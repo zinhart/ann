@@ -38,32 +38,33 @@ namespace zinhart
 		void add_layer(LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
 
-		void set_case_info(const std::uint32_t & n_observations, 
+		int set_case_info(const std::uint32_t & n_observations, 
 						   const std::uint32_t & n_targets, 
 						   const std::uint32_t & n_hidden_weights, 
 						   const std::uint32_t & case_size)
 		{
 		  this->case_size = case_size; // input layer size essentially
 		  this->total_observations.first = n_observations; //number of observations
-		  this->total_observations.second = std::shared_ptr<double> ( new double[n_observations], std::default_delete<int[]>() );//observations themselves 
+		  //this->total_observations.second = std::shared_ptr<float> ( new float[n_observations], std::default_delete<float[]>() );//observations themselves 
 		  this->total_targets.first = n_targets; // number of targets
-		  this->total_targets.second = std::shared_ptr<double> ( new double[n_targets], std::default_delete<int[]>() );//targets themselves 
+		  //this->total_targets.second = std::shared_ptr<float> ( new float[n_targets], std::default_delete<float[]>() );//targets themselves 
 		  this->total_hidden_weights.first = n_hidden_weights; // number of weights
-		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<int[]>() );// weights themselves 
-
+		  //this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<double[]>() );// weights themselves 
 #if CUDA_ENABLED == 1
-//		  cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
+		  return cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
+#else
+		  return 0;
 #endif
 		}
 
-/*#if CUDA_ENABLED == 1
+#if CUDA_ENABLED == 1
 		int cuda_init(std::pair<std::uint32_t, std::shared_ptr<float>> & tot_cases, 
 					  std::pair<std::uint32_t, std::shared_ptr<float>> & tot_targs,
-		              std::pair<std::uint32_t, std::shared_ptr<float>> & tot_hidden_weights,
-					  std::uint32_t & case_sz	)
+		              std::pair<std::uint32_t, std::shared_ptr<double>> & tot_hidden_weights,
+					  const std::uint32_t & case_sz	)
 		{
 		  printf("Here\n");
-		  cudaError_t error_id;
+		  /*cudaError_t error_id;
 		  error_id = cudaMalloc( (void **) &device_total_observations, tot_cases.first * sizeof(float));
 		  if(error_id != cudaSuccess)
 		  {
@@ -100,11 +101,11 @@ namespace zinhart
 		  {
 			std::cout<<" Device weight copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
-		  }
+		  }*/
 		  return cudaSuccess;
 		}
 #endif
-		int train(std::uint32_t & epochs, std::uint32_t & batch_size, double weight_penalty = 1.0 )
+/*		int train(std::uint32_t & epochs, std::uint32_t & batch_size, double weight_penalty = 1.0 )
 		{
 		  std::uint32_t max_observations = total_observations.first * epochs;
 		  std::uint32_t ith_observation, ith_layer;
@@ -149,12 +150,12 @@ namespace zinhart
 							  float * total_observations, std::uint32_t & case_size, 
 							  std::uint32_t & ith_observation_index)
 		{ static_cast<model_type*>(this)->forward(info, n_prev_layer_outputs, ith_layer_weights, total_observations, case_size, ith_observation_index); };
-#endif/
+#endif
 
 		void backward_propagate(std::uint32_t n_cases, std::uint32_t n_inputs, int istart, int istop, int ntarg)// output layer eventually remove ilayer from call list
 		{ static_cast<model_type*>(this)->backward(num_cases, n_inputs, istart, istop, ntarg); };
-  	 
-	  private:*/
+  	 */
+	  private:
 
 	};
 
@@ -213,7 +214,7 @@ namespace zinhart
 	//Begin Cuda Wrappers
 	
 	template<class T>
-	  void set_case_info(ann<T> & model, std::uint32_t & n_observations, 
+	  int set_case_info(ann<T> & model, std::uint32_t & n_observations, 
 						   std::uint32_t & n_targets,  
 						   std::uint32_t & n_hidden_weights, 
 						   std::uint32_t & case_size);
