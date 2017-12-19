@@ -34,46 +34,29 @@ namespace zinhart
 		ann<model_type> & operator = (const ann<model_type>&) = default;
 		ann<model_type> & operator = (ann<model_type> &&) = default;
 		~ann() = default;
+
 		void add_layer(LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
-		void set_case_info(std::uint32_t & n_observations, std::shared_ptr<float> & total_observations, 
-						   std::uint32_t & n_targets, std::shared_ptr<float> & total_targets, 
-						   std::uint32_t & n_hidden_weights, std::shared_ptr<double> & hidden_weights, 
-						   std::uint32_t & case_size)
+
+		void set_case_info(const std::uint32_t & n_observations, 
+						   const std::uint32_t & n_targets, 
+						   const std::uint32_t & n_hidden_weights, 
+						   const std::uint32_t & case_size)
 		{
+		  this->case_size = case_size; // input layer size essentially
 		  this->total_observations.first = n_observations; //number of observations
-		  this->total_observations.second = total_observations;//observations themselves
-
-		  this->total_targets.first = n_targets;
-		  this->total_targets.second = total_targets;
-		  
-		  this->total_hidden_weights.first = n_hidden_weights;
-		  this->total_hidden_weights.second = hidden_weights;
-		  
-		  this->case_size = case_size;
-#if CUDA_ENABLED == 1
-		  cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
-#endif
-		}
-		void set_case_info( std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
-							std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
-							std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights, 
-							std::uint32_t & case_size)
-		{
-		  this->total_observations = total_observations;
-		  this->total_targets = total_targets;
-		  this->total_hidden_weights = total_hidden_weights;
-		  this->case_size = case_size;
+		  this->total_observations.second = std::shared_ptr<double> ( new double[n_observations], std::default_delete<int[]>() );//observations themselves 
+		  this->total_targets.first = n_targets; // number of targets
+		  this->total_targets.second = std::shared_ptr<double> ( new double[n_targets], std::default_delete<int[]>() );//targets themselves 
+		  this->total_hidden_weights.first = n_hidden_weights; // number of weights
+		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<int[]>() );// weights themselves 
 
 #if CUDA_ENABLED == 1
-		  printf("CUDA ENABLED SET_CASE_INFO");
-		  cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
-#else
-		  printf("CUDA DISABLED SET_CASE_INFO");
+//		  cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
 #endif
 		}
 
-#if CUDA_ENABLED == 1
+/*#if CUDA_ENABLED == 1
 		int cuda_init(std::pair<std::uint32_t, std::shared_ptr<float>> & tot_cases, 
 					  std::pair<std::uint32_t, std::shared_ptr<float>> & tot_targs,
 		              std::pair<std::uint32_t, std::shared_ptr<float>> & tot_hidden_weights,
@@ -166,22 +149,16 @@ namespace zinhart
 							  float * total_observations, std::uint32_t & case_size, 
 							  std::uint32_t & ith_observation_index)
 		{ static_cast<model_type*>(this)->forward(info, n_prev_layer_outputs, ith_layer_weights, total_observations, case_size, ith_observation_index); };
-#endif
+#endif/
 
 		void backward_propagate(std::uint32_t n_cases, std::uint32_t n_inputs, int istart, int istop, int ntarg)// output layer eventually remove ilayer from call list
-		{/* static_cast<model_type*>(this)->backward(num_cases, n_inputs, istart, istop, ntarg);*/ };
+		{ static_cast<model_type*>(this)->backward(num_cases, n_inputs, istart, istop, ntarg); };
   	 
-	  private:
+	  private:*/
 
 	};
-  template <class model_type>
-  void set_case_info(model_type m,
-	  std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
-							std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
-							std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights, 
-							std::uint32_t & case_size);
 
-	class ffn : public ann< ffn >
+  	class ffn : public ann< ffn >
 	{
 	  public:
 		ffn() = default;
@@ -190,6 +167,7 @@ namespace zinhart
 		ffn & operator = (const ffn &) = default;
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
+/*
 #if CUDA_ENABLED == 1
 		void forward(cublasHandle_t & context, LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
 					float * total_observations, std::uint32_t & case_size, std::uint32_t & ith_observation_index	)
@@ -221,7 +199,7 @@ namespace zinhart
 		 // cuda_output_gradient (n_cases, n_inputs, ntarg);
 		}
 
-		/*void backward(std::uint32_t n_cases, std::uint32_t ilayer, int nhid_this, int nhid_prior, int last_hidden)
+		void backward(std::uint32_t n_cases, std::uint32_t ilayer, int nhid_this, int nhid_prior, int last_hidden)
 		{
 		  cuda_subsequent_hidden_gradient(n_cases, ilayer, nhid_this, nhid_prior, int last_hidden);
 		}
@@ -230,6 +208,14 @@ namespace zinhart
 		{
 		  cuda_first_hidden_gradient(istart, istop, nin, nhid, only_hidden);
 		}*/
-  };	
+	};
+
+	//Begin Cuda Wrappers
+	
+	template<class T>
+	  void set_case_info(ann<T> & model, std::uint32_t & n_observations, 
+						   std::uint32_t & n_targets,  
+						   std::uint32_t & n_hidden_weights, 
+						   std::uint32_t & case_size);
 }
 #endif
