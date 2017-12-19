@@ -17,6 +17,7 @@ namespace zinhart
 	class ann
 	{
 	  private:
+		std::uint16_t case_size;// max dimensions 2^16
 		std::vector<LAYER_INFO> total_layers; 
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_observations; // input layer size
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size
@@ -26,7 +27,6 @@ namespace zinhart
 		float * device_total_targets;
 		double * device_total_hidden_weights;
 #endif
-		std::uint32_t case_size;
   public:
 		ann() = default;
 		ann(const ann<model_type> &) = default;
@@ -41,15 +41,18 @@ namespace zinhart
 		int set_case_info(const std::uint32_t & n_observations, 
 						   const std::uint32_t & n_targets, 
 						   const std::uint32_t & n_hidden_weights, 
-						   const std::uint32_t & case_size)
+						   const std::uint16_t & case_size)
 		{
 		  this->case_size = case_size; // input layer size essentially
+
 		  this->total_observations.first = n_observations; //number of observations
-		  //this->total_observations.second = std::shared_ptr<float> ( new float[n_observations], std::default_delete<float[]>() );//observations themselves 
+		  this->total_observations.second = std::shared_ptr<float> ( new float[n_observations], std::default_delete<float[]>() );//observations themselves 
+
 		  this->total_targets.first = n_targets; // number of targets
-		  //this->total_targets.second = std::shared_ptr<float> ( new float[n_targets], std::default_delete<float[]>() );//targets themselves 
+		  this->total_targets.second = std::shared_ptr<float> ( new float[n_targets], std::default_delete<float[]>() );//targets themselves 
+
 		  this->total_hidden_weights.first = n_hidden_weights; // number of weights
-		  //this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<double[]>() );// weights themselves 
+		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<double[]>() );// weights themselves 
 #if CUDA_ENABLED == 1
 		  return cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
 #else
@@ -61,10 +64,9 @@ namespace zinhart
 		int cuda_init(std::pair<std::uint32_t, std::shared_ptr<float>> & tot_cases, 
 					  std::pair<std::uint32_t, std::shared_ptr<float>> & tot_targs,
 		              std::pair<std::uint32_t, std::shared_ptr<double>> & tot_hidden_weights,
-					  const std::uint32_t & case_sz	)
+					  const std::uint16_t & case_sz	)
 		{
-		  printf("Here\n");
-		  /*cudaError_t error_id;
+		  cudaError_t error_id;
 		  error_id = cudaMalloc( (void **) &device_total_observations, tot_cases.first * sizeof(float));
 		  if(error_id != cudaSuccess)
 		  {
@@ -72,7 +74,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 
-		  error_id = cudaMemcpyToSymbol(&device_total_observations, tot_cases.second.get(), sizeof(float*), 0, cudaMemcpyHostToDevice);
+		  /*`error_id = cudaMemcpyToSymbol(&device_total_observations, tot_cases.second.get(), sizeof(float*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<" Device case copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
@@ -217,6 +219,6 @@ namespace zinhart
 	  int set_case_info(ann<T> & model, std::uint32_t & n_observations, 
 						   std::uint32_t & n_targets,  
 						   std::uint32_t & n_hidden_weights, 
-						   std::uint32_t & case_size);
+						   std::uint16_t & case_size);
 }
 #endif

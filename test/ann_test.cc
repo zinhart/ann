@@ -6,31 +6,30 @@
 #include <memory>
 using namespace zinhart;
 
-std::random_device rd_ann;
-std::mt19937 mt_ann(rd_ann());
-std::uniform_int_distribution<unsigned int> pos_int_ann(0, std::numeric_limits<unsigned int>::max() );
-std::uniform_real_distribution<double> pos_real_ann(0, std::numeric_limits<double>::max() );
-std::uniform_real_distribution<double> reals_ann(std::numeric_limits<double>::min(), std::numeric_limits<double>::max() );
-std::uniform_real_distribution<double> neg_real_ann(std::numeric_limits<double>::min(), -1 );
-
 TEST(ann_test,ann_test_constructor)
 {
   ann< ffn > network;
 }
 TEST(ann_test, add_layer)
 {
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max());
   ann< ffn > network;
   LAYER_INFO a_layer;
   a_layer.first = LAYER_NAME::IDENTITY;
-  a_layer.second = pos_int_ann(mt_ann);  
+  a_layer.second = dist(mt);  
   network.add_layer(a_layer);
 }
 TEST(ann_test, set_case_info)
 {
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max());
   ann< ffn > network;
   LAYER_INFO a_layer;
   a_layer.first = LAYER_NAME::IDENTITY;
-  a_layer.second = pos_int_ann(mt_ann);  
+  a_layer.second = dist(mt);  
   network.add_layer(a_layer);
 
   //case info declarations 
@@ -38,11 +37,11 @@ TEST(ann_test, set_case_info)
   std::uint32_t total_targets; // output layer size
   std::uint32_t total_hidden_weights;
   
-  std::uint32_t case_size = pos_int_ann(mt_ann);
+  std::uint16_t case_size = dist(mt);
 
-  total_observations = pos_int_ann(mt_ann); //number of observations 
-  total_targets = pos_int_ann(mt_ann);//number of targets
-  total_hidden_weights = pos_int_ann(mt_ann);//number of hidden weights 
+  total_observations = dist(mt);//number of observations 
+  total_targets = dist(mt);//number of targets
+  total_hidden_weights = dist(mt);//number of hidden weights 
 
   set_case_info(network, total_observations, total_targets, total_hidden_weights, case_size);
 		  
