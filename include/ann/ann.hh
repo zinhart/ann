@@ -181,17 +181,14 @@ namespace zinhart
 							std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights, 
 							std::uint32_t & case_size);
 
-
-
-  template<class error_metric>
-	class ffn : public ann< ffn<error_metric> >
+	class ffn : public ann< ffn >
 	{
 	  public:
 		ffn() = default;
-		ffn(const ffn<error_metric> &) = default;
-		ffn(ffn<error_metric> &&) = default;
-		ffn<error_metric> & operator = (const ffn<error_metric> &) = default;
-		ffn<error_metric> & operator = (ffn<error_metric> &&) = default;
+		ffn(const ffn &) = default;
+		ffn(ffn &&) = default;
+		ffn & operator = (const ffn &) = default;
+		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
 		void forward(cublasHandle_t & context, LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
