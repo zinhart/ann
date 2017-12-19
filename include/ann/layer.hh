@@ -1,0 +1,123 @@
+#ifndef LAYER_H
+#define LAYER_H
+#include "typedefs.cuh"
+#include <cstdint>
+#include <utility>
+#if CUDA_ENABLED == 1
+#include <math.h>
+#else
+#include <cmath>
+#endif
+namespace zinhart
+{
+  using LAYER_TYPE = std::uint8_t;
+  enum class LAYER_NAME : LAYER_TYPE { IDENTITY = 0, SOFTMAX, SIGMOID, TANH, RELU, LEAKY_RELU};
+  enum class ACTIVATION : LAYER_TYPE {OBJECTIVE = 0, DERIVATIVE}; 
+  using Neurons = std::uint32_t;
+  using LAYER_INFO = std::pair<LAYER_NAME, Neurons>;
+  
+  class Layer
+  {
+	public:
+	  Layer() = default;
+	  Layer(const Layer &) = default;
+	  Layer(Layer &&) = default;
+	  Layer & operator =(const Layer &) = default;
+	  Layer & operator =(Layer &&) = default;
+	  ~Layer() = default;
+
+	  CUDA_CALLABLE_MEMBER pt operator()(double & input, LAYER_NAME ln, ACTIVATION f)
+	  {
+#if CUDA_ENABLED == 1
+printf("CUDA_ENABLED Layer operator()\n");
+#else
+printf("CUDA_DISABLED Layer operator()\n");
+#endif
+		if(f == ACTIVATION::OBJECTIVE)
+		{
+		  switch(ln)
+		  {
+			case LAYER_NAME::IDENTITY :
+			  return input;
+			case LAYER_NAME::SOFTMAX :
+#if CUDA_ENABLED == 1
+		      printf("CUDA ENABLED  LAYER SOFTMAX\n");
+			  return exp(input);
+#else
+			  printf("CUDA ENABLED  LAYER SOFTMAX\n");
+		      return std::exp(input);
+#endif
+		   case LAYER_NAME::TANH :
+#if CUDA_ENABLED == 1
+		      printf("CUDA ENABLED LAYER TANH\n");
+			  return tanh(-input);
+#else
+		      printf("CUDA DISABLED LAYER TANH\n");
+			  std::tanh(-input);
+#endif
+			case LAYER_NAME::RELU :
+			 return (input >= 0.0) ? input : 0.0;
+			default:
+			 return 0.0;
+		  }
+		}
+		else if(f == ACTIVATION::DERIVATIVE)
+		{
+		  switch(ln)
+		  {
+			case LAYER_NAME::IDENTITY :
+			  return 1.0;
+			case LAYER_NAME::SOFTMAX :
+			  return input * (1.0 - input);
+			case LAYER_NAME::TANH :
+			 return 1.0 - (input * input);
+			case LAYER_NAME::RELU :
+			 return (input >= 0.0) ? 1.0 : 0.0;
+			default:
+			  return 0.0;
+		  }
+		}
+		else
+		  return 0.0;
+	  }
+	  CUDA_CALLABLE_MEMBER pt operator()(double & input, double & coefficient, LAYER_NAME ln, ACTIVATION f)
+	  {
+
+#if CUDA_ENABLED == 1
+printf("CUDA_ENABLED Layer operator() (coeff)\n");
+#else
+printf("CUDA_DISABLED Layer operator() (coeff)\n");
+#endif
+		if(f == ACTIVATION::OBJECTIVE)
+		{
+		  switch(ln)
+		  {
+			case LAYER_NAME::LEAKY_RELU :
+			  return (input >= 0.0) ? input : coefficient * input;
+		   default :
+			return 0.0;
+		  }
+		}
+		else if(f == ACTIVATION::DERIVATIVE)
+		{
+		  switch(ln)
+		  {
+			case LAYER_NAME::LEAKY_RELU :
+			  return (input >= 0.0) ? 1 : coefficient;
+		   default :
+			return 0.0;
+		  }
+		}
+		else
+		  return 0.0;
+
+	  }
+  };
+
+  pt call_activation(Layer & L, double & input, LAYER_NAME ln, ACTIVATION f);
+  pt call_activation(Layer & L, double & input, double & coefficient, LAYER_NAME ln, ACTIVATION f);
+
+  
+
+}
+#endif
