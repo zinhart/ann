@@ -29,10 +29,10 @@ namespace zinhart
 		std::uint32_t case_size;
   public:
 		ann() = default;
-		ann(const ann<model_type> &) = delete;
-		ann(ann<model_type> &&) = delete;
-		ann<model_type> & operator = (const ann<model_type>&) = delete;
-		ann<model_type> & operator = (ann<model_type> &&) = delete;
+		ann(const ann<model_type> &) = default;
+		ann(ann<model_type> &&) = default;
+		ann<model_type> & operator = (const ann<model_type>&) = default;
+		ann<model_type> & operator = (ann<model_type> &&) = default;
 		~ann() = default;
 		void add_layer(LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
