@@ -32,18 +32,22 @@ TEST(ann_test, set_case_info)
   a_layer.second = dist(mt);  
   network.add_layer(a_layer);
 
-  //case info declarations 
-  std::uint32_t total_observations; // input layer size
-  std::uint32_t total_targets; // output layer size
-  std::uint32_t total_hidden_weights;
   
   std::uint16_t case_size = dist(mt);
+  std::pair<std::uint32_t, std::shared_ptr<float>>  total_observations, total_targets;
+  std::pair<std::uint32_t, std::shared_ptr<double>>  total_hidden_weights;
+  
+  total_observations.first = dist(mt); //number of observations
+  total_observations.second = std::shared_ptr<float> ( new float[total_observations.first], std::default_delete<float[]>() );//observations themselves 
+  total_targets.first = dist(mt); // number of targets
+  total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
+  total_hidden_weights.first = dist(mt); // number of weights
+  total_hidden_weights.second = std::shared_ptr<double> ( new double[total_hidden_weights.first], std::default_delete<double[]>() );// weights themselves
 
-  total_observations = dist(mt);//number of observations 
-  total_targets = dist(mt);//number of targets
-  total_hidden_weights = dist(mt);//number of hidden weights 
 
-  set_case_info(network, total_observations, total_targets, total_hidden_weights, case_size);
+
+  ASSERT_EQ(initialize_network(network, case_size, total_observations, total_targets, total_hidden_weights), 0);
+  ASSERT_EQ(cleanup(network), 0);
 		  
 }
 /*

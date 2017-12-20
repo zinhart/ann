@@ -14,9 +14,9 @@
 namespace zinhart
 {
 #if CUDA_ENABLED == 1
-		__device__ float * device_total_observations;
-		__device__ float * device_total_targets;
-		__device__ double * device_total_hidden_weights;
+		__constant__ float * device_total_observations;
+		__constant__ float * device_total_targets;
+		__constant__ double * device_total_hidden_weights;
 #endif
   template <class model_type>
 	class ann
@@ -39,72 +39,100 @@ namespace zinhart
 		void add_layer(LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
 
-		int set_case_info(const std::uint32_t & n_observations, 
-						   const std::uint32_t & n_targets, 
-						   const std::uint32_t & n_hidden_weights, 
-						   const std::uint16_t & case_size)
+		int init(const std::uint16_t & case_size,
+		         std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
+				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+				)
 		{
 		  this->case_size = case_size; // input layer size essentially
-
-		  this->total_observations.first = n_observations; //number of observations
-		  this->total_observations.second = std::shared_ptr<float> ( new float[n_observations], std::default_delete<float[]>() );//observations themselves 
-
-		  this->total_targets.first = n_targets; // number of targets
-		  this->total_targets.second = std::shared_ptr<float> ( new float[n_targets], std::default_delete<float[]>() );//targets themselves 
-
-		  this->total_hidden_weights.first = n_hidden_weights; // number of weights
-		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[n_hidden_weights], std::default_delete<double[]>() );// weights themselves 
+		  std::swap(this->total_observations,total_observations);
+		  std::swap(this->total_targets, total_targets);
+		  std::swap(this->total_hidden_weights, total_hidden_weights);
 #if CUDA_ENABLED == 1
-		  return cuda_init(total_observations, total_targets, total_hidden_weights, case_size);
+		  return cuda_init();
 #else
 		  return 0;
 #endif
 		}
-
+		
 #if CUDA_ENABLED == 1
-		int cuda_init(std::pair<std::uint32_t, std::shared_ptr<float>> & tot_cases, 
-					  std::pair<std::uint32_t, std::shared_ptr<float>> & tot_targs,
-		              std::pair<std::uint32_t, std::shared_ptr<double>> & tot_hidden_weights,
-					  const std::uint16_t & case_sz	)
+		int cuda_init()
 		{
 		  cudaError_t error_id;
-		  error_id = cudaMalloc( (void **) &device_total_observations, tot_cases.first * sizeof(float));
+		  error_id = cudaSetDevice(0);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device case allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Cuda init setDevice failed:\t"<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //allocate space for observations
+		  error_id = cudaMalloc( (void **) &device_total_observations, total_observations.first * sizeof(float));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device case allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //copy observations from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*total_observations.second.get()), sizeof(float*), 0, cudaMemcpyHostToDevice);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device case copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
-		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*tot_cases.second.get()), sizeof(float*), 0, cudaMemcpyHostToDevice);
+		  //allocate space for targets
+		  error_id = cudaMalloc((void **) &device_total_targets, total_targets.first * sizeof(float));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device case copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device target allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaMalloc((void **) &device_total_targets, tot_targs.first * sizeof(float));
+		  //copy targets from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device target allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device target copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*tot_targs.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
+		  //allocate space for hidden weights
+		  error_id = cudaMalloc((void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(float));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device target copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device weight allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaMalloc((void **) &device_total_hidden_weights, tot_hidden_weights.first * sizeof(float));
-		  if(error_id != cudaSuccess)
-		  {
-			std::cout<<" Device weight allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*tot_targs.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
+		  //copy hidden weights from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_hidden_weights.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<" Device weight copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
-		  }/**/
+		  }
+		  return cudaSuccess;
+		}
+		int cuda_cleanup()
+		{
+		  cudaError_t error_id;
+		  error_id  = cudaFree(device_total_observations);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device observations deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_targets);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device target deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_hidden_weights);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device hidden weight deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  cudaDeviceReset();
 		  return cudaSuccess;
 		}
 #endif
@@ -159,7 +187,6 @@ namespace zinhart
 		{ static_cast<model_type*>(this)->backward(num_cases, n_inputs, istart, istop, ntarg); };
   	 */
 	  private:
-
 	};
 
   	class ffn : public ann< ffn >
@@ -217,9 +244,13 @@ namespace zinhart
 	//Begin Cuda Wrappers
 	
 	template<class T>
-	  int set_case_info(ann<T> & model, std::uint32_t & n_observations, 
-						   std::uint32_t & n_targets,  
-						   std::uint32_t & n_hidden_weights, 
-						   std::uint16_t & case_size);
+	  int initialize_network(ann<T> & model,  
+						     const std::uint16_t & case_size,
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
+							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+							);
+	template<class T>
+	  int cleanup(ann<T> & model);
 }
 #endif

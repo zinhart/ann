@@ -4,16 +4,25 @@
 namespace zinhart
 {
   //explicit instantiations
-  template int set_case_info(ann<ffn> & model, std::uint32_t & n_observations, 
-						   std::uint32_t & n_targets, 
-						   std::uint32_t & n_hidden_weights, 
-						   std::uint16_t & case_size);
+  template int initialize_network(ann<ffn> & model,  
+						     const std::uint16_t & case_size,
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
+							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+							);
+
+
+
+  template int cleanup(ann<ffn> & model);
+
   //definitions
-  template <class T>
-	  int set_case_info(ann<T> & model, std::uint32_t & n_observations,  
-						   std::uint32_t & n_targets, 
-						   std::uint32_t & n_hidden_weights,  
-						   std::uint16_t & case_size)
+  template<class T>
+	int initialize_network(ann<T> & model,  
+                    	   const std::uint16_t & case_size,
+						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
+						   std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+						  )
 	  {
 #if CUDA_ENABLED == 1 
 	  printf("CUDA ENABLED SET_CASE_INFO\n");
@@ -21,8 +30,18 @@ namespace zinhart
 	  
 	  printf("CUDA DISABLED SET_CASE_INFO\n");
 #endif
-	  return model.set_case_info(n_observations, n_targets, n_hidden_weights, case_size);
-
+	  return model.init(case_size, total_observations, total_targets, total_hidden_weights);
 	  }
+  template<class T>
+	int cleanup(ann<T> & model)
+	{
+#if CUDA_ENABLED == 1 
+	  printf("CUDA ENABLED CLEANUP\n");
+#else
+	  
+	  printf("CUDA DISABLED CLEANUP\n");
+#endif
+	  model.cuda_cleanup();
+	}
 
 }
