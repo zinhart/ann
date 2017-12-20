@@ -1,4 +1,4 @@
-#Arom Zinhart DeGraca
+echo -e "Arom Zinhart DeGraca"
 #A simply script to automate memory leak checking, this script does NOT take into account symbolic links
 if [ $# -eq 0 ]
 then
