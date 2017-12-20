@@ -10,6 +10,8 @@ CMakeCache.txt
 Debug
 Release
 build*
+release*
+debug*
 *.a
 *.o
 
