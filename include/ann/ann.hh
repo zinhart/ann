@@ -17,6 +17,7 @@ namespace zinhart
 		__constant__ float * device_total_observations;
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
+		__constant__ short * test;
 #endif
   template <class model_type>
 	class ann
@@ -61,6 +62,12 @@ namespace zinhart
 		{
 		  cudaError_t error_id;
 		  error_id = cudaSetDevice(0);
+
+		  //it seems that when their are no memory leaks cuda-memcpy reports 0 allocations along with 0 leaks, so don't trip
+		  /*cudaMalloc((void**)&test, total_observations.first * sizeof(float));
+		  cudaMemcpy(test, total_observations.second.get(), total_observations.first * sizeof(float),cudaMemcpyHostToDevice);
+		  cudaFree(test);*/
+		  
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<"Cuda init setDevice failed:\t"<<cudaGetErrorString(error_id)<<"\n";
@@ -88,6 +95,7 @@ namespace zinhart
 			std::cout<<"Device target allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
+
 		  //copy targets from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
@@ -135,15 +143,39 @@ namespace zinhart
 		  cudaDeviceReset();
 		  return cudaSuccess;
 		}
+		//later move this to an appropriate place
+		const char* cublasGetErrorString(cublasStatus_t status)
+		{
+	  	  switch(status)
+	  	  {
+			case CUBLAS_STATUS_SUCCESS: return "CUBLAS_STATUS_SUCCESS";
+			case CUBLAS_STATUS_NOT_INITIALIZED: return "CUBLAS_STATUS_NOT_INITIALIZED";
+			case CUBLAS_STATUS_ALLOC_FAILED: return "CUBLAS_STATUS_ALLOC_FAILED";
+	 		case CUBLAS_STATUS_INVALID_VALUE: return "CUBLAS_STATUS_INVALID_VALUE"; 
+			case CUBLAS_STATUS_ARCH_MISMATCH: return "CUBLAS_STATUS_ARCH_MISMATCH"; 
+			case CUBLAS_STATUS_MAPPING_ERROR: return "CUBLAS_STATUS_MAPPING_ERROR";
+			case CUBLAS_STATUS_EXECUTION_FAILED: return "CUBLAS_STATUS_EXECUTION_FAILED"; 
+			case CUBLAS_STATUS_INTERNAL_ERROR: return "CUBLAS_STATUS_INTERNAL_ERROR"; 
+	  	  }
+	  	  return "unknown error";
+		}
+
 #endif
-/*		int train(std::uint32_t & epochs, std::uint32_t & batch_size, double weight_penalty = 1.0 )
+		int train(const std::uint32_t & epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
 		  std::uint32_t max_observations = total_observations.first * epochs;
 		  std::uint32_t ith_observation, ith_layer;
 #if CUDA_ENABLED == 1
 		  printf("CUDA ENABLED TRAIN");
+		  cublasStatus_t error_id;
 		  cublasHandle_t handle;
-		  cublasCreate(&handle);
+		  error_id = cublasCreate(&handle);
+		  //not sure if this is statement is necesarry
+		  if(error_id != CUBLAS_STATUS_SUCCESS)
+		  {
+			std::cout<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
 #else
 	  printf("CUDA DISABLED TRAIN");
 
@@ -164,11 +196,18 @@ namespace zinhart
 		  }
 
 #if CUDA_ENABLED == 1
-		  cublasDestroy(handle);
+		  error_id = cublasDestroy(handle);
+		  //not sure if this is statement is necesarry
+		  if(error_id != CUBLAS_STATUS_SUCCESS)
+		  {
+			std::cout<<"CublasHandle destruction failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  
 #endif
 		  return 0;
 		}
-
+/*
 #if CUDA_ENABLED == 1
 		void forward_propagate(cublasHandle_t & context, LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, 
 							  std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
@@ -242,7 +281,6 @@ namespace zinhart
 	};
 
 	//Begin Cuda Wrappers
-	
 	template<class T>
 	  int initialize_network(ann<T> & model,  
 						     const std::uint16_t & case_size,
@@ -250,6 +288,8 @@ namespace zinhart
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
 							);
+	template<class T>
+	  int train(ann<T> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 	template<class T>
 	  int cleanup(ann<T> & model);
 }

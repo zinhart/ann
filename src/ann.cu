@@ -10,10 +10,8 @@ namespace zinhart
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
 							);
-
-
-
   template int cleanup(ann<ffn> & model);
+  template int train(ann<ffn> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 
   //definitions
   template<class T>
@@ -27,21 +25,28 @@ namespace zinhart
 #if CUDA_ENABLED == 1 
 	  printf("CUDA ENABLED SET_CASE_INFO\n");
 #else
-	  
 	  printf("CUDA DISABLED SET_CASE_INFO\n");
 #endif
 	  return model.init(case_size, total_observations, total_targets, total_hidden_weights);
 	  }
+  template<class T>
+	int train(ann<T> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty)
+	{
+#if CUDA_ENABLED == 1 
+	  printf("CUDA ENABLED TRAIN\n");
+#else
+	  printf("CUDA DISABLED TRAIN\n");
+#endif
+	  return model.train(epochs, batch_size, weight_penalty);
+	}
   template<class T>
 	int cleanup(ann<T> & model)
 	{
 #if CUDA_ENABLED == 1 
 	  printf("CUDA ENABLED CLEANUP\n");
 #else
-	  
 	  printf("CUDA DISABLED CLEANUP\n");
 #endif
 	  model.cuda_cleanup();
 	}
-
 }
