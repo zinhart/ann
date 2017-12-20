@@ -12,12 +12,12 @@ echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/"
   if [ -d debug ]
   then
 	(cd debug && make)
-	cuda-memcheck --leak-check full /debug/test/ann_tests
+	cuda-memcheck --leak-check full ./debug/test/ann_tests
   else
      echo -e "Binary < ann_tests > was not found at /debug/test/"
 	 echo e "Executing ./debug-script"
 	./debug-script
-	cuda-memcheck --leak-check full /debug/test/ann_tests
+	cuda-memcheck --leak-check full ./debug/test/ann_tests
   fi
 fi
 
