@@ -13,6 +13,11 @@
 #endif
 namespace zinhart
 {
+#if CUDA_ENABLED == 1
+		__device__ float * device_total_observations;
+		__device__ float * device_total_targets;
+		__device__ double * device_total_hidden_weights;
+#endif
   template <class model_type>
 	class ann
 	{
@@ -22,11 +27,7 @@ namespace zinhart
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_observations; // input layer size
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;
-#if CUDA_ENABLED == 1
-		float * device_total_observations;
-		float * device_total_targets;
-		double * device_total_hidden_weights;
-#endif
+
   public:
 		ann() = default;
 		ann(const ann<model_type> &) = default;
@@ -74,7 +75,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 
-		  /*`error_id = cudaMemcpyToSymbol(&device_total_observations, tot_cases.second.get(), sizeof(float*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*tot_cases.second.get()), sizeof(float*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<" Device case copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
@@ -86,7 +87,7 @@ namespace zinhart
 			std::cout<<" Device target allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaMemcpyToSymbol(&device_total_targets, tot_targs.second.get(), sizeof(float), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*tot_targs.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<" Device target copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
@@ -98,12 +99,12 @@ namespace zinhart
 			std::cout<<" Device weight allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaMemcpyToSymbol(&device_total_targets, tot_targs.second.get(), sizeof(float), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*tot_targs.second.get()), sizeof(float), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<" Device weight copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
-		  }*/
+		  }/**/
 		  return cudaSuccess;
 		}
 #endif
