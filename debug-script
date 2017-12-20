@@ -1,5 +1,5 @@
-echo -e "Arom Zinhart DeGraca"
 echo -e "Building ann in debug mode"
 mkdir -p debug && cd $_
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make
+echo -e "Written by Arom Zinhart DeGraca"

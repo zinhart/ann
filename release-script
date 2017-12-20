@@ -1,5 +1,5 @@
-echo -e "Arom Zinhart DeGraca"
 echo -e "Building ann in release mode"
 mkdir -p release && cd $_
 cmake ..
 make
+echo -e "Written Arom Zinhart DeGraca"
