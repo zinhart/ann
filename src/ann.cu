@@ -7,7 +7,7 @@ namespace zinhart
   template void add_layer(ann<ffn> & model, const LAYER_INFO & ith_layer);
   template int initialize_network(ann<ffn> & model,  
 						     const std::uint16_t & case_size,
-							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
   template int cleanup(ann<ffn> & model);
@@ -20,14 +20,14 @@ namespace zinhart
   template<class T>
 	int initialize_network(ann<T> & model,  
                     	   const std::uint16_t & case_size,
-						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
+						   std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 						  )
 	  {
 #if CUDA_ENABLED == 1 
-	  printf("CUDA ENABLED SET_CASE_INFO\n");
+	  printf("CUDA ENABLED INITIALIZE_NETWORK\n");
 #else
-	  printf("CUDA DISABLED SET_CASE_INFO\n");
+	  printf("CUDA DISABLED INITIALIZE_NETWORK\n");
 #endif
 	  return model.init(case_size, total_observations, total_targets);
 	  }
