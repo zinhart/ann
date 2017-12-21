@@ -262,6 +262,7 @@ namespace zinhart
 
 		{
 		  //cublas gemm here
+		  cublasStatus_t error_id;
 		  std::int32_t lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
 		  std::uint32_t case_begin = case_size * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
@@ -274,12 +275,16 @@ namespace zinhart
 		  lda = total_layers[0].second;//neurons in the first hidden layer
 		  ldb = case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
 		  ldc = lda;//obviously
-		  cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, case_size, case_size, 
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, case_size, case_size, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta,
 					  device_total_activations,ldc
 					  );
-
+		  if(error_id != CUBLAS_STATUS_SUCCESS)
+		  {
+			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
 		  //to do hidden to output layers
 		  /*for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
 		  {
