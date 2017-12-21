@@ -25,8 +25,7 @@ namespace zinhart
 	class ann
 	{
 	  protected:
-		std::uint16_t case_size;// input layer size max dimensions 2^16
-		std::vector<LAYER_INFO> total_layers;//Layer types(Relu sigmoid etc) and the number of inputs of the respective layer 
+		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;// number of training cases and the training cases themselves
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size and the complete set of targets for each input
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
@@ -39,33 +38,42 @@ namespace zinhart
 		ann<model_type> & operator = (ann<model_type> &&) = default;
 		~ann() = default;
 
+		//debugging functions
+		const std::vector<LAYER_INFO> & get_total_layers()const
+		{return total_layers; }
+		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_observations()const
+		{return total_observations;}
+		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_hidden_weights()const
+		{return total_hidden_weights;}
+		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_activations()const
+		{return total_activations;}
+
+		//model manipulating functions
+		//I assume the first layer will be an input layer
 		void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
-		int init(const std::uint16_t & case_size,
+		int init(
 		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
 		{
 		  std::uint32_t ith_layer, prior_layer_neurons;
-		  this->case_size = case_size; // input layer size essentially
 		  std::swap(this->total_observations,total_observations);
 		  std::swap(this->total_targets, total_targets);
 
-		  this->total_activations.first = 0;
+		  //calc number of activations
+		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
+			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layers
+		  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
 
-		  prior_layer_neurons = case_size;
 		  //calc number of hidden weights
-		  for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer)
+		  for(ith_layer = 0, prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size(); ++ith_layer)
 		  {
 			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
 			prior_layer_neurons = this->total_layers[ith_layer].second;
 		  }
  		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
-		  //calc number of activations
-		  for(ith_layer = 0, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
-			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers
-		  this->total_activations.first += this->total_targets.first;//add in output layer 
-		  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
+		
 #if CUDA_ENABLED == 1
 		  return cuda_init();
 #else
@@ -216,14 +224,16 @@ namespace zinhart
 		  //cpu multi-threaded code will go here
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
+		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<"\n";
+		  std::cout<<"first hidden layer neurons: "<<total_layers[0].second<<" case_size: "<<total_layers[0].second<<"\n";
 		  for(ith_epoch = 0; ith_epoch < max_epochs; ++ith_epoch)
 		  {
 			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
 			{
 #if CUDA_ENABLED == 1 
-			  static_cast<model_type*>(this)->forward_propagate(handle, case_size, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+			  static_cast<model_type*>(this)->forward_propagate(handle, total_layers[0].second, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 #else
-			  static_cast<model_type*>(this)->forward_propagate(case_size, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
+			  static_cast<model_type*>(this)->forward_propagate(total_layers[0].second, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
 			}
 		  }
@@ -252,8 +262,8 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
-		void forward_propagate(cublasHandle_t & context, 
-			                   const std::uint16_t & case_size, const std::uint32_t & ith_observation_index, 
+		int forward_propagate(cublasHandle_t & context, 
+			                   const std::uint32_t & case_size, const std::uint32_t & ith_observation_index, 
 							   const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
@@ -265,17 +275,17 @@ namespace zinhart
 		  cublasStatus_t error_id;
 		  std::int32_t lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
-		  std::uint32_t case_begin = case_size * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
+		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
 		  const double alf = 1;
 		  const double bet = 0;
 		  const double *alpha = &alf;
 		  const double *beta = &bet;
 
-		  //do  input layer
+		  //do  first hidden layer and input layer
 		  lda = total_layers[0].second;//neurons in the first hidden layer
-		  ldb = case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
+		  ldb = total_layers[0].second;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
 		  ldc = lda;//obviously
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, case_size, case_size, 
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, total_layers[0].second, total_layers[0].second, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta,
 					  device_total_activations,ldc
@@ -285,14 +295,24 @@ namespace zinhart
 			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  //to do hidden to output layers
-		  /*for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
+		  //subsequent hidden to output layers
+		  for(ith_layer = 1; ith_layer < total_layers.size(); ++ith_layer )
 		  {
-			lda = total_layers[ith_layer].second;
-			ldb = 
-		  }*/
-		  
-		  
+			lda = total_layers[ith_layer].second;//current layer neurons is lda
+			ldb = total_layers[ith_layer - 1].second;
+			ldc = lda;
+  			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer].second, total_layers[0].second, total_layers[0].second, 
+			          alpha, device_total_hidden_weights, lda,
+					  device_total_observations + case_begin, ldb, beta,
+					  device_total_activations,ldc
+					  );
+  			if(error_id != CUBLAS_STATUS_SUCCESS)
+  			{
+  			  std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+  			  return ERROR_CUDA_ERROR;
+  			}
+		  }	  
+		  return cudaSuccess;
 		}
 		void backward_propagate(cublasHandle_t & context)
 		{
@@ -319,11 +339,20 @@ namespace zinhart
 	};
 
 	//Begin External Interface
+	//debugging functions
+	template <class T>
+	  std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
+	template <class T>
+	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
+	template <class T>
+	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model);
+	template <class T>
+	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_activations(const ann<T> & model);
+
 	template<class T>
   	  void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
 	template<class T>
 	  int initialize_network(ann<T> & model,  
-						     const std::uint16_t & case_size,
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);

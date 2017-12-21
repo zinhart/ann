@@ -11,7 +11,7 @@
 namespace zinhart
 {
   using LAYER_TYPE = std::uint8_t;
-  enum class LAYER_NAME : LAYER_TYPE { IDENTITY = 0, SOFTMAX, SIGMOID, TANH, RELU, LEAKY_RELU};
+  enum class LAYER_NAME : LAYER_TYPE {INPUT = 0, IDENTITY, SOFTMAX, SIGMOID, TANH, RELU, LEAKY_RELU};
   enum class ACTIVATION : LAYER_TYPE {OBJECTIVE = 0, DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<LAYER_NAME, Neurons>;
