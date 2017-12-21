@@ -274,11 +274,11 @@ namespace zinhart
 		  lda = total_layers[0].second;//neurons in the first hidden layer
 		  ldb = case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
 		  ldc = lda;//obviously
-		  /*cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, case_size, case_size, 
+		  cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, case_size, case_size, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta,
 					  device_total_activations,ldc
-					  );*/
+					  );
 
 		  //to do hidden to output layers
 		  /*for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
