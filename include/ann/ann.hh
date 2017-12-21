@@ -46,21 +46,24 @@ namespace zinhart
 				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
 		{
-		  std::uint32_t ith_layer;
+		  std::uint32_t ith_layer, prior_layer_neurons;
 		  this->case_size = case_size; // input layer size essentially
 		  std::swap(this->total_observations,total_observations);
 		  std::swap(this->total_targets, total_targets);
 
 		  this->total_activations.first = 0;
-		  this->total_hidden_weights.first = case_size;//input layer neurons
-		  for(ith_layer = 0, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
+
+		  prior_layer_neurons = case_size;
+		  //calc number of hidden weights
+		  for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer)
 		  {
-			this->total_hidden_weights.first += total_layers[ith_layer].second;//hidden layer neurons
-			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers
+			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
+			prior_layer_neurons = this->total_layers[ith_layer].second;
 		  }
-		  this->total_hidden_weights.first += this->total_targets.first;//output layer neurons
-		  std::cout<<"total hidden weights"<< total_hidden_weights.first<<"\n";
-		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
+ 		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
+		  //calc number of activations
+		  for(ith_layer = 0, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
+			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers
 		  this->total_activations.first += this->total_targets.first;//add in output layer 
 		  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
 #if CUDA_ENABLED == 1

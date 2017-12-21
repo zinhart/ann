@@ -25,11 +25,14 @@ TEST(ann_test, initialize_network)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max());
+  std::uniform_int_distribution<std::uint32_t> dist(0,5000);// causes a bad alloc when appro > when a 3 layer network has > 5000 neurons in each //layer machine limitations :(
   ann< ffn > network;
   LAYER_INFO a_layer;
   a_layer.first = LAYER_NAME::IDENTITY;
   a_layer.second = dist(mt);  
+  add_layer(network,a_layer);
+  a_layer.first = LAYER_NAME::RELU;
+  a_layer.second = dist(mt); 
   add_layer(network,a_layer);
   
   std::uint16_t case_size = dist(mt);
@@ -44,7 +47,7 @@ TEST(ann_test, initialize_network)
   total_hidden_weights.first = dist(mt); // number of weights
   total_hidden_weights.second = std::shared_ptr<double> ( new double[total_hidden_weights.first], std::default_delete<double[]>() );// weights themselves
   ASSERT_EQ(initialize_network(network, case_size, total_observations, total_targets), 0);
-//  ASSERT_EQ(cleanup(network), 0);
+  ASSERT_EQ(cleanup(network), 0);
 }
 
 TEST(ann_test, ann_train)
@@ -56,13 +59,13 @@ TEST(ann_test, ann_train)
   ann< ffn > network;
   LAYER_INFO a_layer;
   a_layer.first = LAYER_NAME::RELU;
-  a_layer.second = dist(mt);  
+  a_layer.second = dist_1(mt);  
   add_layer(network, a_layer);
   a_layer.first = LAYER_NAME::SOFTMAX;
-  a_layer.second = dist(mt);  
+  a_layer.second = dist_1(mt);  
   add_layer(network, a_layer); 
 
-  std::uint16_t case_size = dist(mt);
+  std::uint16_t case_size = dist_1(mt);
   std::pair<std::uint32_t, std::shared_ptr<double>> total_observations; 
   std::pair<std::uint32_t, std::shared_ptr<float>> total_targets;
   
@@ -70,7 +73,8 @@ TEST(ann_test, ann_train)
   total_observations.second = std::shared_ptr<double> ( new double[total_observations.first], std::default_delete<double[]>() );//observations themselves 
   total_targets.first = dist_1(mt); // number of targets
   total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
-  
+
+
   ASSERT_EQ(initialize_network(network, case_size, total_observations, total_targets), 0);
   ASSERT_EQ(train(network,dist_1(mt),dist_1(mt), dist_1(mt)), 0);
   ASSERT_EQ(cleanup(network), 0);
