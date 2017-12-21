@@ -4,22 +4,24 @@
 namespace zinhart
 {
   //explicit instantiations
+  template void add_layer(ann<ffn> & model, const LAYER_INFO & ith_layer);
   template int initialize_network(ann<ffn> & model,  
 						     const std::uint16_t & case_size,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
-							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
   template int cleanup(ann<ffn> & model);
-  template int train(ann<ffn> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
+  template int train(ann<ffn> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 
   //definitions
+  template<class T>
+	void add_layer(ann<T> & model, const LAYER_INFO & ith_layer)
+	{ model.add_layer(ith_layer);}
   template<class T>
 	int initialize_network(ann<T> & model,  
                     	   const std::uint16_t & case_size,
 						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
-						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
-						   std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 						  )
 	  {
 #if CUDA_ENABLED == 1 
@@ -27,10 +29,10 @@ namespace zinhart
 #else
 	  printf("CUDA DISABLED SET_CASE_INFO\n");
 #endif
-	  return model.init(case_size, total_observations, total_targets, total_hidden_weights);
+	  return model.init(case_size, total_observations, total_targets);
 	  }
   template<class T>
-	int train(ann<T> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty)
+	int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty)
 	{
 #if CUDA_ENABLED == 1 
 	  printf("CUDA ENABLED TRAIN\n");
@@ -47,6 +49,6 @@ namespace zinhart
 #else
 	  printf("CUDA DISABLED CLEANUP\n");
 #endif
-	  model.cuda_cleanup();
+	  return model.cuda_cleanup();
 	}
 }

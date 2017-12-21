@@ -7,6 +7,7 @@
 //#include <zinhart/vector_space>
 #include <vector>
 #define MAXPOSNUM 2137483647
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #if CUDA_ENABLED == 1
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
@@ -17,19 +18,18 @@ namespace zinhart
 		__constant__ float * device_total_observations;
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
-		__constant__ short * test;
+		//__constant__ short * test;
 #endif
   template <class model_type>
 	class ann
 	{
-	  private:
-		std::uint16_t case_size;// max dimensions 2^16
-		std::vector<LAYER_INFO> total_layers; 
-		std::pair<std::uint32_t, std::shared_ptr<float>> total_observations; // input layer size
-		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;
-
-  public:
+	  protected:
+		std::uint16_t case_size;// input layer size max dimensions 2^16
+		std::vector<LAYER_INFO> total_layers;//Layer types(Relu sigmoid etc) and the number of inputs of the respective layer 
+		std::pair<std::uint32_t, std::shared_ptr<float>> total_observations;// number of training cases and the training cases themselves
+		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size and the complete set of targets for each input
+		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
+	  public:
 		ann() = default;
 		ann(const ann<model_type> &) = default;
 		ann(ann<model_type> &&) = default;
@@ -37,19 +37,25 @@ namespace zinhart
 		ann<model_type> & operator = (ann<model_type> &&) = default;
 		~ann() = default;
 
-		void add_layer(LAYER_INFO & ith_layer)
+		void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
-
 		int init(const std::uint16_t & case_size,
 		         std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
-				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
-				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
 		{
+		  std::uint32_t ith_layer;
 		  this->case_size = case_size; // input layer size essentially
 		  std::swap(this->total_observations,total_observations);
 		  std::swap(this->total_targets, total_targets);
-		  std::swap(this->total_hidden_weights, total_hidden_weights);
+
+		  this->total_hidden_weights.first = case_size;//input layer neurons
+		  for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
+		  {
+			this->total_hidden_weights.first += total_layers[ith_layer].second;//hidden layer neurons
+		  }
+		  this->total_hidden_weights.first += this->total_targets.first;//output layer neurons
+		  total_hidden_weights.second = std::shared_ptr<double> ( new double[total_hidden_weights.first], std::default_delete<double[]>() );// weights themselves
 #if CUDA_ENABLED == 1
 		  return cuda_init();
 #else
@@ -161,73 +167,49 @@ namespace zinhart
 		}
 
 #endif
-		int train(const std::uint32_t & epochs, const std::uint32_t & batch_size, const double & weight_penalty)
+		int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
-		  std::uint32_t max_observations = total_observations.first * epochs;
-		  std::uint32_t ith_observation, ith_layer;
+		  std::uint32_t ith_epoch, ith_observation;
 #if CUDA_ENABLED == 1
-		  printf("CUDA ENABLED TRAIN");
+		  printf("CUDA ENABLED TRAIN\n");
 		  cublasStatus_t error_id;
 		  cublasHandle_t handle;
 		  error_id = cublasCreate(&handle);
-		  //not sure if this is statement is necesarry
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
 			std::cout<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 #else
-	  printf("CUDA DISABLED TRAIN");
-
+		  //cpu multi-threaded code will go here
+		  printf("CUDA DISABLED TRAIN\n");
 #endif
-		  for(ith_observation = 0; ith_observation < max_observations; ++ith_observation)
+		  for(ith_epoch = 0; ith_epoch < max_epochs; ++ith_epoch)
 		  {
-			//all relevant info is already copied to device 
-			for(ith_layer = 1; ith_layer < total_layers.size(); ++ith_layer)
+			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
 			{
-			  //removing layer_type from layer so that a layer can be made with just enum,
-			  //and hence determined @ compile time avoid an if/switch statement;
 #if CUDA_ENABLED == 1 
-			 // forward_propagate(handle, total_layers[ith_layer], total_layers[ith_layer - 1].first, total_hidden_weights, device_total_targets, case_size, ith_observation); 
+			  static_cast<model_type*>(this)->forward_propagate(handle, case_size, ith_observation, total_observations, total_targets, total_hidden_weights );
 #else
-			  //forward_propagate(total_layers[ith_layer], total_layers[ith_layer - 1].first, total_hidden_weights, total_observations.second.get(), case_size, ith_observation); 
+			  static_cast<model_type*>(this)->forward_propagate(case_size, ith_observation, total_observations, total_targets, total_hidden_weights);
 #endif
 			}
 		  }
 
 #if CUDA_ENABLED == 1
 		  error_id = cublasDestroy(handle);
-		  //not sure if this is statement is necesarry
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
 			std::cout<<"CublasHandle destruction failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
+#else
+		  //cpu multi-threaded code will go here
 		  
 #endif
 		  return 0;
 		}
-/*
-#if CUDA_ENABLED == 1
-		void forward_propagate(cublasHandle_t & context, LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, 
-							  std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
-							  float * total_observations, std::uint32_t & case_size, 
-							  std::uint32_t & ith_observation_index)
-		{ static_cast<model_type*>(this)->forward(context, info, n_prev_layer_outputs, ith_layer_weights, total_observations, case_size, ith_observation_index); };
-#else
-		void forward_propagate(LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, 
-							  std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
-							  float * total_observations, std::uint32_t & case_size, 
-							  std::uint32_t & ith_observation_index)
-		{ static_cast<model_type*>(this)->forward(info, n_prev_layer_outputs, ith_layer_weights, total_observations, case_size, ith_observation_index); };
-#endif
-
-		void backward_propagate(std::uint32_t n_cases, std::uint32_t n_inputs, int istart, int istop, int ntarg)// output layer eventually remove ilayer from call list
-		{ static_cast<model_type*>(this)->backward(num_cases, n_inputs, istart, istop, ntarg); };
-  	 */
-	  private:
 	};
-
   	class ffn : public ann< ffn >
 	{
 	  public:
@@ -237,59 +219,52 @@ namespace zinhart
 		ffn & operator = (const ffn &) = default;
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
-/*
 #if CUDA_ENABLED == 1
-		void forward(cublasHandle_t & context, LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
-					float * total_observations, std::uint32_t & case_size, std::uint32_t & ith_observation_index	)
+		void forward_propagate(cublasHandle_t & context, 
+							   const std::uint16_t & case_size, const std::uint32_t & ith_observation_index,
+							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
+							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+							  )
 
 		{
-		  printf("CUDA_ENABLED - ffn::forward ");
-		  float * ith_observation = total_observations + (case_size * ith_observation_index);
-		 //pass in cublas_handle, perform weight * input , add bias and perform activation function in kernel
-		  Layer ith_hidden_layer;
-		  std::cout<<"Here 1:\n";
-		 // cuda_hidden_activation (int istart, int istop, int nhid, int ilayer );
+		  printf("CUDA_ENABLED - ffn::forward\n");
+		  //cublas dgemm here
+		}
+		void backward_propagate(cublasHandle_t & context)
+		{
+		  //cublas dgemm here
 		}
 
 #else
-		void forward(LAYER_INFO & info, std::uint32_t & n_prev_layer_outputs, std::pair<std::uint32_t, std::shared_ptr<double>> & ith_layer_weights,
-					float * total_observations, std::uint32_t & case_size, std::uint32_t & ith_observation_index	)
-
+		//cpu multi-threaded code will go here
+		void forward_propagate(const std::uint16_t & case_size, const std::uint32_t & ith_observation_index,
+							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
+							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+					          )
 		{
-		  printf("CUDA_DISABLED - ffn::forward ");
-		  float * ith_observation = total_observations + (case_size * ith_observation_index);
-		 //pass in cublas_handle, perform weight * input , add bias and perform activation function in kernel
-		  Layer ith_hidden_layer;
-		 // cuda_hidden_activation (int istart, int istop, int nhid, int ilayer );
+		  //lapacke dgemm etc
 		}
+		void backward_propagate(LAYER_INFO & info)
+		{
+		  //lapacke dgemm etc
+		}
+
 #endif
-		void backward(std::uint32_t n_cases, std::uint32_t n_inputs, int istart, int istop, int ntarg)
-		{
-		 // cuda_output_delta (int istart, int istop, int ntarg );
-		 // cuda_output_gradient (n_cases, n_inputs, ntarg);
-		}
-
-		void backward(std::uint32_t n_cases, std::uint32_t ilayer, int nhid_this, int nhid_prior, int last_hidden)
-		{
-		  cuda_subsequent_hidden_gradient(n_cases, ilayer, nhid_this, nhid_prior, int last_hidden);
-		}
-
-		void backward(int istart, int istop, int nin, int nhid, int only_hidden)
-		{
-		  cuda_first_hidden_gradient(istart, istop, nin, nhid, only_hidden);
-		}*/
 	};
 
-	//Begin Cuda Wrappers
+	//Begin External Interface
+	template<class T>
+  	  void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
 	template<class T>
 	  int initialize_network(ann<T> & model,  
 						     const std::uint16_t & case_size,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations,
-							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets,
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
 	template<class T>
-	  int train(ann<T> & model, const std::uint32_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
+	  int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 	template<class T>
 	  int cleanup(ann<T> & model);
 }
