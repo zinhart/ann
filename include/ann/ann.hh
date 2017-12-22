@@ -15,6 +15,7 @@
 namespace zinhart
 {
 #if CUDA_ENABLED == 1
+        __constant__ int input_layer_size;
 		__constant__ double * device_total_observations;
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
@@ -209,8 +210,9 @@ namespace zinhart
 #endif
 		int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
-		  std::uint32_t ith_epoch, ith_observation;
+		  std::uint32_t ith_epoch, ith_observation, input_layer_length = total_layers[0].second;
 #if CUDA_ENABLED == 1
+		  int error;
 		  printf("CUDA ENABLED TRAIN\n");
 		  cublasStatus_t error_id;
 		  cublasHandle_t handle;
@@ -225,15 +227,17 @@ namespace zinhart
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
 		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<"\n";
-		  std::cout<<"first hidden layer neurons: "<<total_layers[0].second<<" case_size: "<<total_layers[0].second<<"\n";
-		  for(ith_epoch = 0; ith_epoch < max_epochs; ++ith_epoch)
+		  std::cout<<"first hidden layer neurons: "<<total_layers[1].second<<" case_size: "<<total_layers[0].second<<"\n";
+		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
 		  {
-			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
+			for(ith_observation = 0; ith_observation < total_observations.first/total_observations.first; ++ith_observation)
 			{
 #if CUDA_ENABLED == 1 
-			  static_cast<model_type*>(this)->forward_propagate(handle, total_layers[0].second, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+			  error = static_cast<model_type*>(this)->forward_propagate(handle, input_layer_length, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+			  if(error == 1)
+				std::abort();
 #else
-			  static_cast<model_type*>(this)->forward_propagate(total_layers[0].second, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
+			  static_cast<model_type*>(this)->forward_propagate(input_layer_length, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
 			}
 		  }
@@ -275,13 +279,58 @@ namespace zinhart
 		  cublasStatus_t error_id;
 		  std::int32_t lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
+		  std::uint32_t weight_offset;//number of weights connection between layer i and layer i + 1
+		  std::uint32_t activation_offset;//number of activations(input) to a layer
 		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
 		  const double alf = 1;
 		  const double bet = 0;
 		  const double *alpha = &alf;
 		  const double *beta = &bet;
-
+		  //number of weights for between any 2 layers is the current layers neurons * (the prior layers neurons +1)
+		  
 		  //do  first hidden layer and input layer
+		  lda = total_layers[1].second;//neurons in the first hidden layer
+		  ldb = total_layers[0].second;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
+		  ldc = lda;//obviously
+		  std::cout<<"lda: "<<int(total_layers[1].second)<<" ldb: "<<ldb<<" ldc: "<<ldc<<"\n";
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, total_layers[0].second,total_layers[1].second, 
+			          alpha, device_total_hidden_weights, lda,
+					  device_total_observations + case_begin, ldb, beta,
+					  device_total_activations,ldc
+					  );
+		  if(error_id != CUBLAS_STATUS_SUCCESS)
+		  {
+			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+
+
+
+
+/*
+
+		  //second hidden layer to output layer
+		  for(ith_layer = 1, weight_offset = 0, activation_offset = 0; ith_layer < total_layers.size() - 1; ++ith_layer )
+		  {
+			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
+			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
+			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
+			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, total_layers[ith_layer].second, total_layers[ith_layer + 1].second,
+								   alpha, device_hidden_weights + weight_offset, lda, 		
+								   device_total_activations + activation_offset, 
+				);
+			weight_offset =  total_layers[ith_layer + 1].second + (total_layers[ith_layer] + 1);//there is a bias input so + 1
+			activation_offset += total_layers[ith_layer + 1].second;
+		  } 
+		  
+*/
+		  
+		  
+		  
+		  
+		  
+		  
+		  /*//do  first hidden layer and input layer
 		  lda = total_layers[0].second;//neurons in the first hidden layer
 		  ldb = total_layers[0].second;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
 		  ldc = lda;//obviously
@@ -311,8 +360,8 @@ namespace zinhart
   			  std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
   			  return ERROR_CUDA_ERROR;
   			}
-		  }	  
-		  return cudaSuccess;
+		  }*/	  
+		  return 0;
 		}
 		void backward_propagate(cublasHandle_t & context)
 		{
