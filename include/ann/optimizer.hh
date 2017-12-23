@@ -197,6 +197,9 @@ void call_nadam(
 								    	);
 void call_nadam_moment_update(optimizer & op, double & beta_1_t, double & beta_2_t, double beta_1 = 0.9, double beta_2 = 0.999);
 
+#if CUDA_ENABLED == 1
+//Kernels for each optimizer will go here
+#endif
 
 }
 #endif

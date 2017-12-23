@@ -51,9 +51,9 @@ namespace zinhart
 
 		//model manipulating functions
 		//I assume the first layer will be an input layer
-		void add_layer(const LAYER_INFO & ith_layer)
+		HOST void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
-		int init(
+		HOST int init(
 		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
@@ -83,7 +83,7 @@ namespace zinhart
 		}
 		
 #if CUDA_ENABLED == 1
-		int cuda_init()
+		HOST int cuda_init()
 		{
 		  cudaError_t error_id;
 		  error_id = cudaSetDevice(0);
@@ -160,7 +160,7 @@ namespace zinhart
 
 		  return cudaSuccess;
 		}
-		int cuda_cleanup()
+		HOST int cuda_cleanup()
 		{
 		  cudaError_t error_id;
 		  error_id  = cudaFree(device_total_observations);
@@ -191,7 +191,7 @@ namespace zinhart
 		  return cudaSuccess;
 		}
 		//later move this to an appropriate place
-		const char* cublasGetErrorString(cublasStatus_t status)
+		HOST const char* cublasGetErrorString(cublasStatus_t status)
 		{
 	  	  switch(status)
 	  	  {
@@ -208,7 +208,7 @@ namespace zinhart
 		}
 
 #endif
-		int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
+		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
 		  std::uint32_t ith_epoch, ith_observation, input_layer_length = total_layers[0].second;
 #if CUDA_ENABLED == 1
@@ -266,7 +266,7 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
-		int forward_propagate(cublasHandle_t & context, 
+		HOST int forward_propagate(cublasHandle_t & context, 
 			                   const std::uint32_t & case_size, const std::uint32_t & ith_observation_index, 
 							   const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
@@ -363,7 +363,7 @@ namespace zinhart
 		  }*/	  
 		  return 0;
 		}
-		void backward_propagate(cublasHandle_t & context)
+		HOST void backward_propagate(cublasHandle_t & context)
 		{
 		  //cublas gemm here
 		}
