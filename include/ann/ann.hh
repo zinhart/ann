@@ -16,16 +16,10 @@
 namespace zinhart
 {
 #if CUDA_ENABLED == 1
-        __constant__ int input_layer_size;
 		__constant__ double * device_total_observations;
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
 		__constant__ double * device_total_activations;
-
-		 __device__  double * device_temp_hidden_weights;
-		 __device__  double * device_temp_inputs;
-		 __device__  double * device_temp_outputs;
-//		__constant__ thurst::device_vector<double*> device_temp;
 		//__constant__ short * test;
 #endif
   template <class model_type>
@@ -68,20 +62,19 @@ namespace zinhart
 		  std::uint32_t ith_layer, prior_layer_neurons;
 		  std::swap(this->total_observations,total_observations);
 		  std::swap(this->total_targets, total_targets);
+		  for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
+			std::cout<<"layer "<<ith_layer + 1<<" rows: "<<total_layers[ith_layer].second<<" columns: "<<1<<"\n";
 
 		  //calc number of activations
 		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
-		  {
-			std::cout<<"layer "<<ith_layer<<" rows: "<<total_layers[ith_layer].second<<" columns: "<<1<<"\n";
 			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layers
-		  }
 		  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
 
 		  //calc number of hidden weights
 		  for(ith_layer = 0, this->total_hidden_weights.first = 0,prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size()-1; ++ith_layer)
 		  {
-			std::cout<<"weight matrix connecting layers "<<ith_layer + 1<<" to "<<ith_layer + 2<<" rows: "<<this->total_layers[ith_layer].second<<" columns: "<< (prior_layer_neurons + 1)<<"\n";
-			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
+			std::cout<<"weight matrix connecting layers "<<ith_layer + 1<<" to "<<ith_layer + 2<<" rows: "<<this->total_layers[ith_layer].second<<" columns: "<< (prior_layer_neurons)<<"\n";
+			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons );//+ 1 for bias input
 			prior_layer_neurons = this->total_layers[ith_layer].second;
 		  }
  		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
@@ -233,14 +226,11 @@ namespace zinhart
 			std::cout<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  //temp to test theory
-		  cuda_cleanup();
 #else
 		  //cpu multi-threaded code will go here
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
 		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<std::get<0>(total_observations)<<" Training case size: "<<std::get<1>(total_observations)<<"\n";
-		  std::cout<<"first hidden layer neurons: "<<total_layers[1].second<<"\n";
 		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
 		  {
 			for(ith_observation = 0; ith_observation < std::get<0>(total_observations)/std::get<0>(total_observations); ++ith_observation)
@@ -299,9 +289,9 @@ namespace zinhart
 
 		  //do  first hidden layer and input layer
 		  lda = total_layers[1].second;
-		  ldb = case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
+		  ldb = total_layers[0].second;//case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
 		  ldc = lda;//obviously
-		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<case_size<<"\n";
+		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
 		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
 		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";
 		  const double alf = 1;
@@ -310,7 +300,7 @@ namespace zinhart
 		  const double *beta = &bet;
 		  
 		  //number of weights for between any 2 layers is the current layers neurons * (the prior layers neurons +1)
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1, case_size, 
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1, total_layers[0].second, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta,
 					  device_total_activations,ldc
@@ -320,6 +310,7 @@ namespace zinhart
 			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }/**/
+		  
 
 
 /*

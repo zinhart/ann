@@ -58,7 +58,7 @@ TEST(ann_test, initialize_model)
   //calc number of hidden weights
   for(ith_layer = 0, prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
-	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
+	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons );//+ 1 for bias input
 	prior_layer_neurons = total_layers[ith_layer].second;
   }
   ASSERT_EQ(initialize_model(model, total_observations, total_targets), 0);
@@ -105,7 +105,7 @@ TEST(ann_test, ann_train)
   //calc number of hidden weights
   for(ith_layer = 0, total_hidden_weights = 0,prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
-	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
+	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons);//+ 1 for bias input
 	prior_layer_neurons = total_layers[ith_layer].second;
   }
   ASSERT_EQ(initialize_model(model, total_observations, total_targets), 0);
