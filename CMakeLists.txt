@@ -21,6 +21,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 find_package(CUDA REQUIRED)
+set(CUDA_ARCH -gencode arch = compute_52, code = sm_52)
 find_package(Threads REQUIRED)
 #find_package(Boost)
 find_package(LAPACK)

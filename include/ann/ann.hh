@@ -11,6 +11,7 @@
 #if CUDA_ENABLED == 1
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
+//#include <thrust>
 #endif
 namespace zinhart
 {
@@ -20,6 +21,11 @@ namespace zinhart
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
 		__constant__ double * device_total_activations;
+
+		 __device__  double * device_temp_hidden_weights;
+		 __device__  double * device_temp_inputs;
+		 __device__  double * device_temp_outputs;
+//		__constant__ thurst::device_vector<double*> device_temp;
 		//__constant__ short * test;
 #endif
   template <class model_type>
@@ -27,7 +33,8 @@ namespace zinhart
 	{
 	  protected:
 		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;// number of training cases and the training cases themselves
+        //number of training cases, trainint case size, the training cases themselves
+		std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> total_observations;
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size and the complete set of targets for each input
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_activations;//this is the sum of all the hidden layers and the output layer neurons
@@ -42,7 +49,7 @@ namespace zinhart
 		//debugging functions
 		const std::vector<LAYER_INFO> & get_total_layers()const
 		{return total_layers; }
-		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_observations()const
+		const std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & get_total_observations()const
 		{return total_observations;}
 		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_hidden_weights()const
 		{return total_hidden_weights;}
@@ -54,7 +61,7 @@ namespace zinhart
 		HOST void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
 		HOST int init(
-		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
+		   std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
 				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
 		{
@@ -64,12 +71,16 @@ namespace zinhart
 
 		  //calc number of activations
 		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
+		  {
+			std::cout<<"layer "<<ith_layer<<" rows: "<<total_layers[ith_layer].second<<" columns: "<<1<<"\n";
 			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layers
+		  }
 		  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
 
 		  //calc number of hidden weights
-		  for(ith_layer = 0, prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size(); ++ith_layer)
+		  for(ith_layer = 0, this->total_hidden_weights.first = 0,prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size()-1; ++ith_layer)
 		  {
+			std::cout<<"weight matrix connecting layers "<<ith_layer + 1<<" to "<<ith_layer + 2<<" rows: "<<this->total_layers[ith_layer].second<<" columns: "<< (prior_layer_neurons + 1)<<"\n";
 			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons + 1);//+ 1 for bias input
 			prior_layer_neurons = this->total_layers[ith_layer].second;
 		  }
@@ -95,21 +106,21 @@ namespace zinhart
 		  
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Cuda init setDevice failed:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Cuda init setDevice failed: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for observations
-		  error_id = cudaMalloc( (void **) &device_total_observations, total_observations.first * sizeof(double));
+		  error_id = cudaMalloc( (void **) &device_total_observations, std::get<0>(total_observations) * std::get<1>(total_observations) * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device case allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy observations from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*total_observations.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*std::get<2>(total_observations).get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device case copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -117,7 +128,7 @@ namespace zinhart
 		  error_id = cudaMalloc((void **) &device_total_targets, total_targets.first * sizeof(float));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device target allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -125,21 +136,21 @@ namespace zinhart
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(float*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for hidden weights
 		  error_id = cudaMalloc((void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device weight allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device weight allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy hidden weights from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_hidden_weights.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device weight copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<" Device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  
@@ -147,14 +158,14 @@ namespace zinhart
 		  error_id = cudaMalloc((void **) &device_total_activations, total_activations.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device activation allocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy activations from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_activations, &(*total_activations.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device activation copy failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<" Device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -166,25 +177,25 @@ namespace zinhart
 		  error_id  = cudaFree(device_total_observations);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device observations deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device observations deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_targets);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device target deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_hidden_weights);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden weight deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device hidden weight deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_activations);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden activation deallocation failed with error:\t"<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"Device hidden activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  cudaDeviceReset();
@@ -210,7 +221,7 @@ namespace zinhart
 #endif
 		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
-		  std::uint32_t ith_epoch, ith_observation, input_layer_length = total_layers[0].second;
+		  std::uint32_t ith_epoch, ith_observation, input_layer_length = std::get<1>(total_observations);
 #if CUDA_ENABLED == 1
 		  int error;
 		  printf("CUDA ENABLED TRAIN\n");
@@ -222,20 +233,22 @@ namespace zinhart
 			std::cout<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
+		  //temp to test theory
+		  cuda_cleanup();
 #else
 		  //cpu multi-threaded code will go here
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
-		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<"\n";
-		  std::cout<<"first hidden layer neurons: "<<total_layers[1].second<<" case_size: "<<total_layers[0].second<<"\n";
+		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<std::get<0>(total_observations)<<" Training case size: "<<std::get<1>(total_observations)<<"\n";
+		  std::cout<<"first hidden layer neurons: "<<total_layers[1].second<<"\n";
 		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
 		  {
-			for(ith_observation = 0; ith_observation < total_observations.first/total_observations.first; ++ith_observation)
+			for(ith_observation = 0; ith_observation < std::get<0>(total_observations)/std::get<0>(total_observations); ++ith_observation)
 			{
 #if CUDA_ENABLED == 1 
 			  error = static_cast<model_type*>(this)->forward_propagate(handle, input_layer_length, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
-			  if(error == 1)
-				std::abort();
+			  //do something with the error code
+			  //call back_propagate
 #else
 			  static_cast<model_type*>(this)->forward_propagate(input_layer_length, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
@@ -277,23 +290,27 @@ namespace zinhart
 		{
 		  //cublas gemm here
 		  cublasStatus_t error_id;
-		  std::int32_t lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
+		  std::int32_t m, n, k, lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
 		  std::uint32_t weight_offset;//number of weights connection between layer i and layer i + 1
 		  std::uint32_t activation_offset;//number of activations(input) to a layer
-		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
+		  std::uint32_t case_begin = std::get<1>(total_observations) * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
+		 
+
+		  //do  first hidden layer and input layer
+		  lda = total_layers[1].second;
+		  ldb = case_size;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
+		  ldc = lda;//obviously
+		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<case_size<<"\n";
+		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
+		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";
 		  const double alf = 1;
 		  const double bet = 0;
 		  const double *alpha = &alf;
 		  const double *beta = &bet;
-		  //number of weights for between any 2 layers is the current layers neurons * (the prior layers neurons +1)
 		  
-		  //do  first hidden layer and input layer
-		  lda = total_layers[1].second;//neurons in the first hidden layer
-		  ldb = total_layers[0].second;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
-		  ldc = lda;//obviously
-		  std::cout<<"lda: "<<int(total_layers[1].second)<<" ldb: "<<ldb<<" ldc: "<<ldc<<"\n";
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, total_layers[0].second,total_layers[1].second, 
+		  //number of weights for between any 2 layers is the current layers neurons * (the prior layers neurons +1)
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1, case_size, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta,
 					  device_total_activations,ldc
@@ -302,9 +319,7 @@ namespace zinhart
 		  {
 			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
-		  }
-
-
+		  }/**/
 
 
 /*
@@ -324,43 +339,6 @@ namespace zinhart
 		  } 
 		  
 */
-		  
-		  
-		  
-		  
-		  
-		  
-		  /*//do  first hidden layer and input layer
-		  lda = total_layers[0].second;//neurons in the first hidden layer
-		  ldb = total_layers[0].second;//input layer is has case_size many neurons which is also the number of columns of the input layer matrix
-		  ldc = lda;//obviously
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, total_layers[0].second, total_layers[0].second, 
-			          alpha, device_total_hidden_weights, lda,
-					  device_total_observations + case_begin, ldb, beta,
-					  device_total_activations,ldc
-					  );
-		  if(error_id != CUBLAS_STATUS_SUCCESS)
-		  {
-			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-		  //subsequent hidden to output layers
-		  for(ith_layer = 1; ith_layer < total_layers.size(); ++ith_layer )
-		  {
-			lda = total_layers[ith_layer].second;//current layer neurons is lda
-			ldb = total_layers[ith_layer - 1].second;
-			ldc = lda;
-  			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer].second, total_layers[0].second, total_layers[0].second, 
-			          alpha, device_total_hidden_weights, lda,
-					  device_total_observations + case_begin, ldb, beta,
-					  device_total_activations,ldc
-					  );
-  			if(error_id != CUBLAS_STATUS_SUCCESS)
-  			{
-  			  std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
-  			  return ERROR_CUDA_ERROR;
-  			}
-		  }*/	  
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)
@@ -392,7 +370,7 @@ namespace zinhart
 	template <class T>
 	  std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
 	template <class T>
-	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
+	  std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
 	template <class T>
 	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model);
 	template <class T>
@@ -401,8 +379,8 @@ namespace zinhart
 	template<class T>
   	  void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
 	template<class T>
-	  int initialize_network(ann<T> & model,  
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
+	  int initialize_model(ann<T> & model,  
+			std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
 	template<class T>

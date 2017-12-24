@@ -5,13 +5,13 @@ namespace zinhart
 {
   //explicit instantiations
   template std::vector<LAYER_INFO> get_total_layers(const ann<ffn> & model);
-  template std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<ffn> & model);
+  template std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> get_total_observations(const ann<ffn> & model);
   template std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<ffn> & model);
   template std::pair<std::uint32_t, std::shared_ptr<double>> get_total_activations(const ann<ffn> & model);
 
   template void add_layer(ann<ffn> & model, const LAYER_INFO & ith_layer);
-  template int initialize_network(ann<ffn> & model,  
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
+  template int initialize_model(ann<ffn> & model,  
+						     std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
   template int cleanup(ann<ffn> & model);
@@ -22,7 +22,7 @@ namespace zinhart
 	std::vector<LAYER_INFO> get_total_layers(const ann<T> & model)
 	{return model.get_total_layers(); }
   template <class T>
-	std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model)
+	std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model)
 	{return model.get_total_observations();}
   template <class T>
 	std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model)
@@ -35,8 +35,8 @@ namespace zinhart
 	void add_layer(ann<T> & model, const LAYER_INFO & ith_layer)
 	{ model.add_layer(ith_layer);}
   template<class T>
-	int initialize_network(ann<T> & model,  
-						   std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
+	int initialize_model(ann<T> & model,  
+	std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
 						   std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 						  )
 	  {
