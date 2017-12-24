@@ -38,15 +38,13 @@ TEST(ann_test, initialize_model)
   a_layer.second = dist(mt); 
   add_layer(model,a_layer);
   
-  std::uint16_t case_size = dist(mt);
-  std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> total_observations;
+  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
   std::pair<std::uint32_t, std::shared_ptr<float>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
   
-  std::get<0>(total_observations) = dist(mt);//number of observations
-  std::get<1>(total_observations) = dist(mt);//size of an observation
-  std::get<2>(total_observations) = std::shared_ptr<double> ( new double[std::get<0>(total_observations) * std::get<1>(total_observations)], std::default_delete<double[]>() );//observations themselves 
+  total_observations.first = dist(mt);//number of observations
+  total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
  
   total_targets.first = dist(mt); // number of targets
   total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
@@ -86,15 +84,13 @@ TEST(ann_test, ann_train)
   a_layer.second = dist(mt); 
   add_layer(model,a_layer);
   
-  std::uint16_t case_size = dist(mt);
-  std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> total_observations;
+  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
   std::pair<std::uint32_t, std::shared_ptr<float>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
   
-  std::get<0>(total_observations) = dist(mt);//number of observations
-  std::get<1>(total_observations) = dist(mt);//size of an observation
-  std::get<2>(total_observations) = std::shared_ptr<double> ( new double[std::get<0>(total_observations) * std::get<1>(total_observations)], std::default_delete<double[]>() );//observations themselves 
+  total_observations.first = dist(mt);//number of observations
+  total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
   total_targets.first = dist(mt); // number of targets
   total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
     

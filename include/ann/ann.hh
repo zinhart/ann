@@ -20,7 +20,6 @@ namespace zinhart
 		__constant__ float * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
 		__constant__ double * device_total_activations;
-		//__constant__ short * test;
 #endif
   template <class model_type>
 	class ann
@@ -28,7 +27,7 @@ namespace zinhart
 	  protected:
 		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
         //number of training cases, trainint case size, the training cases themselves
-		std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> total_observations;
+		std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
 		std::pair<std::uint32_t, std::shared_ptr<float>> total_targets; // output layer size and the complete set of targets for each input
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_activations;//this is the sum of all the hidden layers and the output layer neurons
@@ -43,7 +42,7 @@ namespace zinhart
 		//debugging functions
 		const std::vector<LAYER_INFO> & get_total_layers()const
 		{return total_layers; }
-		const std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & get_total_observations()const
+		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_observations()const
 		{return total_observations;}
 		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_hidden_weights()const
 		{return total_hidden_weights;}
@@ -55,7 +54,7 @@ namespace zinhart
 		HOST void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
 		HOST int init(
-		   std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
+		   std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 				 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 				)
 		{
@@ -103,14 +102,14 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for observations
-		  error_id = cudaMalloc( (void **) &device_total_observations, std::get<0>(total_observations) * std::get<1>(total_observations) * sizeof(double));
+		  error_id = cudaMalloc( (void **) &device_total_observations, total_observations.first * total_layers[0].second * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<"Device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy observations from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*std::get<2>(total_observations).get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*(total_observations.second.get()) ), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<"Device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -214,7 +213,7 @@ namespace zinhart
 #endif
 		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
-		  std::uint32_t ith_epoch, ith_observation, input_layer_length = std::get<1>(total_observations);
+		  std::uint32_t ith_epoch, ith_observation;
 #if CUDA_ENABLED == 1
 		  int error;
 		  printf("CUDA ENABLED TRAIN\n");
@@ -236,11 +235,11 @@ namespace zinhart
 			for(ith_observation = 0; ith_observation < std::get<0>(total_observations)/std::get<0>(total_observations); ++ith_observation)
 			{
 #if CUDA_ENABLED == 1 
-			  error = static_cast<model_type*>(this)->forward_propagate(handle, input_layer_length, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+			  error = static_cast<model_type*>(this)->forward_propagate(handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 			  //do something with the error code
 			  //call back_propagate
 #else
-			  static_cast<model_type*>(this)->forward_propagate(input_layer_length, total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
+			  static_cast<model_type*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
 			}
 		  }
@@ -270,8 +269,7 @@ namespace zinhart
 		~ffn() = default;
 #if CUDA_ENABLED == 1
 		HOST int forward_propagate(cublasHandle_t & context, 
-			                   const std::uint32_t & case_size, const std::uint32_t & ith_observation_index, 
-							   const std::vector<LAYER_INFO> & total_layers,
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations
@@ -284,7 +282,7 @@ namespace zinhart
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
 		  std::uint32_t weight_offset;//number of weights connection between layer i and layer i + 1
 		  std::uint32_t activation_offset;//number of activations(input) to a layer
-		  std::uint32_t case_begin = std::get<1>(total_observations) * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
+		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
 		 
 
 		  //do  first hidden layer and input layer
@@ -309,10 +307,7 @@ namespace zinhart
 		  {
 			std::cout<<"Cublas Dgemm failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
-		  }/**/
-		  
-
-
+		  }
 /*
 
 		  //second hidden layer to output layer
@@ -359,24 +354,24 @@ namespace zinhart
 	//Begin External Interface
 	//debugging functions
 	template <class T>
-	  std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
+	 HOST  std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
 	template <class T>
-	  std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
 	template <class T>
-	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model);
 	template <class T>
-	  std::pair<std::uint32_t, std::shared_ptr<double>> get_total_activations(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_activations(const ann<T> & model);
 
 	template<class T>
-  	  void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
+  	  HOST void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
 	template<class T>
-	  int initialize_model(ann<T> & model,  
-			std::tuple<std::uint32_t, std::uint16_t, std::shared_ptr<double>> & total_observations,
+	  HOST int initialize_model(ann<T> & model,  
+							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
 							 std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets
 							);
 	template<class T>
-	  int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
+	  HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 	template<class T>
-	  int cleanup(ann<T> & model);
+	  HOST int cleanup(ann<T> & model);
 }
 #endif
