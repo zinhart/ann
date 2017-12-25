@@ -126,21 +126,21 @@ namespace zinhart
 		  
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"cuda init setDevice failed: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"cuda init setDevice failed: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for observations
 		  error_id = cudaMalloc( (void **) &device_total_observations, total_observations.first * total_layers[0].second * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy observations from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*(total_observations.second.get()) ), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -148,7 +148,7 @@ namespace zinhart
 		  error_id = cudaMalloc((void **) &device_total_targets, total_targets.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device target allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device target allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -156,84 +156,84 @@ namespace zinhart
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for hidden weights
 		  error_id = cudaMalloc((void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device weight allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device weight allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy hidden weights from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_hidden_weights.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for activations
 		  error_id = cudaMalloc((void **) &device_total_activations, total_activations.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy activations from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_activations, &(*total_activations.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for error
 		  error_id = cudaMalloc((void **) &device_total_error, total_error.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device error allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device error allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy error from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_error, &(*total_error.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device error copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device error copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for gradient
 		  error_id = cudaMalloc((void **) &device_total_gradient, total_gradient.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device gradient allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device gradient allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy gradient from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_gradient, &(*total_gradient.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device gradient copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device gradient copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for deltas
 		  error_id = cudaMalloc((void **) &device_total_deltas, total_deltas.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device deltas allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device deltas allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy deltas from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_deltas, &(*total_deltas.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device deltas copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device deltas copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //bias matrixs must be the same size as the matrix they are being added to b/c matrix addition rules
 		  error_id = cudaMalloc((void**)&device_total_bias, total_activations.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"device bias allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"device bias allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //set bias vector to 1's
@@ -246,49 +246,49 @@ namespace zinhart
 		  error_id  = cudaFree(device_total_observations);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device observations deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device observations deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_targets);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device target deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_hidden_weights);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden weight deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device hidden weight deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_activations);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device hidden activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_error);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden error deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device hidden error deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_gradient);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device hidden gradient deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device hidden gradient deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_deltas);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device deltas deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device deltas deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  error_id = cudaFree(device_total_bias);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device bias deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cerr<<"Device bias deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  cudaDeviceReset();
@@ -323,7 +323,7 @@ namespace zinhart
 		  error_id = cublasCreate(&handle);
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cout<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 #else
@@ -409,33 +409,55 @@ namespace zinhart
 					  );
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgemm on first hidden layer and input layer  failed with error:"<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgemm on first hidden layer and input layer  failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
+		  lda = total_layers[1].second;
+		  ldb = lda;
+		  ldc = lda;
 		  //add in bias
-/*		  error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, 1,
-			                     alpha, device_total_activations, total_layers[0].second,
-								 beta2, device_total_bias, 1,
-								 device_total_activations, total_layers[0].second
-			                    );*/
-		  //f(Wx + b) complete
-/*
-
-		  //second hidden layer to output layer
-		  for(ith_layer = 1, weight_offset = 0, activation_offset = 0; ith_layer < total_layers.size() - 1; ++ith_layer )
+		  error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1,
+			                     alpha, device_total_activations, lda,
+								 beta2, device_total_bias, ldb,
+								 device_total_activations, ldc
+			                    );
+		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
+			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //f(Wx + b) complete
+		  
+		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
+		  for(ith_layer = 1, weight_offset = lda * ldb ; ith_layer < total_layers.size() - 1; ++ith_layer )
+		  {
+			//perform Wx
+			/*lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
 			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
 			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
-			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, total_layers[ith_layer].second, total_layers[ith_layer + 1].second,
-								   alpha, device_hidden_weights + weight_offset, lda, 		
-								   device_total_activations + activation_offset, 
-				);
-			weight_offset =  total_layers[ith_layer + 1].second + (total_layers[ith_layer] + 1);//there is a bias input so + 1
-			activation_offset += total_layers[ith_layer + 1].second;
+			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1, total_layers[ith_layer].second,
+								   alpha, device_total_hidden_weights + weight_offset, lda, 		
+								   device_total_activations + total_layers[ith_layer].second, ldb, beta1,
+								   device_total_activations + total_layers[ith_layer + 1].second,ldc 
+								  );
+		    if(error_id != CUBLAS_STATUS_SUCCESS)
+		    {
+			  std::cerr<<"cublas dgemm failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+		 	  return ERROR_CUDA_ERROR;
+		    }
+			weight_offset = total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
+			//add in bias
+			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,
+			                     alpha, device_total_activations, lda,
+								 beta2, device_total_bias, ldb,
+								 device_total_activations, ldc
+			                    );
+			if(error_id != CUBLAS_STATUS_SUCCESS)
+			{
+			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			  return ERROR_CUDA_ERROR;
+			}*/
 		  } 
-		  
-*/
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)
