@@ -336,14 +336,18 @@ namespace zinhart
 		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";/**/
 		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
 		  {
-			for(ith_observation = 0; ith_observation < total_observations.first /*/ total_observations.first*/; ++ith_observation)
+			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
+			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
 			{
 			  std::cout<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
 			  error = static_cast<model_type*>(this)->forward_propagate(handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 			  //do something with the error code
 			  if(error == 1)
+			  {
 				std::cerr<<"An unknown error occured in forward_propagate\n";
+				std::abort();
+			  }
 			  //call back_propagate
 #else
 			  static_cast<model_type*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
@@ -429,7 +433,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //f(Wx + b) complete
-		 /* 
+		  
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
 		  for(ith_layer = 1, weight_offset = lda * ldb ; ith_layer < total_layers.size() - 1; ++ith_layer )
 		  {
@@ -447,7 +451,7 @@ namespace zinhart
 			  std::cerr<<"cublas dgemm failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 		 	  return ERROR_CUDA_ERROR;
 		    }
-			weight_offset = total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
+			/*weight_offset = total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
 			//add in bias
 			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,
 			                     alpha, device_total_activations, lda,
@@ -458,8 +462,8 @@ namespace zinhart
 			{
 			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
-			}
-		  }*/ 
+			}*/
+		  } 
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)
