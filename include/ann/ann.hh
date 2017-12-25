@@ -20,10 +20,10 @@ namespace zinhart
 		__constant__ double * device_total_targets;
 		__constant__ double * device_total_hidden_weights;
 		__constant__ double * device_total_activations;
-		__constant__ double * device_bias;
-		__constant__ double * device_error;
-		__constant__ double * device_gradient;
-		__constant__ double * device_deltas;
+		__constant__ double * device_total_bias;
+		__constant__ double * device_total_error;
+		__constant__ double * device_total_gradient;
+		__constant__ double * device_total_deltas;
 #endif
   template <class model_type>
 	class ann
@@ -68,8 +68,8 @@ namespace zinhart
 		HOST void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
 		HOST int init(
-		   std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
-				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
+		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
+				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets,
 				)
 		{
 		  std::uint32_t ith_layer, prior_layer_neurons;
@@ -126,21 +126,21 @@ namespace zinhart
 		  
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Cuda init setDevice failed: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"cuda init setDevice failed: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for observations
 		  error_id = cudaMalloc( (void **) &device_total_observations, total_observations.first * total_layers[0].second * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device case allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy observations from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*(total_observations.second.get()) ), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -148,7 +148,7 @@ namespace zinhart
 		  error_id = cudaMalloc((void **) &device_total_targets, total_targets.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device target allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -156,39 +156,88 @@ namespace zinhart
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //allocate space for hidden weights
 		  error_id = cudaMalloc((void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device weight allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device weight allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy hidden weights from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_hidden_weights.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  
 		  //allocate space for activations
 		  error_id = cudaMalloc((void **) &device_total_activations, total_activations.first * sizeof(double));
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<"Device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy activations from host to device
 		  error_id = cudaMemcpyToSymbol(device_total_activations, &(*total_activations.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
-			std::cout<<" Device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			std::cout<<"device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-
+		  //allocate space for error
+		  error_id = cudaMalloc((void **) &device_total_error, total_error.first * sizeof(double));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device error allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //copy error from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_error, &(*total_error.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device error copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //allocate space for gradient
+		  error_id = cudaMalloc((void **) &device_total_gradient, total_gradient.first * sizeof(double));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device gradient allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //copy gradient from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_gradient, &(*total_gradient.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device gradient copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //allocate space for deltas
+		  error_id = cudaMalloc((void **) &device_total_deltas, total_deltas.first * sizeof(double));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device deltas allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //copy deltas from host to device
+		  error_id = cudaMemcpyToSymbol(device_total_deltas, &(*total_deltas.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device deltas copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //bias matrixs must be the same size as the matrix they are being added to b/c matrix addition rules
+		  error_id = cudaMalloc((void**)&device_total_bias, total_activations.first * sizeof(double));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"device bias allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  //set bias vector to 1's
+		  cudaMemset(device_total_bias, 1, total_activations.first * sizeof(double));
 		  return cudaSuccess;
 		}
 		HOST int cuda_cleanup()
@@ -216,6 +265,30 @@ namespace zinhart
 		  if(error_id != cudaSuccess)
 		  {
 			std::cout<<"Device hidden activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_error);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device hidden error deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_gradient);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device hidden gradient deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_deltas);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device deltas deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
+		  error_id = cudaFree(device_total_bias);
+		  if(error_id != cudaSuccess)
+		  {
+			std::cout<<"Device bias deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  cudaDeviceReset();
