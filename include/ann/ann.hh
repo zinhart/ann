@@ -69,7 +69,7 @@ namespace zinhart
 		{ total_layers.push_back(ith_layer); }
 		HOST int init(
 		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
-				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets,
+				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
 				)
 		{
 		  std::uint32_t ith_layer, prior_layer_neurons;
@@ -392,9 +392,9 @@ namespace zinhart
 		  lda = total_layers[1].second;
 		  ldb = total_layers[0].second;
 		  ldc = lda;//obviously
-		  /*std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
+		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
 		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
-		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";*/
+		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";
 		  const double alf = 1;
 		  const double bet_mult = 0, bet_add = 1;
 		  const double *alpha = &alf;
@@ -413,9 +413,9 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //add in bias
-/*		  error_id = cublasDgeam(contex, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, 1,
+/*		  error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[0].second, 1,
 			                     alpha, device_total_activations, total_layers[0].second,
-								 beta2, device_bias, 1,
+								 beta2, device_total_bias, 1,
 								 device_total_activations, total_layers[0].second
 			                    );*/
 		  //f(Wx + b) complete
