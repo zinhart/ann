@@ -26,6 +26,8 @@ TEST(ann_test, initialize_model)
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> dist(0,5000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
+  std::uint32_t total_num_targets = dist(mt);
+
   ann< ffn > model;
   LAYER_INFO a_layer;
   a_layer.first = LAYER_NAME::INPUT;
@@ -35,19 +37,19 @@ TEST(ann_test, initialize_model)
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
   a_layer.first = LAYER_NAME::RELU;
-  a_layer.second = dist(mt); 
+  a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   
   std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-  std::pair<std::uint32_t, std::shared_ptr<float>> total_targets;
+  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
   
   total_observations.first = dist(mt);//number of observations
   total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
  
-  total_targets.first = dist(mt); // number of targets
-  total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
+  total_targets.first = total_num_targets; // number of targets
+  total_targets.second = std::shared_ptr<double> ( new double[total_targets.first], std::default_delete<double[]>() );//targets themselves 
     
   //calc number of activations
   for(ith_layer = 1, total_activations = 0; ith_layer < total_layers.size(); ++ith_layer )
@@ -71,6 +73,7 @@ TEST(ann_test, ann_train)
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> dist(0,5000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
+  std::uint32_t total_num_targets = dist(mt);
 
   ann< ffn > model;
   LAYER_INFO a_layer;
@@ -81,18 +84,18 @@ TEST(ann_test, ann_train)
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
   a_layer.first = LAYER_NAME::SOFTMAX;
-  a_layer.second = dist(mt); 
+  a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   
   std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-  std::pair<std::uint32_t, std::shared_ptr<float>> total_targets;
+  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
   
   total_observations.first = dist(mt);//number of observations
   total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
-  total_targets.first = dist(mt); // number of targets
-  total_targets.second = std::shared_ptr<float> ( new float[total_targets.first], std::default_delete<float[]>() );//targets themselves 
+  total_targets.first = total_num_targets; // number of targets
+  total_targets.second = std::shared_ptr<double> ( new double[total_targets.first], std::default_delete<double[]>() );//targets themselves 
     
   //calc number of activations
   for(ith_layer = 1, total_activations = 0; ith_layer < total_layers.size(); ++ith_layer )
