@@ -29,9 +29,9 @@ namespace zinhart
 	  CUDA_CALLABLE_MEMBER pt operator()(double & input, LAYER_NAME ln, ACTIVATION f)
 	  {
 #if CUDA_ENABLED == 1
-printf("CUDA_ENABLED Layer operator()\n");
+		printf("CUDA_ENABLED Layer operator()\n");
 #else
-printf("CUDA_DISABLED Layer operator()\n");
+		printf("CUDA_DISABLED Layer operator()\n");
 #endif
 		if(f == ACTIVATION::OBJECTIVE)
 		{
@@ -41,18 +41,14 @@ printf("CUDA_DISABLED Layer operator()\n");
 			  return input;
 			case LAYER_NAME::SOFTMAX :
 #if CUDA_ENABLED == 1
-		      printf("CUDA ENABLED  LAYER SOFTMAX\n");
 			  return exp(input);
 #else
-			  printf("CUDA ENABLED  LAYER SOFTMAX\n");
 		      return std::exp(input);
 #endif
 		   case LAYER_NAME::TANH :
 #if CUDA_ENABLED == 1
-		      printf("CUDA ENABLED LAYER TANH\n");
 			  return tanh(-input);
 #else
-		      printf("CUDA DISABLED LAYER TANH\n");
 			  std::tanh(-input);
 #endif
 			case LAYER_NAME::RELU :
@@ -84,9 +80,9 @@ printf("CUDA_DISABLED Layer operator()\n");
 	  {
 
 #if CUDA_ENABLED == 1
-printf("CUDA_ENABLED Layer operator() (coeff)\n");
+		printf("CUDA_ENABLED Layer operator() (coeff)\n");
 #else
-printf("CUDA_DISABLED Layer operator() (coeff)\n");
+		printf("CUDA_DISABLED Layer operator() (coeff)\n");
 #endif
 		if(f == ACTIVATION::OBJECTIVE)
 		{
@@ -113,7 +109,6 @@ printf("CUDA_DISABLED Layer operator() (coeff)\n");
 
 	  }
   };
-
   pt call_activation(Layer & L, double & input, LAYER_NAME ln, ACTIVATION f);
   pt call_activation(Layer & L, double & input, double & coefficient, LAYER_NAME ln, ACTIVATION f);
 

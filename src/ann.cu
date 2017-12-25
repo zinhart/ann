@@ -57,9 +57,9 @@ namespace zinhart
 						  )
 	  {
 #if CUDA_ENABLED == 1 
-	  printf("CUDA ENABLED INITIALIZE_NETWORK\n");
+		std::cerr<<"CUDA ENABLED INITIALIZE_NETWORK\n";
 #else
-	  printf("CUDA DISABLED INITIALIZE_NETWORK\n");
+		std::cerr<<"CUDA DISABLED INITIALIZE_NETWORK\n";
 #endif
 	  return model.init(total_observations, total_targets);
 	  }
@@ -67,9 +67,9 @@ namespace zinhart
 	HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty)
 	{
 #if CUDA_ENABLED == 1 
-	  printf("CUDA ENABLED TRAIN\n");
+	  std::cerr<<"CUDA ENABLED TRAIN\n";
 #else
-	  printf("CUDA DISABLED TRAIN\n");
+	  std::cerr<<"CUDA DISABLED TRAIN\n";
 #endif
 	  return model.train(epochs, batch_size, weight_penalty);
 	}
@@ -77,9 +77,9 @@ namespace zinhart
 	HOST int cleanup(ann<T> & model)
 	{
 #if CUDA_ENABLED == 1 
-	  printf("CUDA ENABLED CLEANUP\n");
+	  std::cerr<<"CUDA ENABLED CLEANUP\n";
 #else
-	  printf("CUDA DISABLED CLEANUP\n");
+	  std::cerr<<"CUDA DISABLED CLEANUP\n";
 #endif
 	  return model.cuda_cleanup();
 	}

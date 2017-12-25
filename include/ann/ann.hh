@@ -331,10 +331,14 @@ namespace zinhart
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
 		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<std::get<0>(total_observations)<<" Training case size: "<<total_layers[0].second<<"\n";
+		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
+		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
+		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";/**/
 		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
 		  {
-			for(ith_observation = 0; ith_observation < total_observations.first / total_observations.first; ++ith_observation)
+			for(ith_observation = 0; ith_observation < total_observations.first /*/ total_observations.first*/; ++ith_observation)
 			{
+			  std::cout<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
 			  error = static_cast<model_type*>(this)->forward_propagate(handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 			  //do something with the error code
@@ -392,16 +396,14 @@ namespace zinhart
 		  lda = total_layers[1].second;
 		  ldb = total_layers[0].second;
 		  ldc = lda;//obviously
-		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
-		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
-		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";
+		  
 		  const double alf = 1;
 		  const double bet_mult = 0, bet_add = 1;
 		  const double *alpha = &alf;
 		  const double *beta1 = &bet_mult;
 		  const double *beta2 = &bet_add;
 		 
-		 //perform Wx 
+		  //perform Wx 
 		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1, total_layers[0].second, 
 			          alpha, device_total_hidden_weights, lda,
 					  device_total_observations + case_begin, ldb, beta1,
@@ -409,7 +411,7 @@ namespace zinhart
 					  );
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgemm on first hidden layer and input layer  failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgemm on first hidden layer and input layer failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  lda = total_layers[1].second;
@@ -427,12 +429,12 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //f(Wx + b) complete
-		  
+		 /* 
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
 		  for(ith_layer = 1, weight_offset = lda * ldb ; ith_layer < total_layers.size() - 1; ++ith_layer )
 		  {
 			//perform Wx
-			/*lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
+			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
 			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
 			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
 			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1, total_layers[ith_layer].second,
@@ -456,8 +458,8 @@ namespace zinhart
 			{
 			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
-			}*/
-		  } 
+			}
+		  }*/ 
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)
@@ -487,7 +489,7 @@ namespace zinhart
 	//Begin External Interface
 	//debugging functions
 	template <class T>
-	 HOST  std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
+	  HOST std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
 	template <class T>
 	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
 	template <class T>
