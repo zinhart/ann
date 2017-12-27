@@ -112,6 +112,13 @@ namespace zinhart
   pt call_activation(Layer & L, double & input, LAYER_NAME ln, ACTIVATION f);
   pt call_activation(Layer & L, double & input, double & coefficient, LAYER_NAME ln, ACTIVATION f);
 
+#if CUDA_ENABLED == 1
+  //activation function kernels here
+  __global__ void activation_kernel(LAYER_NAME ln, double * Wx_plus_b, std::uint32_t size); 
+  __global__ void activation_kernel_coeff(LAYER_NAME ln, double * Wx_plus_b, std::uint32_t size); 
+
+#endif
+
   
 
 }
