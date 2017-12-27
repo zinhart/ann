@@ -72,17 +72,13 @@ namespace zinhart
 				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
 				)
 		{
-		  std::uint32_t ith_layer, prior_layer_neurons;
+		  std::uint32_t ith_layer;
 		  std::swap(this->total_observations,total_observations);
 		  std::swap(this->total_targets, total_targets);
 
 		  //of course the last layer should have the same number of neurons as their are targets,
 		  //additionally the user may make the mistake on to doing this and the correction is not the
 		  //responsibility of ann
-		  //total_layers[total_layers.size() - 1].second = total_targets.first;
-
-		  for(ith_layer = 0; ith_layer < total_layers.size(); ++ith_layer )
-			std::cout<<"layer "<<ith_layer + 1<<" rows: "<<total_layers[ith_layer].second<<" columns: "<<1<<"\n";
 
 		  //calc number of activations, number of deltas is the same
 		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
@@ -92,12 +88,8 @@ namespace zinhart
 		  this->total_deltas.second = std::shared_ptr<double>(new double[this->total_deltas.first], std::default_delete<double[]>());//allocate deltas
 
 		  //calc number of hidden weights, number of gradients is the same
-		  for(ith_layer = 0, this->total_hidden_weights.first = 0, prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size()-1; ++ith_layer)
-		  {
-			std::cout<<"weight matrix connecting layers "<<ith_layer + 1<<" to "<<ith_layer + 2<<" rows: "<<this->total_layers[ith_layer].second<<" columns: "<< (prior_layer_neurons)<<"\n";
-			this->total_hidden_weights.first += this->total_layers[ith_layer].second * (prior_layer_neurons );
-			prior_layer_neurons = this->total_layers[ith_layer].second;
-		  }
+		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
  		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
 		  this->total_gradient.first = this->total_gradient.first;
 		  this->total_gradient.second = std::shared_ptr<double>(new double[this->total_gradient.first], std::default_delete<double[]>());//allocate gradients
@@ -237,7 +229,12 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //set bias vector to 1's
-		  cudaMemset(device_total_bias, 1, total_activations.first * sizeof(double));
+		  error_id = cudaMemset(device_total_bias, 1, total_activations.first * sizeof(double));
+		  if(error_id != cudaSuccess)
+		  {
+			std::cerr<<"cudamemset failed on device vector failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			return ERROR_CUDA_ERROR;
+		  }
 		  return cudaSuccess;
 		}
 		HOST int cuda_cleanup()
@@ -323,18 +320,23 @@ namespace zinhart
 		  error_id = cublasCreate(&handle);
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"CublasHandle creation failed with error:\t"<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"CublasHandle creation failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 #else
 		  //cpu multi-threaded code will go here
 		  printf("CUDA DISABLED TRAIN\n");
 #endif
-		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<std::get<0>(total_observations)<<" Training case size: "<<total_layers[0].second<<"\n";
-		  std::cout<<"Matrix A rows(m): "<<total_layers[1].second<<" columns(k): "<<total_layers[0].second<<"\n";
-		  std::cout<<"Matrix B rows(k): "<<total_layers[0].second<<" columns(n): "<<1<<"\n";
-		  std::cout<<"Matrix C rows(m): "<<total_layers[1].second<<" columns(n): "<<1<<"\n";/**/
-		  for(ith_epoch = 0; ith_epoch < max_epochs/max_epochs; ++ith_epoch)
+		  //debugging lines
+		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<" Training case size: "<<total_layers[0].second
+				   <<" total_hidden_weights: "<<total_hidden_weights.first<<"\n";
+		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() ; ++ith_layer)
+			std::cout<<"Neurons in layer "<<ith_layer + 1<<": "<<total_layers[ith_layer].second<<"\n";
+		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+			std::cout<<"weight matrix between layer "<<ith_layer + 2<<" and "<<ith_layer + 1<<" dimensions: "<<total_layers[ith_layer + 1].second<<" by "<<total_layers[ith_layer].second<<"\n";
+		  //end debug lines
+		  
+		  for(ith_epoch = 0; ith_epoch < max_epochs / max_epochs; ++ith_epoch)
 		  {
 			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
 			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
@@ -391,8 +393,8 @@ namespace zinhart
 		  cublasStatus_t error_id;
 		  std::int32_t m, n, k, lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
-		  std::uint32_t weight_offset;//number of weights connection between layer i and layer i + 1
-		  std::uint32_t activation_offset;//number of activations(input) to a layer
+		  std::uint32_t weight_offset = 0;//number of weights connection between layer i and layer i + 1
+		  std::uint32_t activation_offset = 0;//number of activations(input) to a layer
 		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
 		 
 
@@ -432,27 +434,29 @@ namespace zinhart
 			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  //f(Wx + b) complete
+		  //f(Wx + b) complete no runtime errors up till this point
 		  
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
-		  for(ith_layer = 1, weight_offset = lda * ldb ; ith_layer < total_layers.size() - 1; ++ith_layer )
+		  for(ith_layer = 1, weight_offset =total_layers[1].second * total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer )
 		  {
-			//perform Wx
+			std::cout<<"ith_layer: "<<ith_layer<<" weight offset: "<<weight_offset<<" "<<total_layers[2].second<<" "<<total_layers[1].second<<" "<<std::uint32_t(total_layers[ith_layer + 1].second * total_layers[ith_layer].second)<<"\n";
+
+			 //perform Wx
 			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
 			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
 			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
 			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1, total_layers[ith_layer].second,
 								   alpha, device_total_hidden_weights + weight_offset, lda, 		
 								   device_total_activations + total_layers[ith_layer].second, ldb, beta1,
-								   device_total_activations + total_layers[ith_layer + 1].second,ldc 
+								   device_total_activations + total_layers[ith_layer + 1].second, ldc 
 								  );
 		    if(error_id != CUBLAS_STATUS_SUCCESS)
 		    {
 			  std::cerr<<"cublas dgemm failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 		 	  return ERROR_CUDA_ERROR;
 		    }
-			/*weight_offset = total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
-			//add in bias
+			//no runtime errors in loop until here
+			/*//add in bias
 			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,
 			                     alpha, device_total_activations, lda,
 								 beta2, device_total_bias, ldb,
@@ -463,6 +467,7 @@ namespace zinhart
 			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
 			}*/
+			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
 		  } 
 		  return 0;
 		}

@@ -36,7 +36,7 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions")
 if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -G -Xcompiler -rdynamic")
+  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -G -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
 endif()
 
 if (Sanitize)

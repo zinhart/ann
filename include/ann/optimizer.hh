@@ -199,6 +199,7 @@ HOST void call_nadam_moment_update(optimizer & op, double & beta_1_t, double & b
 
 #if CUDA_ENABLED == 1
 //Kernels for each optimizer will go here
+//and cache prefereces as well
 #endif
 
 }

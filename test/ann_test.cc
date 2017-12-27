@@ -43,7 +43,7 @@ TEST(ann_test, initialize_model)
   std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
   std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
-  std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
+  std::uint32_t total_hidden_weights, total_activations, ith_layer;
   
   total_observations.first = dist(mt);//number of observations
   total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
@@ -56,10 +56,9 @@ TEST(ann_test, initialize_model)
 	total_activations += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
   
   //calc number of hidden weights
-  for(ith_layer = 0, prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer)
+  for(ith_layer = 0, total_hidden_weights = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
-	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons );//+ 1 for bias input
-	prior_layer_neurons = total_layers[ith_layer].second;
+	total_hidden_weights += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
   }
   ASSERT_EQ(initialize_model(model, total_observations, total_targets), 0);
   ASSERT_EQ(total_activations, get_total_activations(model).first);
@@ -90,7 +89,7 @@ TEST(ann_test, ann_train)
   std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
   std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
-  std::uint32_t total_hidden_weights, total_activations, ith_layer, prior_layer_neurons;
+  std::uint32_t total_hidden_weights, total_activations, ith_layer;
   
   total_observations.first = dist(mt);//number of observations
   total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
@@ -102,11 +101,11 @@ TEST(ann_test, ann_train)
 	total_activations += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
   
   //calc number of hidden weights
-  for(ith_layer = 0, total_hidden_weights = 0,prior_layer_neurons = total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer)
+  for(ith_layer = 0, total_hidden_weights = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
-	total_hidden_weights += total_layers[ith_layer].second * (prior_layer_neurons);//+ 1 for bias input
-	prior_layer_neurons = total_layers[ith_layer].second;
+	total_hidden_weights += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
   }
+  
   ASSERT_EQ(initialize_model(model, total_observations, total_targets), 0);
   ASSERT_EQ(total_activations, get_total_activations(model).first);
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);
