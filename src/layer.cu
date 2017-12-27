@@ -12,10 +12,9 @@ namespace zinhart
   {
 	Layer L;
 	std::uint32_t i = threadIdx.x;
-	if( i < size)
-	{
+	if(i > size)
+	  return;
 	  L(Wx_plus_b[i], ln, ACTIVATION::OBJECTIVE);
-	}
   }	
 #endif
 }
