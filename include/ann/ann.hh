@@ -434,14 +434,16 @@ namespace zinhart
 			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  //f(Wx + b) complete no runtime errors up till this point
+		  //Wx + b complete
+		  //call activation function kernel here
+		  //f(Wx + b) complete for first hidden layer and input layer
 		  
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
 		  for(ith_layer = 1, weight_offset =total_layers[1].second * total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer )
 		  {
-			std::cout<<"ith_layer: "<<ith_layer<<" weight offset: "<<weight_offset<<" "<<total_layers[2].second<<" "<<total_layers[1].second<<" "<<std::uint32_t(total_layers[ith_layer + 1].second * total_layers[ith_layer].second)<<"\n";
+			//std::cout<<"ith_layer: "<<ith_layer<<" weight offset: "<<weight_offset<<" "<<total_layers[2].second<<" "<<total_layers[1].second<<" "<<std::uint32_t(total_layers[ith_layer + 1].second * total_layers[ith_layer].second)<<"\n";
 
-			 //perform Wx
+			//perform Wx
 			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
 			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
 			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
@@ -456,17 +458,21 @@ namespace zinhart
 		 	  return ERROR_CUDA_ERROR;
 		    }
 			//no runtime errors in loop until here
-			/*//add in bias
+		    ldb = total_layers[ith_layer + 1].second;	
+			//add in bias
 			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,
-			                     alpha, device_total_activations, lda,
-								 beta2, device_total_bias, ldb,
-								 device_total_activations, ldc
+			                     alpha, device_total_activations + total_layers[ith_layer + 1].second, lda,
+								 beta2, device_total_bias + total_layers[ith_layer + 1].second, ldb,
+								 device_total_activations + total_layers[ith_layer + 1].second, ldc
 			                    );
 			if(error_id != CUBLAS_STATUS_SUCCESS)
 			{
 			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
-			}*/
+			}
+		    //Wx + b complete
+			//call activation function kernel here	
+			//f(Wx + b) complete for all hidden layers after the first till the output layer
 			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
 		  } 
 		  return 0;
