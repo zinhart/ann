@@ -17,7 +17,7 @@ TEST(ann_test, add_layer)
   std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max() );
   ann< ffn > model;
   LAYER_INFO a_layer;
-  a_layer.first = LAYER_NAME::IDENTITY;
+  a_layer.first = ACTIVATION_NAME::IDENTITY;
   a_layer.second = dist(mt);  
   add_layer(model, a_layer);
 }
@@ -30,13 +30,13 @@ TEST(ann_test, initialize_model)
 
   ann< ffn > model;
   LAYER_INFO a_layer;
-  a_layer.first = LAYER_NAME::INPUT;
+  a_layer.first = ACTIVATION_NAME::INPUT;
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
-  a_layer.first = LAYER_NAME::SIGMOID;
+  a_layer.first = ACTIVATION_NAME::SIGMOID;
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
-  a_layer.first = LAYER_NAME::RELU;
+  a_layer.first = ACTIVATION_NAME::RELU;
   a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   
@@ -76,13 +76,13 @@ TEST(ann_test, ann_train)
 
   ann< ffn > model;
   LAYER_INFO a_layer;
-  a_layer.first = LAYER_NAME::INPUT;
+  a_layer.first = ACTIVATION_NAME::INPUT;
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
-  a_layer.first = LAYER_NAME::RELU;
+  a_layer.first = ACTIVATION_NAME::RELU;
   a_layer.second = dist(mt);  
   add_layer(model,a_layer);
-  a_layer.first = LAYER_NAME::SOFTMAX;
+  a_layer.first = ACTIVATION_NAME::SOFTMAX;
   a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   

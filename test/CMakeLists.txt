@@ -6,7 +6,7 @@ set(test_src
   run_all.cc
   loss_function_test.cc
   optimizer_test.cc
-  layer_test.cc
+  activation_test.cc
   ann_test.cc
 )
 

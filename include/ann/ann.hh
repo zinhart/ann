@@ -1,7 +1,7 @@
 #ifndef ANN_HH
 #define ANN_HH
 #include "loss_function.hh"
-#include "layer.hh"
+#include "activation.hh"
 #include "optimizer.hh"
 #include <memory>
 //#include <zinhart/vector_space>
@@ -16,14 +16,14 @@
 namespace zinhart
 {
 #if CUDA_ENABLED == 1
-		__constant__ double * device_total_observations;
-		__constant__ double * device_total_targets;
-		__constant__ double * device_total_hidden_weights;
-		__constant__ double * device_total_activations;
-		__constant__ double * device_total_bias;
-		__constant__ double * device_total_error;
-		__constant__ double * device_total_gradient;
-		__constant__ double * device_total_deltas;
+		 double * device_total_observations;
+		 double * device_total_targets;
+		 double * device_total_hidden_weights;
+		 double * device_total_activations;
+		 double * device_total_bias;
+		 double * device_total_error;
+		 double * device_total_gradient;
+		 double * device_total_deltas;
 #endif
   template <class model_type>
 	class ann
@@ -129,7 +129,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy observations from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_observations, &(*(total_observations.second.get()) ), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_observations, total_observations.second.get(), total_observations.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device case copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -145,7 +145,7 @@ namespace zinhart
 		  }
 
 		  //copy targets from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_targets.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -159,7 +159,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy hidden weights from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_targets, &(*total_hidden_weights.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_hidden_weights, total_hidden_weights.second.get(), total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device weight copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -173,7 +173,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy activations from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_activations, &(*total_activations.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_activations, total_activations.second.get(), total_activations.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device activation copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -187,7 +187,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy error from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_error, &(*total_error.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_error, total_error.second.get(), total_error.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device error copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -201,7 +201,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy gradient from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_gradient, &(*total_gradient.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_gradient, total_gradient.second.get(), total_gradient.first * sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device gradient copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -215,7 +215,7 @@ namespace zinhart
 			return ERROR_CUDA_ERROR;
 		  }
 		  //copy deltas from host to device
-		  error_id = cudaMemcpyToSymbol(device_total_deltas, &(*total_deltas.second.get()), sizeof(double*), 0, cudaMemcpyHostToDevice);
+		  error_id = cudaMemcpy(device_total_deltas, total_deltas.second.get(), sizeof(double), cudaMemcpyHostToDevice);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"device deltas copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -258,7 +258,7 @@ namespace zinhart
 			std::cerr<<"Device hidden weight deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-		  error_id = cudaFree(device_total_activations);
+  		  error_id = cudaFree(device_total_activations);
 		  if(error_id != cudaSuccess)
 		  {
 			std::cerr<<"Device hidden activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -431,7 +431,7 @@ namespace zinhart
 			                    );
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgeam  on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //Wx + b complete
@@ -457,7 +457,6 @@ namespace zinhart
 			  std::cerr<<"cublas dgemm failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 		 	  return ERROR_CUDA_ERROR;
 		    }
-			//no runtime errors in loop until here
 		    ldb = total_layers[ith_layer + 1].second;	
 			//add in bias
 			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,

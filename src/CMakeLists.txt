@@ -1,7 +1,7 @@
 set(ann_src
   loss_function.cu  
   optimizer.cu
-  layer.cu  
+  activation.cu  
   ann.cu	
 )
 
