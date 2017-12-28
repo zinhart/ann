@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 #include <random>
 #include <limits>
+#include <memory>
 using namespace zinhart;
 
 std::random_device rd;
@@ -16,13 +17,29 @@ std::uniform_real_distribution<double> neg_real(std::numeric_limits<double>::min
 /*
  * ACTIVATION OBJECTIVE
  * */
-/*TEST(Layer_Test, call_activation_identity)
+TEST(Layer_Test, call_activation_identity)
 {
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ(x, call_activation(L, x, LAYER_NAME::IDENTITY, ACTIVATION::OBJECTIVE));
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max());
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  std::shared_ptr<double> activation;
+  std::shared_ptr<double> activation_copy;
+  std::uint16_t activation_size = Z_plus(mt);
+  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {	
+	activation.get()[i] = real(mt);
+	activation_copy.get()[i] = activation.get()[i];
+  }
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, activation_copy.get(), activation_size), 0);
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {
+	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+  }
 }
-TEST(Layer_Test, call_activation_softmax)
+/*TEST(Layer_Test, call_activation_softmax)
 {
   Layer L;
   double x = reals(mt);
