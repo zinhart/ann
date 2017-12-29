@@ -29,6 +29,15 @@ namespace zinhart
 		  return input;
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return Numeric_Type(1);
+#if CUDA_ENABLED == 1	
+		default:
+		  printf("default case called in activation_identity\n");
+		  return 0;
+#else	
+		default:
+		  std::cerr<<"default case called in activation_identity\n";
+		  return 0;
+#endif
 	  }
 	}
 
@@ -45,9 +54,15 @@ namespace zinhart
 #if CUDA_ENABLED == 1
 		case ACTIVATION_TYPE::OBJECTIVE:
 		  return exp(input_i);
+		default:
+		  printf("default case called in activation_softmax\n");
+		  return 0;
 #else
 		case ACTIVATION_TYPE::OBJECTIVE:
 		  return std::exp(input_i);
+		default:
+		  std::cerr<<"default case called in activation_identity\n";
+		  return 0;
 #endif
   		case ACTIVATION_TYPE::DERIVATIVE:
   		  return input_i * (kronecker_delta - input_j);
@@ -69,11 +84,17 @@ namespace zinhart
 		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + exp(-input));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return input * (Numeric_Type(1.0) - input);
+		default:
+		  printf("default case called in activation_sigmoid\n");
+		  return 0;
 #else
 		case ACTIVATION_TYPE::OBJECTIVE:
 		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + std::exp(-input));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return input * (Numeric_Type(1.0) - input);
+		default:
+		  std::cerr<<"default case called in activation_sigmoid\n";
+		  return 0;
 #endif
 	  }
   }
@@ -94,11 +115,17 @@ namespace zinhart
 		  return log(Numeric_Type(1.0) + exp(input));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + exp(-input));
+		default:
+		  printf("default case called in activation_softplus\n");
+		  return 0;
 #else
 		case ACTIVATION_TYPE::OBJECTIVE:
 		  return log(Numeric_Type(1.0) + std::exp(input));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + std::exp(-input));
+		default:
+		  std::cerr<<"default case called in activation_softplus\n";
+		  return 0;
 #endif
 	}
   }
@@ -118,11 +145,17 @@ namespace zinhart
 		  return tanh(-input);
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return Numeric_Type(1.0) - (input * input);
+		default:
+		  printf("default case called in activation_tanh\n");
+		  return 0;
 #else
 		case ACTIVATION_TYPE::OBJECTIVE:
 		  return std::tanh(-input);
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return Numeric_Type(1.0) - (input * input);
+		default:
+		  std::cerr<<"default case called in activation_tanh\n";
+		  return 0;
 #endif
 	  }
   }
@@ -141,6 +174,15 @@ namespace zinhart
 		  return (input >= Numeric_Type(0.0) ) ? input : Numeric_Type(0.0);
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : Numeric_Type(0.0);
+#if CUDA_ENABLED == 1
+		default:
+		  printf("default case called in activation_relu\n");
+		  return 0;
+#else
+		default:
+		  std::cerr<<"default case called in activation_relu\n";
+		  return 0;
+#endif
 	  }
 	}
 
@@ -158,6 +200,15 @@ namespace zinhart
 		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * input;
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient;
+#if CUDA_ENABLED == 1
+		default:
+		  printf("default case called in activation_leaky_relu\n");
+		  return 0;
+#else
+		default:
+		  std::cerr<<"default case called in activation_leaky_relu\n";
+		  return 0;
+#endif
 	  }
 	}
 
@@ -177,6 +228,9 @@ namespace zinhart
 		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * (exp(input) - Numeric_Type(1.0));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient * (exp(input) - Numeric_Type(1.0)) + leakage_coefficient;
+		default:
+		  printf("default case called in activation_leaky_relu\n");
+		  return 0;
 	  }
 #else
 	  printf("CUDA_DISABLED activation_leaky_relu\n");
@@ -186,15 +240,18 @@ namespace zinhart
 		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * (std::exp(input) - Numeric_Type(1.0));
 		case ACTIVATION_TYPE::DERIVATIVE:
 		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient * (std::exp(input) - Numeric_Type(1.0)) + leakage_coefficient;
+		default:
+		  std::cerr<<"default case called in activation_leaky_relu\n";
+		  return 0;
 	  }
 #endif
   } 
 
 
-#if CUDA_ENABLED == 1
   //wrappers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
   std::int32_t call_activation(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t size);
   std::int32_t call_activation(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t size);
+#if CUDA_ENABLED == 1
   //activation function kernels here
   __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t size); //everything that's not leaky relu, elu, or softmax
   __global__ void activation_kernel_coeff(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t size);//leaky relu or elu

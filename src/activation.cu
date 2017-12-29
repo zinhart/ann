@@ -18,13 +18,12 @@ namespace zinhart
 	//call kernel
 	activation_kernel<<<block_launch, threads_per_block>>>(activation_name, activation_type, Wx_plus_b, layer_size);
 	cudaDeviceSynchronize();
-   	error_id = cudaGetLastError();
+  	error_id = cudaGetLastError();
 	if(error_id != cudaSuccess)
 	{
 	  std::cerr<<"activation_kernel failed to launch with error: "<<cudaGetErrorString(error_id);
 	  return 1;
 	}
-	//copy memory from device to host
 	return 0;
   }
   std::int32_t call_activation(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t layer_size)
@@ -58,6 +57,7 @@ namespace zinhart
 	std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 	if(thread_id > layer_size)
   	  return;
+	printf("here, %d", thread_id);
 	switch(activation_name)
 	{
 	  case ACTIVATION_NAME::SIGMOID:

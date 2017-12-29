@@ -2,12 +2,13 @@
 if [ $# -eq 0 ]
 then
 echo -e "USAGE: $0 <some valid number list below>"
+echo -e "0: Erase all files matching the regex < cuda-memcheck.file* >"
 echo -e "1: Run cuda-memcheck on binary located at:  /debug/test/ann_tests"
+echo -e "2: Run cuda-memcheck on binary located at:  /release/test/ann_tests"
 #possible future options here
 fi
 
-if [ $# -eq 1 ]
-then
+if [[ $# -eq 1 && $1 -eq 1 ]] ; then
 echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/" 
   if [ -d debug ]
   then
@@ -21,5 +22,19 @@ echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/"
   fi
 fi
 
-#if $# = 2,3,4 etc
+if [[ $# -eq 1 && $1 -eq 2 ]] ; then
+echo -e "Running cuda-memcheck on binary < ann_tests >located at: /release/test/" 
+  if [ -d release ]
+  then
+	(cd release && make)
+	cuda-memcheck --leak-check full ./release/test/ann_tests
+  else
+     echo -e "Binary < ann_tests > was not found at /release/test/"
+	 echo e "Executing ./release-script"
+	 ./release-script
+ 	 cuda-memcheck --leak-check full ./release/test/ann_tests
+  fi
+fi
+
+#if $# = 3,4,5 etc
 echo -e "Written by Arom Zinhart DeGraca"

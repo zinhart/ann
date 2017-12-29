@@ -313,6 +313,7 @@ namespace zinhart
 		{
 		  int error = 0;
 		  std::uint32_t ith_epoch, ith_observation;
+		  std::uint32_t batch_count;
 #if CUDA_ENABLED == 1
 		  printf("CUDA ENABLED TRAIN\n");
 		  cublasStatus_t error_id;
@@ -339,15 +340,21 @@ namespace zinhart
 		  for(ith_epoch = 0; ith_epoch < max_epochs / max_epochs; ++ith_epoch)
 		  {
 			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
-			for(ith_observation = 0; ith_observation < total_observations.first; ++ith_observation)
+			for(ith_observation = 0, batch_count = 0; ith_observation < total_observations.first; ++ith_observation, ++batch_count)
 			{
 			  std::cout<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
-			  error = static_cast<model_type*>(this)->forward_propagate(handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+			  if(batch_count == batch_size)
+			  {
+  				error = static_cast<model_type*>(this)->forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);//every batch copy data back to host
+				batch_count = 0;//reset the count
+			  }	  
+			  else
+				error = static_cast<model_type*>(this)->forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 			  //do something with the error code
 			  if(error == 1)
 			  {
-				std::cerr<<"An unknown error occured in forward_propagate\n";
+				std::cerr<<"An error occured in forward_propagate\n";
 				std::abort();
 			  }
 			  //call back_propagate
@@ -381,7 +388,7 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
-		HOST int forward_propagate(cublasHandle_t & context, 
+		HOST int forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
@@ -391,10 +398,9 @@ namespace zinhart
 		{
 		  //cublas gemm here
 		  cublasStatus_t error_id;
-		  std::int32_t m, n, k, lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
+		  std::int32_t  lda, ldb,ldc;//note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;//from the first hidden layer to the output layer 
 		  std::uint32_t weight_offset = 0;//number of weights connection between layer i and layer i + 1
-		  std::uint32_t activation_offset = 0;//number of activations(input) to a layer
 		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
 		 
 
@@ -431,7 +437,7 @@ namespace zinhart
 			                    );
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgeam  on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 		  //Wx + b complete
@@ -439,7 +445,7 @@ namespace zinhart
 		  //f(Wx + b) complete for first hidden layer and input layer
 		  
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
-		  for(ith_layer = 1, weight_offset =total_layers[1].second * total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer )
+		  for(ith_layer = 1, weight_offset = total_layers[1].second * total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer )
 		  {
 			//std::cout<<"ith_layer: "<<ith_layer<<" weight offset: "<<weight_offset<<" "<<total_layers[2].second<<" "<<total_layers[1].second<<" "<<std::uint32_t(total_layers[ith_layer + 1].second * total_layers[ith_layer].second)<<"\n";
 
@@ -474,6 +480,19 @@ namespace zinhart
 			//f(Wx + b) complete for all hidden layers after the first till the output layer
 			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
 		  } 
+		  //copy activations back to host
+		  if(copy_device_to_host == true)
+		  {
+		    /*
+			//copy activations from device to host
+		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
+			if(error_id != cudaSuccess)
+			{
+			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			  return ERROR_CUDA_ERROR;
+			}
+			*/
+		  }
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)
