@@ -8,8 +8,13 @@ echo -e "2: Run cuda-memcheck on binary located at:  /release/test/ann_tests"
 #possible future options here
 fi
 
+if [[ $# -eq 1 && $1 -eq 0 ]] ; then
+  echo -e "Removing file matching regex < cuda-memcheck.file* >"
+  rm -f cuda-memcheck.file*
+fi
+
 if [[ $# -eq 1 && $1 -eq 1 ]] ; then
-echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/" 
+  echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/" 
   if [ -d debug ]
   then
 	(cd debug && make)
@@ -23,7 +28,7 @@ echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/"
 fi
 
 if [[ $# -eq 1 && $1 -eq 2 ]] ; then
-echo -e "Running cuda-memcheck on binary < ann_tests >located at: /release/test/" 
+  echo -e "Running cuda-memcheck on binary < ann_tests >located at: /release/test/" 
   if [ -d release ]
   then
 	(cd release && make)
