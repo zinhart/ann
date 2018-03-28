@@ -2,7 +2,7 @@
 namespace zinhart
 {
   //wrappers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
-  std::int32_t call_activation(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t current_layer_size)
+  std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t current_layer_size)
   {
 	cudaError_t error_id;
 	cudaDeviceProp properties;
@@ -17,7 +17,7 @@ namespace zinhart
 	block_launch.z = 1;
 	std::cout<<"current_layer_size: "<<current_layer_size<<" threads_per_block: "<<threads_per_block<<" warp_size: "<<warp_size <<" block_launch.x: " <<block_launch.x<< " block_launch.y: " <<block_launch.y<< " block_launch.z: " <<block_launch.z<<"\n";
 	//call kernel
-	activation_kernel<<<block_launch, threads_per_block>>>(activation_name, activation_type, Wx_plus_b, current_layer_size);
+	activation_kernel<<<block_launch, threads_per_block>>>(activation_name, activation_type,Wx_plus_b, current_layer_size);
 	cudaDeviceSynchronize();
   	error_id = cudaGetLastError();
 	if(error_id != cudaSuccess)
@@ -54,15 +54,41 @@ namespace zinhart
 	return 0;
   }*/
   //activation function kernels here
-  __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
+
+	__global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
   {
 
 	const std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-	printf("thread_id: %d\n", thread_id);
+	//printf("thread_id: %d\n", thread_id);
 	if(thread_id >= layer_size)
 	  return;
-	activation_function<ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::OBJECTIVE> f;
-    Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id]);
+	if(activation_name == ACTIVATION_NAME::IDENTITY)
+	{
+	  activation<identity> f;
+	  Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id], activation_type);
+	}
+	else if(activation_name == ACTIVATION_NAME::SIGMOID)
+	{
+	  activation<sigmoid> f;
+	  Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id], activation_type);
+	}
+	else if(activation_name == ACTIVATION_NAME::SOFTPLUS)
+	{
+	  activation<softplus> f;
+	  Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id], activation_type);
+	}
+	else if(activation_name == ACTIVATION_NAME::TANH)
+	{
+	  activation<hyperbolic_tangent> f;
+	  Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id], activation_type);
+	}
+	else if(activation_name == ACTIVATION_NAME::RELU)
+	{
+	  activation<relu> f;
+	  Wx_plus_b[thread_id] =  f(Wx_plus_b[thread_id], activation_type);
+	}
+	else
+	  return;
   }
   __global__ void activation_kernel_coeff(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t layer_size)//leaky relu or elu
   {

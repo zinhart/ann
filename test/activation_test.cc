@@ -43,8 +43,8 @@ TEST(activation_test, call_activation_identity)
   error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
   if(error_id != cudaSuccess)
 	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  /**/
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activations/*activation_copy.get()*/, activation_size), 0);
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+  
   error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
   if(error_id != cudaSuccess)
 	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
