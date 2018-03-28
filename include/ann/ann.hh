@@ -342,7 +342,7 @@ namespace zinhart
 			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
 			for(ith_observation = 0, batch_count = 0; ith_observation < total_observations.first; ++ith_observation, ++batch_count)
 			{
-			  std::cout<<ith_observation + 1<<"\n";
+			  std::cout<<"Case: "<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
 			  if(batch_count == batch_size)
 			  {
@@ -421,11 +421,13 @@ namespace zinhart
 					  device_total_observations + case_begin, ldb, beta1,
 					  device_total_activations,ldc
 					  );
+		  //check for errors
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
 			std::cerr<<"cublas dgemm on first hidden layer and input layer failed with error: "<<cublasGetErrorString(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
+		  //update dimensions of matrix multiplication
 		  lda = total_layers[1].second;
 		  ldb = lda;
 		  ldc = lda;
@@ -435,6 +437,7 @@ namespace zinhart
 								 beta2, device_total_bias, ldb,
 								 device_total_activations, ldc
 			                    );
+		  //check for error on dgemm
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
 			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
@@ -442,6 +445,7 @@ namespace zinhart
 		  }
 		  //Wx + b complete
 		  //call activation function kernel here
+		  call_activation(total_layers[1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[1].second);
 		  //f(Wx + b) complete for first hidden layer and input layer
 		  
 		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
@@ -475,8 +479,9 @@ namespace zinhart
 			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
 			}
-		    //Wx + b complete
+			//Wx + b complete
 			//call activation function kernel here	
+			call_activation(total_layers[ith_layer + 1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[ith_layer + 1].second);	
 			//f(Wx + b) complete for all hidden layers after the first till the output layer
 			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
 		  } 
