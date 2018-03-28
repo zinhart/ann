@@ -10,11 +10,325 @@
 #endif
 namespace zinhart
 {
-  //using ACTIVATION_TYPE = std::uint8_t;
   enum class ACTIVATION_NAME : std::uint8_t/*ACTIVATION_TYPE*/ {INPUT = 0, IDENTITY, SOFTMAX, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU};
   enum class ACTIVATION_TYPE : std::uint8_t/*ACTIVATION_TYPE*/ {OBJECTIVE = 0, DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
+  template<ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type>
+   CUDA_CALLABLE_MEMBER	class activation_function;
+  template<>	
+	activation_function<ACTIVATION_NAME::INPUT,ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return x;};
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::INPUT,ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return x;};
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return x;};
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return 1;};
+   }
+
+ template<>	
+	activation_function<ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		  return double(1.0) / (double(1.0) + exp(-x);
+#else
+		  return double(1.0) / (double(1.0) + std::exp(-x);
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   //to do
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+		return x * (double(1.0) - x);
+
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTMAX, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		  return exp(input_i);
+#else
+		  return std::exp(input_i);
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTMAX, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   //to do
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return 1;};
+   }
+
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		  return log(double(1.0) + exp(x));
+#else
+		  return std::log(double(1.0) + std::exp(x));
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTMAX, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   //to do
+	   CUDA_CALLABLE_MEMBER double operator ()(double x){return 1;};
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		  return log(double(1.0) + exp(x));
+#else
+		  return std::log(double(1.0) + std::exp(x));
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		 return double(1.0) / (double(1.0) + exp(-x));
+#else
+		 return double(1.0) / (double(1.0) + std::exp(-x));
+#endif
+	  };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::TANH, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+#if CUDA_ENABLED == 1
+		  return tanh(-x);
+#else
+		  return std::tanh(-x);
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::TANH, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+		 return double(1.0) - (x * x);
+	   };
+   }
+
+  template<>	
+	activation_function<ACTIVATION_NAME::RELU, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+		  return (x >= double(0.0) ) ? x : double(0.0);
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::RELU, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x)
+	   {
+   		 return (x >= x(0.0) ) ? double(1.0) : double(0.0);
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::LEAKY_RELU, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x, double leakage_coefficient = 0.1)
+	   {
+		 return (x >= double(0.0) ) ? x : leakage_coefficient * input;
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::LEAKY_RELU, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x, double leakage_coefficient = 0.1)
+	   {
+   		 return (input >= double(0.0) ) ? double(1.0) : leakage_coefficient;
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::EXP_LEAKY_RELU, ACTIVATION_TYPE::OBJECTIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x, double leakage_coefficient = 0.1)
+	   {
+#if CUDA_ENABLED == 1
+		 return (input >= double(0.0) ) ? input : leakage_coefficient * (exp(input) - double(1.0));
+#else
+		 return (input >= double(0.0) ) ? input : leakage_coefficient * (std::exp(input) - double(1.0));
+#endif
+	   };
+   }
+  template<>	
+	activation_function<ACTIVATION_NAME::EXP_LEAKY_RELU, ACTIVATION_TYPE::DERIVATIVE>
+   {
+	 public:
+	   CUDA_CALLABLE_MEMBER activation_function() = default;
+	   CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+	   CUDA_CALLABLE_MEMBER activation_function & operator = (activation&&) = default;
+	   CUDA_CALLABLE_MEMBER double operator ()(double x, double leakage_coefficient = 0.1)
+	   {
+#if CUDA_ENABLED == 1
+		 return (input >= double(0.0) ) ? input : leakage_coefficient * (exp(input) - double(1.0));
+#else
+		 return (input >= double(0.0) ) ? input : leakage_coefficient * (std::exp(input) - double(1.0));
+#endif
+	   };
+   }
+
+
+
+
+
+
+
+
+
+
+
+
   template<class Numeric_Type>
 	CUDA_CALLABLE_MEMBER Numeric_Type activation_identity(ACTIVATION_TYPE activation_type, Numeric_Type & input)	
 	{

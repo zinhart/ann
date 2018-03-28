@@ -56,7 +56,7 @@ namespace zinhart
   __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
   {
 	std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-	printf("thread_id: %d\n", thread_id);
+//	printf("thread_id: %d\n", thread_id);
 	if(thread_id > layer_size)
 	  return;
 	switch(activation_name)
