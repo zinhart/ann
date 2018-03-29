@@ -1,4 +1,8 @@
 #A simply script to automate memory leak checking, this script does NOT take into account symbolic links
+debug_build_output="debug-build-output.txt"
+debug_output="debug-output.txt"
+release_build_output="release-build-output.txt"
+release_output="release-output.txt"
 if [ $# -eq 0 ]
 then
 printf "USAGE: $0 <some valid number list below>\n"
