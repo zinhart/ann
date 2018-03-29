@@ -1,45 +1,80 @@
 #A simply script to automate memory leak checking, this script does NOT take into account symbolic links
 if [ $# -eq 0 ]
 then
-echo -e "USAGE: $0 <some valid number list below>"
-echo -e "0: Erase all files matching the regex < cuda-memcheck.file* >"
-echo -e "1: Run cuda-memcheck on binary located at:  /debug/test/ann_tests"
-echo -e "2: Run cuda-memcheck on binary located at:  /release/test/ann_tests"
+printf "USAGE: $0 <some valid number list below>\n"
+printf "0: Erase all files matching the regex < cuda-memcheck.file* >\n"
+printf "1: Run cuda-memcheck on binary located at:  /debug/test/ann_tests\n"
+printf "2: Run cuda-memcheck on binary located at:  /release/test/ann_tests\n"
 #possible future options here
 fi
 
 if [[ $# -eq 1 && $1 -eq 0 ]] ; then
-  echo -e "Removing file matching regex < cuda-memcheck.file* >"
+  printf "Removing file matching regex < cuda-memcheck.file* >\n"
   rm -f cuda-memcheck.file*
 fi
 
 if [[ $# -eq 1 && $1 -eq 1 ]] ; then
-  echo -e "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/" 
+  truncate -s 0 debug-output.txt
+  printf "Running cuda-memcheck on binary < ann_tests >located at: /debug/test/\n" 
   if [ -d debug ]
   then
-	(cd debug && make)
-	cuda-memcheck --leak-check full ./debug/test/ann_tests
+	printf "Removing debug directory\n"
+	rm -rf debug
+	printf "Finished removing debug directory\n"
+	printf "Executing ./debug-script\n"
+	./debug-script 
+	 printf "Finished executing debug-script results are in: debug-build-output.txt\n"
+	 printf "Executing cuda-memcheck --leak-check full ./debug/test/ann_tests"
+	 cuda-memcheck --leak-check full ./debug/test/ann_tests > debug-memcheck-output.txt 2>&1 
+	 printf "Finished executing cuda-memcheck output file is debug-memcheck-output.txt\n"
+	 printf "Concatenating results of debug-build-output.txt and debug-memcheck-output.txt into debug-output.txt\n"
+	 cat debug-build-output.txt debug-memcheck-output.txt >> debug-output.txt
+	 printf "debug-output.txt complete\n"
   else
-     echo -e "Binary < ann_tests > was not found at /debug/test/"
-	 echo e "Executing ./debug-script"
-	 ./debug-script
- 	 cuda-memcheck --leak-check full ./debug/test/ann_tests
+     printf "Binary < ann_tests > was not found at /debug/test/\n"
+	 printf "Executing ./debug-script\n"
+	 ./debug-script  
+	 printf "Finished executing debug-script results are in: debug-build-output.txt\n"
+	 printf "Executing cuda-memcheck --leak-check full ./debug/test/ann_tests"
+ 	 cuda-memcheck --leak-check full ./debug/test/ann_tests > debug-memcheck-output.txt 2>&1
+	 printf "Finished executing cuda-memcheck output file is debug-memcheck-output.txt\n"
+	 printf "Concatenating results of debug-build-output.txt and debug-memcheck-output.txt into debug-output.txt\n"
+	 cat debug-build-output.txt debug-memcheck-output.txt >> debug-output.txt
+	 printf "debug-output.txt complete\n"
   fi
 fi
 
 if [[ $# -eq 1 && $1 -eq 2 ]] ; then
-  echo -e "Running cuda-memcheck on binary < ann_tests >located at: /release/test/" 
+  truncate -s 0 release-output.txt
+  printf "Running cuda-memcheck on binary < ann_tests >located at: /release/test/\n" 
   if [ -d release ]
   then
-	(cd release && make)
-	cuda-memcheck --leak-check full ./release/test/ann_tests
+	printf "Removing release directory\n"
+	rm -rf release
+	printf "Finished removing release directory\n"
+	printf "Executing ./release-script\n"
+	./release-script 
+	printf "Finished executing release-script results are in: release-build-output.txt\n"
+	printf "Executing cuda-memcheck --leak-check full ./release/test/ann_tests"
+	cuda-memcheck --leak-check full ./release/test/ann_tests 2>&1 
+	printf "Finished executing cuda-memcheck output file is release-memcheck-output.txt\n"
+	printf "Concatenating results of release-build-output.txt and release-memcheck-output.txt into release-output.txt\n"
+	cat release-build-output.txt release-memcheck-output.txt >> release-output.txt
+	printf "release-output.txt complete\n"
   else
-     echo -e "Binary < ann_tests > was not found at /release/test/"
-	 echo e "Executing ./release-script"
+     printf "Binary < ann_tests > was not found at /release/test/\n"
+	 printf "Executing ./release-script\n"
 	 ./release-script
- 	 cuda-memcheck --leak-check full ./release/test/ann_tests
+	 printf "Finished executing release-script results are in: release-build-output.txt\n"
+	 printf "Executing cuda-memcheck --leak-check full ./release/test/ann_tests"
+	 cuda-memcheck --leak-check full ./release/test/ann_tests 2>&1 
+	 printf "Finished executing cuda-memcheck output file is release-memcheck-output.txt\n"
+	 printf "Concatenating results of release-build-output.txt and release-memcheck-output.txt into release-output.txt\n"
+	 cat release-build-output.txt release-memcheck-output.txt >> release-output.txt
+	 printf "release-output.txt complete\n"
+ 	 cuda-memcheck --leak-check full ./release/test/ann_tests > release-memcheck-output.txt 2>&1
   fi
 fi
 
 #if $# = 3,4,5 etc
-echo -e "Written by Arom Zinhart DeGraca"
+printf "Written by Arom Zinhart DeGraca\n"

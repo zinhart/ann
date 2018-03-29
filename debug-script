@@ -1,5 +1,9 @@
-echo -e "Building ann in debug mode"
+printf "Building ann in debug mode\n"
+truncate -s 0 debug-build-output.txt
 mkdir -p debug && cd $_
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
-echo -e "Written by Arom Zinhart DeGraca"
+printf "Proceding with cmake\n"
+cmake -DCMAKE_BUILD_TYPE=Debug .. >> ../debug-build-output.txt 2>&1
+printf "Finished with cmake\n"
+printf "Proceding with make\n"
+make >> ../debug-build-output.txt 2>&1
+printf "Finished make\n"

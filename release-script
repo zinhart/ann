@@ -1,5 +1,9 @@
 echo -e "Building ann in release mode"
+truncate -s 0 release-build-output.txt
 mkdir -p release && cd $_
-cmake ..
-make
-echo -e "Written Arom Zinhart DeGraca"
+printf "\nProceding with cmake\n"
+cmake .. >> ../release-build-output.txt 2>&1
+printf "Finished with cmake\n"
+printf "Proceding with make\n"
+make >> ../release-build-output.txt 2>&1
+printf "Finished make\n"
