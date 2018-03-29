@@ -18,7 +18,7 @@ std::uniform_real_distribution<double> neg_real(std::numeric_limits<double>::min
 /*
  * ACTIVATION OBJECTIVE
  * */
-TEST(activation_test, call_activation_identity)
+TEST(activation_test, call_activation_identity_objective)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -28,9 +28,11 @@ TEST(activation_test, call_activation_identity)
   std::shared_ptr<double> activation_copy;
   double * device_activations;
   cudaError_t error_id;
+  //arbitrary layer size  based on ushort max
   std::uint16_t activation_size = Z_plus(mt);
   activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
-  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+  //will store the results of call activation
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
   error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
   if(error_id != cudaSuccess)
@@ -57,7 +59,7 @@ TEST(activation_test, call_activation_identity)
   if(error_id != cudaSuccess)
 	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-TEST(activation_test, call_activation_sigmoid)
+TEST(activation_test, call_activation_sigmoid_object)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -137,7 +139,7 @@ TEST(activation_test, call_activation_sigmoid)
 //	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 //}
 
-TEST(activation_test, call_activation_softplus)
+TEST(activation_test, call_activation_softplus_objective)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -175,7 +177,7 @@ TEST(activation_test, call_activation_softplus)
 	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
 
-TEST(activation_test, call_activation_tanh)
+TEST(activation_test, call_activation_tanh_objective)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -214,7 +216,7 @@ TEST(activation_test, call_activation_tanh)
 	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
 
-TEST(activation_test, call_activation_relu)
+TEST(activation_test, call_activation_relu_objective)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
