@@ -57,68 +57,199 @@ TEST(activation_test, call_activation_identity)
   if(error_id != cudaSuccess)
 	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-/*TEST(Layer_Test, call_activation_softmax)
+TEST(activation_test, call_activation_sigmoid)
 {
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ(std::exp(x), call_activation(L, x, LAYER_NAME::SOFTMAX, ACTIVATION::OBJECTIVE));
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  std::shared_ptr<double> activation;
+  std::shared_ptr<double> activation_copy;
+  double * device_activations;
+  cudaError_t error_id;
+  std::uint16_t activation_size = Z_plus(mt);
+  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
+  error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";/**/
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {	
+	activation.get()[i] = real(mt);
+	activation_copy.get()[i] = activation.get()[i];
+  }
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+  
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {
+	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+  }
+  error_id = cudaFree(device_activations);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-TEST(Layer_Test, call_activation_tanh)
+//to do
+//TEST(activation_test, call_activation_softmax)
+//{
+//  std::random_device rd;
+//  std::mt19937 mt(rd());
+//  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+//  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+//  std::shared_ptr<double> activation;
+//  std::shared_ptr<double> activation_copy;
+//  double * device_activations;
+//  cudaError_t error_id;
+//  std::uint16_t activation_size = Z_plus(mt);
+//  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+//  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+//  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
+//  error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
+//  if(error_id != cudaSuccess)
+//	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";/**/
+//  for(std::int16_t i = 0; i < activation_size; ++i)
+//  {	
+//	activation.get()[i] = real(mt);
+//	activation_copy.get()[i] = activation.get()[i];
+//  }
+//  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+//  if(error_id != cudaSuccess)
+//	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+//  ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTMAX, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+//  
+//  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+//  if(error_id != cudaSuccess)
+//	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+//
+//  for(std::int16_t i = 0; i < activation_size; ++i)
+//  {
+//	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+//  }
+//  error_id = cudaFree(device_activations);
+//  if(error_id != cudaSuccess)
+//	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+//}
+
+TEST(activation_test, call_activation_softplus)
 {
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ(std::tanh(-x), call_activation(L, x, LAYER_NAME::TANH, ACTIVATION::OBJECTIVE));
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  std::shared_ptr<double> activation;
+  std::shared_ptr<double> activation_copy;
+  double * device_activations;
+  cudaError_t error_id;
+  std::uint16_t activation_size = Z_plus(mt);
+  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
+  error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";/**/
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {	
+	activation.get()[i] = real(mt);
+	activation_copy.get()[i] = activation.get()[i];
+  }
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {
+	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+  }
+  error_id = cudaFree(device_activations);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-TEST(Layer_Test, call_activation_relu)
+
+TEST(activation_test, call_activation_tanh)
 {
-  Layer L;
-  double x = pos_real(mt);
-  ASSERT_EQ(x, call_activation(L, x, LAYER_NAME::RELU, ACTIVATION::OBJECTIVE));
-  x = neg_real(mt);
-  ASSERT_EQ(0, call_activation(L, x, LAYER_NAME::RELU, ACTIVATION::OBJECTIVE));
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  std::shared_ptr<double> activation;
+  std::shared_ptr<double> activation_copy;
+  double * device_activations;
+  cudaError_t error_id;
+  std::uint16_t activation_size = Z_plus(mt);
+  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
+  error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";/**/
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {	
+	activation.get()[i] = real(mt);
+	activation_copy.get()[i] = activation.get()[i];
+  }
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::TANH, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {
+	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+  }
+  error_id = cudaFree(device_activations);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-TEST(Layer_Test, call_activation_leaky_relu)
+
+TEST(activation_test, call_activation_relu)
 {
-  Layer L;
-  double x = pos_real(mt);
-  double leakage_coefficient = 0.1;
-  ASSERT_EQ(x, call_activation(L, x, leakage_coefficient,LAYER_NAME::LEAKY_RELU, ACTIVATION::OBJECTIVE));
-  x = neg_real(mt);
-  ASSERT_EQ((x * leakage_coefficient), call_activation(L, x, leakage_coefficient,LAYER_NAME::LEAKY_RELU, ACTIVATION::OBJECTIVE));
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  std::shared_ptr<double> activation;
+  std::shared_ptr<double> activation_copy;
+  double * device_activations;
+  cudaError_t error_id;
+  std::uint16_t activation_size = Z_plus(mt);
+  activation = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );
+  activation_copy = std::shared_ptr<double> ( new double[activation_size], std::default_delete<double[]>() );//will store the results of call activation
+  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation size: "<<activation_size<<" total bytes: "<<std::uint32_t(activation_size) * sizeof(double)<<"\n";
+  error_id = cudaMalloc( (void **) &device_activations, std::uint32_t(activation_size) * sizeof(double) );
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";/**/
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {	
+	activation.get()[i] = real(mt);
+	activation_copy.get()[i] = activation.get()[i];
+  }
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::RELU, ACTIVATION_TYPE::OBJECTIVE, device_activations, activation_size), 0);
+  
+  error_id = cudaMemcpy(device_activations, activation_copy.get(), activation_size * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+
+  for(std::int16_t i = 0; i < activation_size; ++i)
+  {
+	ASSERT_EQ(activation.get()[i],activation_copy.get()[i]);
+  }
+  error_id = cudaFree(device_activations);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
- // ACTIVATION DERIVATIVE
-TEST(Layer_Test, call_activation_identity_derivative)
-{
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ(1.0, call_activation(L, x, LAYER_NAME::IDENTITY, ACTIVATION::DERIVATIVE));
-}
-TEST(Layer_Test, call_activation_softmax_derivative)
-{
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ( x * (1.0 - x ), call_activation(L, x, LAYER_NAME::SOFTMAX, ACTIVATION::DERIVATIVE));
-}
-TEST(Layer_Test, call_activation_tanh_derivative)
-{
-  Layer L;
-  double x = reals(mt);
-  ASSERT_EQ(1.0 - (x*x), call_activation(L, x, LAYER_NAME::TANH, ACTIVATION::DERIVATIVE));
-}
-TEST(Layer_Test, call_activation_relu_derivative)
-{
-  Layer L;
-  double x = pos_real(mt);
-  ASSERT_EQ(1.0, call_activation(L, x, LAYER_NAME::RELU, ACTIVATION::DERIVATIVE));
-  x = neg_real(mt);
-  ASSERT_EQ(0, call_activation(L, x, LAYER_NAME::RELU, ACTIVATION::DERIVATIVE));
-}
-TEST(Layer_Test, call_activation_leaky_relu_derivative)
-{
-  Layer L;
-  double x = pos_real(mt);
-  double leakage_coefficient = 0.1;
-  ASSERT_EQ(1.0, call_activation(L, x, leakage_coefficient,LAYER_NAME::LEAKY_RELU, ACTIVATION::DERIVATIVE));
-  x = neg_real(mt);
-  ASSERT_EQ(leakage_coefficient, call_activation(L, x, leakage_coefficient,LAYER_NAME::LEAKY_RELU, ACTIVATION::DERIVATIVE));
-}*/
