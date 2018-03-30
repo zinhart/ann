@@ -15,7 +15,7 @@ namespace zinhart
 	block_launch.x = (current_layer_size + threads_per_block - 1) / threads_per_block;// number of blocks
 	block_launch.y = 1;
 	block_launch.z = 1;
-	std::cout<<"current_layer_size: "<<current_layer_size<<" threads_per_block: "<<threads_per_block<<" warp_size: "<<warp_size <<" block_launch.x: " <<block_launch.x<< " block_launch.y: " <<block_launch.y<< " block_launch.z: " <<block_launch.z<<"\n";
+	//std::cout<<"current_layer_size: "<<current_layer_size<<" threads_per_block: "<<threads_per_block<<" warp_size: "<<warp_size <<" block_launch.x: " <<block_launch.x<< " block_launch.y: " <<block_launch.y<< " block_launch.z: " <<block_launch.z<<"\n";
 	//call kernel
 	activation_kernel<<<block_launch, threads_per_block>>>(activation_name, activation_type,Wx_plus_b, current_layer_size);
 	cudaDeviceSynchronize();

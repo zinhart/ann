@@ -342,7 +342,7 @@ namespace zinhart
 			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
 			for(ith_observation = 0, batch_count = 0; ith_observation < total_observations.first; ++ith_observation, ++batch_count)
 			{
-			  std::cout<<"Case: "<<ith_observation + 1<<"\n";
+			  //std::cout<<"Case: "<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
 			  if(batch_count == batch_size)
 			  {
