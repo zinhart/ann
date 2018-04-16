@@ -1,5 +1,5 @@
-#ifndef ACTIVATION_HH
-#define ACTIVATION_HH
+#ifndef ACTIVATION_H
+#define ACTIVATION_H
 #include "typedefs.cuh"
 #include <cstdint>
 #include <utility>
