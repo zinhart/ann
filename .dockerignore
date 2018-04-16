@@ -1,0 +1,19 @@
+# All the crap cmake generates:
+Testing
+CMakeFiles
+cmake_install.cmake
+CTestTestfile.cmake
+CMakeLists.txt.user
+CMakeCache.txt
+
+# Build files:
+Debug
+Release
+build*
+release*
+debug*
+*.a
+*.o
+
+# IDE files:
+*.swp
