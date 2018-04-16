@@ -63,6 +63,10 @@ ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ENV NVIDIA_REQUIRE_CUDA "cuda>=9.0"
 # END Nvidia
 
+#grab project 
+RUN  cd /root && git clone https://github.com/zinhart/ann.git \
+	&& echo "Got repo"
+
 WORKDIR "/root"
 CMD ["/bin/bash"]
 
