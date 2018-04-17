@@ -39,7 +39,7 @@ TEST(activation_test, call_activation_identity_objective)
   //allocate device activation vector
   error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector allocation in identity objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
@@ -51,13 +51,13 @@ TEST(activation_test, call_activation_identity_objective)
   }
   error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
   //copy activations from device to host
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyDeviceToHost);
+  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
@@ -66,7 +66,7 @@ TEST(activation_test, call_activation_identity_objective)
   //release device memory
   error_id = cudaFree(device_activation_vector);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector deallocation (In Identity_Derivative) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
 
 /*
@@ -93,7 +93,7 @@ TEST(activation_test, call_activation_identity_derivative)
   //allocate device activation vector
   error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation allocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector allocation in identity derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
@@ -101,32 +101,27 @@ TEST(activation_test, call_activation_identity_derivative)
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
 	//values post-activation
-	activation_vector.get()[i] = act_identity(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
+	activation_vector.get()[i] = act_identity(activation_vector.get()[i], ACTIVATION_TYPE::DERIVATIVE);
   }
   error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
   //copy activations from device to host
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyDeviceToHost);
+  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
-	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
+	ASSERT_EQ(activation_vector.get()[i], activation_vector_copy.get()[i]);
   }
   //release device memory
   error_id = cudaFree(device_activation_vector);
   if(error_id != cudaSuccess)
-	std::cerr<<"device activation deallocation failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+	std::cerr<<"device_activation_vector deallocation failed (In Identity_Derivative) with error: "<<cudaGetErrorString(error_id)<<"\n";
 }
-
-
-
-
-
 
 /*TEST(activation_test, call_activation_sigmoid_objective)
 {

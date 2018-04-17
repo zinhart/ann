@@ -53,6 +53,8 @@ namespace zinhart
 	//copy memory from host to device
 	return 0;
   }*/
+
+
   //activation function kernels here
 	__global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * device_Wx_plus_b, std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
   {

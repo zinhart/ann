@@ -39,7 +39,7 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER double objective(const double & x)
 	   {return x;};
 	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {return x;};
+	   {return 1;};
   };
 
   class sigmoid : public activation<sigmoid>
