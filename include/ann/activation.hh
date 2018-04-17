@@ -25,13 +25,7 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER activation & operator = (const activation&) = default;
 		CUDA_CALLABLE_MEMBER activation & operator = (activation&&) = default;
 		CUDA_CALLABLE_MEMBER double operator ()(double x, ACTIVATION_TYPE at)
-		{
-		  return (at == ACTIVATION_TYPE::OBJECTIVE) ? 
-			static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) 
-			: 
-			static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x)
-			;
-		};
+		{ return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x); };
 	};
 
   class identity : public activation<identity>

@@ -5,5 +5,5 @@ printf "Proceding with cmake\n"
 cmake -DCMAKE_BUILD_TYPE=Debug .. >> ../debug-build-output.txt 2>&1
 printf "Finished with cmake\n"
 printf "Proceding with make\n"
-make >> ../debug-build-output.txt 2>&1
+make -j 8 >> ../debug-build-output.txt 2>&1
 printf "Finished make\n"
