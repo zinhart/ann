@@ -222,7 +222,7 @@ TEST(ann_test, forward_propagate)
   cublas_error_id = cublasCreate(&handle);
   if(cublas_error_id != CUBLAS_STATUS_SUCCESS)
   {
-	//std::cerr<<"CublasHandle creation failed with error: "<<cublasGetErrorString(cublas_error_id)<<"\n";
+	std::cerr<<"CublasHandle creation failed with error: "<<cublasGetErrorString(cublas_error_id)<<"\n";
   }
 
   /* This is the forward propagation loop that is to be validated
@@ -238,7 +238,7 @@ TEST(ann_test, forward_propagate)
   cublas_error_id = cublasDestroy(handle);
   if(cublas_error_id != CUBLAS_STATUS_SUCCESS)
   {
-	//std::cerr<<"cublas handle destruction failed with error: "<<cublasGetErrorString(cublas_error_id)<<"\n";
+	std::cerr<<"cublas handle destruction failed with error: "<<cublasGetErrorString(cublas_error_id)<<"\n";
   }
   // deallocate device memory and check for errors  
   error_id = cudaFree(device_total_observations);

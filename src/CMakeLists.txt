@@ -3,6 +3,7 @@ set(ann_src
   optimizer.cu
   activation.cu  
   ann.cu	
+  error.cc
 )
 
 cuda_add_library(ann ${LIB_TYPE} ${ann_src})

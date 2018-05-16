@@ -10,6 +10,7 @@
   #include <cuda.h>
   #include <builtin_types.h>
   #include <cuda_runtime_api.h>
+  #include <cublas_v2.h>
 #else
   #define CUDA_CALLABLE_MEMBER
   #define HOST
@@ -23,6 +24,7 @@
 #include <thrust/device_vector.h>
 namespace zinhart
 {
+
   using uint = unsigned int;
   using precision_type = double;
   using pt = precision_type;
