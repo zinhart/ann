@@ -1,20 +1,24 @@
 #ifndef TYPEDEFS_CUH
 #define TYPEDEFS_CUH
-#ifdef __CUDACC__
-#define CUDA_ENABLED 1
-#define CUDA_CALLABLE_MEMBER __host__ __device__
-#define HOST __host__
-#define DEVICE __device__
-#define CONSTANT __constant__
+
+#if CUDA_ENABLED == true//this is defined in top level cmake lists file
+  #define CUDA_CALLABLE_MEMBER __host__ __device__
+  #define HOST __host__
+  #define DEVICE __device__
+  #define CONSTANT __constant__
+  #define SHARED __shared__
+  #include <cuda.h>
+  #include <builtin_types.h>
+  #include <cuda_runtime_api.h>
 #else
-#define CUDA_ENABLED 0
-#define CUDA_CALLABLE_MEMBER
-#define HOST 
-#define CONSTANT
-#define DEVICE 
+  #define CUDA_CALLABLE_MEMBER
+  #define HOST
+  #define DEVICE
+  #define CONSTANT
+  #define SHARED
+  #include <lapacke.h>
 #endif
-#include <cuda.h>
-#include <builtin_types.h>
+
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 namespace zinhart

@@ -3,7 +3,7 @@
 #include "typedefs.cuh"
 #include <cstdint>
 #include <utility>
-#if CUDA_ENABLED == 1
+#if CUDA_ENABLED == true
 #include <math.h>
 #else
 #include <cmath>

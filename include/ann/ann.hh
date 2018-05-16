@@ -16,7 +16,10 @@
 namespace zinhart
 {
 
-#if CUDA_ENABLED == 1
+  template <class model_type>
+	class ann
+	{
+#if CUDA_ENABLED == true
 		 double * global_device_total_observations;
 		 double * global_device_total_targets;
 		 double * global_device_total_hidden_weights;
@@ -26,9 +29,6 @@ namespace zinhart
 		 double * global_device_total_gradient;
 		 double * global_device_total_deltas;
 #endif
-  template <class model_type>
-	class ann
-	{
 
 	  protected:
 
