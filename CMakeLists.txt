@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(ann)
 
 # Set build type to RELEASE by default:
@@ -7,54 +7,103 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RELEASE")
 endif ()
 
+# for unit tests using google test
 option(BuildTest "BuildTest" ON)
-option(BuildCuda "BuildCuda" ON)#when this is off will use stl threads and lapack instead of cuda and cublas
-#option(BuildBench "BuildBench" OFF)
+# for cuda when this is off will use stl threads and lapack instead of cuda and cublas
+option(BuildCuda "BuildCuda" ON)
+# library type
 option(BuildShared "BuildShared" OFF)
+# sanitizer support
 option(Sanitize "Sanitize" OFF)
 
-if (BuildShared)
+#threading options 
+option(PTHREADS "PTHREADS" ON)
+option(WIN32_THREADS "WIN32_THREADS" OFF)
+
+
+# set lib type
+if(BuildShared)
   set(LIB_TYPE SHARED)
-else ()
+else()
   set(LIB_TYPE STATIC)
 endif()
 
+#set module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-if (BuildCuda)
+
+# set lib type
+if(PTHREADS)
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+elseif(WIN32_THREADS)
+  set(THREADS_PREFER_WIN32_FLAG ON)
+elseif(PTHREADS AND WIN32_THREADS)
+  message(FATAL_ERROR "Choose 1 threading library")
+endif()
+
+# threading library
+find_package(Threads REQUIRED)
+
+
+# find cuda package and set compute achitecture
+if(BuildCuda)
   find_package(CUDA REQUIRED)
   set(CUDA_ARCH -gencode arch = compute_61, code = sm_61)
-  #  find_package(Thrust)
-else ()
-  find_package(Threads REQUIRED)
+
+  # check to see if CUDA_ENABLED was defined by another library using this one
+  string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}" )
+  if(${result} MATCHES "CUDA_ENABLED")
+    # do nothing
+  else()
+	# set macro to conditionaly include headers define functions etc w.r.t gpu code
+	add_definitions(-DCUDA_ENABLED=true)
+  endif()
+else()
+  string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}")
+  if(${result} MATCHES "CUDA_ENABLED")
+  else()
+	add_definitions(-DCUDA_ENABLED=false)
+  endif()
   find_package(LAPACK)
 endif()
-find_package(Math)
 
+# set include paths
 include_directories(. include ${Boost_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} concurrent_routines/include)
 
-set(CMAKE_CXX_STANDARD 11) 
+# set cxx standard
+set(CMAKE_CXX_STANDARD 11)
+# force cxx standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set cxx flags
 set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
+# set cxx release flags
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+# set cxx debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions")
+
+# set nvcc flags for debugging
 if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -G -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
+  #only if Building gpu support
+  if(BuildCuda)
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -G -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
+  endif()
 endif()
 
-if (Sanitize)
-  set(CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=undefined ${CMAKE_CXX_FLAGS}")
-endif ()
 
+# sanitize flags
+if (Sanitize)
+  set(CMAKE_CXX_FLAGS "-fsantize=address -fsanitize=undefined ${CMAKE_CXX_FLAGS}")
+endif()
+
+
+# add src directory
 add_subdirectory(src)
+# add concurrent_routines directory
 add_subdirectory(concurrent_routines)
 
+#enable testing and add test directory
 if (BuildTest)
   enable_testing()
   add_subdirectory(test)
-endif ()
-
-if (BuildBench)
-  add_subdirectory(bench)
 endif ()
 
 message(STATUS "")
