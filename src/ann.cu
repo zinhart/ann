@@ -18,8 +18,7 @@ namespace zinhart
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
 							);
   template HOST int cleanup(ann<ffn> & model);
-  template<class T>
-	HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
+  template HOST std::int32_t forward_propagate(ann<ffn> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
@@ -72,7 +71,7 @@ namespace zinhart
 	  return model.init(total_observations, total_targets);
 	  }
 
-#if CUDA_ENABLED == 1 
+#if CUDA_ENABLED == true
   template<class T>
 	HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
@@ -81,7 +80,7 @@ namespace zinhart
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
 							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights)
 	{
-	 model.forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations); 
+	 model.forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations, device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights); 
 	}
 #endif
 

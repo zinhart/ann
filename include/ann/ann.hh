@@ -8,7 +8,7 @@
 #include <vector>
 #define MAXPOSNUM 2137483647
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
-#if CUDA_ENABLED == 1
+#if CUDA_ENABLED == true
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
 //#include <thrust>
@@ -304,7 +304,7 @@ namespace zinhart
 			case CUBLAS_STATUS_ALLOC_FAILED: return "CUBLAS_STATUS_ALLOC_FAILED";
 	 		case CUBLAS_STATUS_INVALID_VALUE: return "CUBLAS_STATUS_INVALID_VALUE"; 
 			case CUBLAS_STATUS_ARCH_MISMATCH: return "CUBLAS_STATUS_ARCH_MISMATCH"; 
-			case CUBLAS_STATUS_MAPPING_ERROR: return "CUBLAS_STATUS_MAPPING_ERROR";
+			case CUBLAS_STATUS_MAPPING_ERROR: return "CUBLAS_TATUS_MAPPING_ERROR";
 			case CUBLAS_STATUS_EXECUTION_FAILED: return "CUBLAS_STATUS_EXECUTION_FAILED"; 
 			case CUBLAS_STATUS_INTERNAL_ERROR: return "CUBLAS_STATUS_INTERNAL_ERROR"; 
 	  	  }
@@ -569,7 +569,7 @@ namespace zinhart
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
-							   double device_total_observations, double device_total_activations, double device_total_bias, double device_total_hidden_weights);
+							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights);
 #endif
 	template<class T>
 	  HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
