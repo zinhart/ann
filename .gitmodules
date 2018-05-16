@@ -1,0 +1,3 @@
+[submodule "concurrent_routines"]
+	path = concurrent_routines
+	url = git@github.com:zinhart/concurrent_routines.git
