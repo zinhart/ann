@@ -8,6 +8,7 @@ set(ann_src
 cuda_add_library(ann ${LIB_TYPE} ${ann_src})
 
 target_link_libraries(ann
+  concurrent_routines
   ${CUDA_CUBLAS_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBS}

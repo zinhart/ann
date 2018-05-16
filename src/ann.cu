@@ -18,6 +18,13 @@ namespace zinhart
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
 							);
   template HOST int cleanup(ann<ffn> & model);
+  template<class T>
+	HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations);
+
   template HOST int train(ann<ffn> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 
   //definitions
@@ -63,6 +70,21 @@ namespace zinhart
 #endif
 	  return model.init(total_observations, total_targets);
 	  }
+
+#if CUDA_ENABLED == 1 
+  template<class T>
+	HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations)
+	{
+	  //left off here
+	}
+#endif
+
+
+
   template<class T>
 	HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty)
 	{

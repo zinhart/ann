@@ -5,6 +5,7 @@
 #include <random>
 #include <limits>
 #include <memory>
+#include <vector>
 using namespace zinhart;
 
 std::random_device rd;

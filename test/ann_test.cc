@@ -65,6 +65,10 @@ TEST(ann_test, initialize_model)
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);
   ASSERT_EQ(cleanup(model), 0);
 }
+TEST(ann_test, forward_propagate)
+{
+
+}
 
 TEST(ann_test, ann_train)
 {
@@ -104,8 +108,7 @@ TEST(ann_test, ann_train)
   for(ith_layer = 0, total_hidden_weights = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
 	total_hidden_weights += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
-  }
-  
+  }  
   ASSERT_EQ(initialize_model(model, total_observations, total_targets), 0);
   ASSERT_EQ(total_activations, get_total_activations(model).first);
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);

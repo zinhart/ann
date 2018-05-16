@@ -309,6 +309,14 @@ namespace zinhart
 		}
 
 #endif
+#if CUDA_ENABLED == 1
+		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations)
+		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations); }
+#endif
 		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
 		  int error = 0;
@@ -346,11 +354,14 @@ namespace zinhart
 #if CUDA_ENABLED == 1 
 			  if(batch_count == batch_size)
 			  {
-  				error = static_cast<model_type*>(this)->forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);//every batch copy data back to host
+
+  				error = forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+				  //static_cast<model_type*>(this)->forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);//every batch copy data back to host
 				batch_count = 0;//reset the count
 			  }	  
 			  else
-				error = static_cast<model_type*>(this)->forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+				error = forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+//				error = static_cast<model_type*>(this)->forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
 			  //do something with the error code
 			  if(error == 1)
 			  {
@@ -388,7 +399,7 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
-		HOST int forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
+		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
@@ -546,8 +557,15 @@ namespace zinhart
 	template<class T>
 	  HOST int initialize_model(ann<T> & model,  
 							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
-							);
+							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets );
+#if CUDA_ENABLED == 1
+	template<class T>
+	  HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
+			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations);
+#endif
 	template<class T>
 	  HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 	template<class T>
