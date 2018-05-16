@@ -165,7 +165,7 @@ TEST(activation_test, call_activation_sigmoid_objective)
   if(error_id != cudaSuccess)
 	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
   //copy activations from device to host
   error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
   if(error_id != cudaSuccess)
@@ -220,7 +220,7 @@ TEST(activation_test, call_activation_sigmoid_derivative)
   if(error_id != cudaSuccess)
 	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
   //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
+  ASSERT_EQ(call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
   //copy activations from device to host
   error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
   if(error_id != cudaSuccess)
