@@ -46,6 +46,7 @@ if (Sanitize)
 endif ()
 
 add_subdirectory(src)
+add_subdirectory(concurrent_routines)
 
 if (BuildTest)
   enable_testing()

@@ -1,6 +1,6 @@
-add_library(gtest ./gtest/gtest-all.cc)
+add_library(gtest_ann ./gtest/gtest-all.cc)
 include_directories(.)
-target_link_libraries(gtest ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(gtest_ann ${CMAKE_THREAD_LIBS_INIT})
 
 set(test_src
   run_all.cc
@@ -13,7 +13,7 @@ set(test_src
 add_executable(ann_tests ${test_src})
 
 target_link_libraries(ann_tests
-  gtest
+  gtest_ann
   ann
   ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBS}
