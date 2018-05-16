@@ -21,6 +21,7 @@ TEST(ann_test, add_layer)
   a_layer.second = dist(mt);  
   add_layer(model, a_layer);
 }
+
 TEST(ann_test, initialize_model)
 {
   std::random_device rd;
