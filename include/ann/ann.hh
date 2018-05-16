@@ -91,7 +91,7 @@ namespace zinhart
 		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
 			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
  		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
-		  this->total_gradient.first = this->total_gradient.first;
+		  this->total_gradient.first = this->total_hidden_weights.first;
 		  this->total_gradient.second = std::shared_ptr<double>(new double[this->total_gradient.first], std::default_delete<double[]>());//allocate gradients
 
 		  //the error
