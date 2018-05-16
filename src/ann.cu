@@ -23,7 +23,8 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations);
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights);
 
   template HOST int train(ann<ffn> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
 
@@ -77,9 +78,10 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations)
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights)
 	{
-	  //left off here
+	 model.forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations); 
 	}
 #endif
 

@@ -15,6 +15,7 @@
 #endif
 namespace zinhart
 {
+
 #if CUDA_ENABLED == 1
 		 double * device_total_observations;
 		 double * device_total_targets;
@@ -29,6 +30,7 @@ namespace zinhart
 	class ann
 	{
 	  protected:
+
 		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
         //number of training cases, trainint case size, the training cases themselves
 		std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
@@ -314,8 +316,10 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations)
-		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations); }
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights)
+		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
+			,device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights); }
 #endif
 		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
@@ -355,13 +359,11 @@ namespace zinhart
 			  if(batch_count == batch_size)
 			  {
 
-  				error = forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
-				  //static_cast<model_type*>(this)->forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);//every batch copy data back to host
+  				error = forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations, device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights);
 				batch_count = 0;//reset the count
 			  }	  
 			  else
-				error = forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
-//				error = static_cast<model_type*>(this)->forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations);
+				error = forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations, device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights);
 			  //do something with the error code
 			  if(error == 1)
 			  {
@@ -403,7 +405,8 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights
 							  )
 
 		{
@@ -564,7 +567,8 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations);
+							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   double device_total_observations, double device_total_activations, double device_total_bias, double device_total_hidden_weights);
 #endif
 	template<class T>
 	  HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
