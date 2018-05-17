@@ -29,7 +29,7 @@ if [[ $# -eq 1 && $1 -eq 1 ]] ; then
 	./debug-script 
 	 printf "Finished executing debug-script results are in: debug-build-output.txt\n"
 	 printf "Executing cuda-memcheck --leak-check full ./debug/test/ann_tests"
-	 cuda-memcheck --leak-check full ./debug/test/ann_tests > debug-memcheck-output.txt 2>&1 
+	 cuda-memcheck --leak-check full --racecheck-report all --show-backtrace yes ./debug/test/ann_tests > debug-memcheck-output.txt 2>&1 
 	 printf "Finished executing cuda-memcheck output file is debug-memcheck-output.txt\n"
 	 printf "Concatenating results of debug-build-output.txt and debug-memcheck-output.txt into debug-output.txt\n"
 	 cat debug-build-output.txt debug-memcheck-output.txt >> debug-output.txt

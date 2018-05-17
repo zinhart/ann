@@ -68,6 +68,7 @@ TEST(ann_test, initialize_model)
   ASSERT_EQ(cleanup(model), 0);
 }
 #if CUDA_ENABLED == 1
+/*
 TEST(ann_test, forward_propagate)
 {
   //Random numbers will serve as random model configurations
@@ -225,15 +226,21 @@ TEST(ann_test, forward_propagate)
 	std::cerr<<"CublasHandle creation failed with error: "<<cublasGetErrorString(cublas_error_id)<<"\n";
   }
 
-  /* This is the forward propagation loop that is to be validated
-   * The only matrix that should not be the same is device activations
-   * */
-/*  for(ith_observation = 0; i < total_observations.first; ++ith_observation)
+  // This is the forward propagation loop that is to be validated
+  // The only matrix that should not be the same is device activations
+    
+
+  for(ith_observation = 0; ith_observation < total_observations.first / total_observations.first; ++ith_observation)
   {
 	error = forward_propagate(model, false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations, device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights);
+
 	if(error == 1)
-	  std::cerr<<"An error occured in forward_propagate during the "<<ith_observation<<" th iterator\n";;
-  }*/
+	{
+	  std::cerr<<"An error occured in forward_propagate during the "<<ith_observation<<"th iterator\n";
+	  std::abort();
+	}	
+  }
+  
   // release cublas resources and check for errors
   cublas_error_id = cublasDestroy(handle);
   if(cublas_error_id != CUBLAS_STATUS_SUCCESS)
@@ -254,8 +261,9 @@ TEST(ann_test, forward_propagate)
   if(error_id != cudaSuccess)
 	std::cerr<<"device_total_hidden_weights deallocation (In forward_propagate) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 
-}
+}*/
 #endif
+/*
 TEST(ann_test, ann_train)
 {
   //Random numbers will serve as random model configurations
@@ -300,4 +308,4 @@ TEST(ann_test, ann_train)
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);
   ASSERT_EQ(train(model,dist(mt),dist(mt), dist(mt)), 0);
   ASSERT_EQ(cleanup(model), 0);
-}
+}*/

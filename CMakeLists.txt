@@ -84,7 +84,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-func
 if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
   #only if Building gpu support
   if(BuildCuda)
-	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -G -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -lineinfo -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
   endif()
 endif()
 
