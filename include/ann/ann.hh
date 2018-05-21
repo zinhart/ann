@@ -1,13 +1,14 @@
 #ifndef ANN_HH
 #define ANN_HH
+#include "concurrent_routines/concurrent_routines_error.hh"
 #include "loss_function.hh"
 #include "activation.hh"
 #include "optimizer.hh"
 #include <memory>
 //#include <zinhart/vector_space>
 #include <vector>
-#define MAXPOSNUM 2137483647
-#define IDX2C(i,j,ld) (((j)*(ld))+(i))
+//#define MAXPOSNUM 2137483647
+//#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #if CUDA_ENABLED == true
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
@@ -304,9 +305,9 @@ namespace zinhart
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
 			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
 							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
-							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights)
+							   double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight)
 		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
-			,device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights); }
+			,device_total_observation, device_total_activation, device_total_bia, device_total_hidden_weight); }
 #endif
 		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
@@ -320,7 +321,7 @@ namespace zinhart
 		  error_id = cublasCreate(&handle);
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"CublasHandle creation failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"CublasHandle creation failed with error: "<<cublas_get_error_string(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 #else
@@ -341,7 +342,7 @@ namespace zinhart
 			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
 			for(ith_observation = 0, batch_count = 0; ith_observation < total_observations.first; ++ith_observation, ++batch_count)
 			{
-		//	  std::cout<<"Case: "<<ith_observation + 1<<"\n";
+			  std::cout<<"Case: "<<ith_observation + 1<<"\n";
 #if CUDA_ENABLED == 1 
 			  if(batch_count == batch_size)
 			  {
@@ -359,6 +360,7 @@ namespace zinhart
 			  }
 			  //call back_propagate
 #else
+			  std::cout<<"Apples\n";
 			  static_cast<model_type*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
 			}
@@ -368,7 +370,7 @@ namespace zinhart
 		  error_id = cublasDestroy(handle);
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas handle destruction failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas handle destruction failed with error: "<<cublas_get_error_string(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 #else
@@ -398,44 +400,66 @@ namespace zinhart
 
 		{
   std::cout<<"Total layers size: "<<total_layers.size()<<"\n";
-
-
   for(unsigned int ith_layer = 0; ith_layer < total_layers.size() ; ++ith_layer)
 	std::cout<<"Neurons in layer "<<ith_layer + 1<<": "<<total_layers[ith_layer].second<<"\n";
   for(unsigned int ith_layer = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
 	std::cout<<"weight matrix between layer "<<ith_layer + 2<<" and "<<ith_layer + 1<<" dimensions: "<<total_layers[ith_layer + 1].second<<" by "<<total_layers[ith_layer].second<<"\n";
 
 		  cublasStatus_t error_id;
-		  std::int32_t  lda, ldb,ldc;// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
+		  std::int32_t  m, n, k, lda, ldb,ldc;// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
 		  std::uint32_t ith_layer;// from the first hidden layer to the output layer 
 		  std::uint32_t weight_offset = 0;// number of weights connection between layer i and layer i + 1
 		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
-		 
-
-		  //do  first hidden layer and input layer
-		  lda = total_layers[1].second;
-		  ldb = total_layers[0].second;
-		  ldc = lda;//obviously
-		  
+		
 		  const double alf = 1;
 		  const double bet_mult = 0, bet_add = 1;
 		  const double *alpha = &alf;
 		  const double *beta1 = &bet_mult;
 		  const double *beta2 = &bet_add;
-		 
-		  //perform Wx 
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1, total_layers[0].second, 
-			          alpha, device_total_hidden_weights, lda,
-					  device_total_observations + case_begin, ldb, beta1,
-					  device_total_activations,ldc
+
+		  m = 1; // cols of x
+		  n = total_layers[1].second; // rows of weight matrix 
+		  k = total_layers[0].second; // rows of x
+
+		  lda = m;
+		  ldb = k;
+		  ldc = m;
+
+		  
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+					  m, n, k, 
+			          alpha, 
+					  device_total_observations + case_begin, lda,
+					  device_total_hidden_weights, ldb, 
+					  beta1,
+					  device_total_activations, ldc
 					  );
+/*		  //do  first hidden layer and input layer
+		  m = total_layers[1].second; // the weight matrix's rows are the number of neurons in the first hidden layer, it's columns are the number of neurons in  the input layer
+		  n = 1; // the result is a row vector
+		  k = total_layers[0].second; // the number of columns of the weight matrix and rows of the input layer
+
+		  lda = m;
+		  ldb = k;
+		  ldc = m;
+	 
+		  //perform Wx  original
+		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+					  m, n, k, 
+			          alpha, 
+					  device_total_hidden_weights, lda,
+					  device_total_observations + case_begin, ldb, 
+					  beta1,
+					  device_total_activations, ldc
+					  );*/
+		  
 		  //check for errors
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgemm on first hidden layer and input layer failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgemm on first hidden layer and input layer failed with error: "<<cublas_get_error_string(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
-
+/*
 		  //update dimensions of matrix multiplication
 		  lda = total_layers[1].second;
 		  ldb = lda;
@@ -449,7 +473,7 @@ namespace zinhart
 		  //check for error on dgemm
 		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublas_get_error_string(error_id)<<"\n";
 			return ERROR_CUDA_ERROR;
 		  }
 
@@ -476,7 +500,7 @@ namespace zinhart
 								  );
 		    if(error_id != CUBLAS_STATUS_SUCCESS)
 		    {
-			  std::cerr<<"cublas dgemm failed with error: "<<cublasGetErrorString(error_id)<<"\n";
+			  std::cerr<<"cublas dgemm failed with error: "<<cublas_get_error_string(error_id)<<"\n";
 		 	  return ERROR_CUDA_ERROR;
 		    }
 		    ldb = total_layers[ith_layer + 1].second;	
@@ -488,7 +512,7 @@ namespace zinhart
 			                    );
 			if(error_id != CUBLAS_STATUS_SUCCESS)
 			{
-			  std::cerr<<"cublas dgeam on failed with error: "<< cublasGetErrorString(error_id)<<"\n";
+			  std::cerr<<"cublas dgeam on failed with error: "<< cublas_get_error_string(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
 			}
 			//Wx + b complete
@@ -500,7 +524,7 @@ namespace zinhart
 		  //copy activations back to host
 		  if(copy_device_to_host == true)
 		  {
-		    /*
+		    
 			//copy activations from device to host
 		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
 			if(error_id != cudaSuccess)
@@ -508,8 +532,9 @@ namespace zinhart
 			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
 			  return ERROR_CUDA_ERROR;
 			}
-			*/
+			
 		  }
+*/		
 		  return 0;
 		}
 		HOST void backward_propagate(cublasHandle_t & context)

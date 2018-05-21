@@ -94,11 +94,11 @@ if (Sanitize)
   set(CMAKE_CXX_FLAGS "-fsantize=address -fsanitize=undefined ${CMAKE_CXX_FLAGS}")
 endif()
 
+# add concurrent_routines directory
+add_subdirectory(concurrent_routines)
 
 # add src directory
 add_subdirectory(src)
-# add concurrent_routines directory
-add_subdirectory(concurrent_routines)
 
 #enable testing and add test directory
 if (BuildTest)

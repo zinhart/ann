@@ -1,7 +1,7 @@
 #ifndef ACTIVATION_H
 #define ACTIVATION_H
 #include "typedefs.cuh"
-#include "error.hh"
+#include "concurrent_routines/concurrent_routines_error.hh"
 #include <cstdint>
 #include <utility>
 #if CUDA_ENABLED == true
