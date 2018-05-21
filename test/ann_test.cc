@@ -42,16 +42,16 @@ TEST(ann_test, initialize_model)
   a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
+  std::pair<std::uint32_t, double *> total_observations;
+  std::pair<std::uint32_t, double *> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer;
   
   total_observations.first = dist(mt);//number of observations
-  total_observations.second = std::shared_ptr<double> ( new double[total_observations.first * total_layers[0].second], std::default_delete<double[]>() );//observations themselves 
+  total_observations.second = new double[total_observations.first * total_layers[0].second];//observations themselves 
  
   total_targets.first = total_num_targets; // number of targets
-  total_targets.second = std::shared_ptr<double> ( new double[total_targets.first], std::default_delete<double[]>() );//targets themselves 
+  total_targets.second = new double[total_targets.first];//targets themselves 
     
   //calc number of activations
   for(ith_layer = 1, total_activations = 0; ith_layer < total_layers.size(); ++ith_layer )
@@ -79,19 +79,19 @@ TEST(ann_test, forward_propagate)
   std::uint32_t total_num_targets = dist(mt);
 
   // host vectors 
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_activations;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_bias;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;
+  std::pair<std::uint32_t, double *> total_observations;
+  std::pair<std::uint32_t, double *> total_targets;
+  std::pair<std::uint32_t, double *> total_activations;
+  std::pair<std::uint32_t, double *> total_bias;
+  std::pair<std::uint32_t, double *> total_hidden_weights;
 
   // host validation vectors
   
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations_copy;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets_copy;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_activations_copy;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_bias_copy;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights_copy;
+  std::pair<std::uint32_t, double *> total_observations_copy;
+  std::pair<std::uint32_t, double *> total_targets_copy;
+  std::pair<std::uint32_t, double *> total_activations_copy;
+  std::pair<std::uint32_t, double *> total_bias_copy;
+  std::pair<std::uint32_t, double *> total_hidden_weights_copy;
 /*
   // device vectors
   double * device_total_observations, * device_total_activations, * device_total_bias, * device_total_hidden_weights;
@@ -280,8 +280,8 @@ TEST(ann_test, ann_train)
   a_layer.second = total_num_targets; 
   add_layer(model,a_layer);
   
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-  std::pair<std::uint32_t, std::shared_ptr<double>> total_targets;
+  std::pair<std::uint32_t, double *> total_observations;
+  std::pair<std::uint32_t, double *> total_targets;
   std::vector<LAYER_INFO> total_layers(get_total_layers(model));
   std::uint32_t total_hidden_weights, total_activations, ith_layer;
   

@@ -35,35 +35,35 @@ namespace zinhart
 
 		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
         //number of training cases, trainint case size, the training cases themselves
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_observations;
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_targets; // output layer size and the complete set of targets for each input
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_activations;//this is the sum of all the hidden layers and the output layer neurons
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_error;
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_gradient;
-		std::pair<std::uint32_t, std::shared_ptr<double>> total_deltas;
+		std::pair<std::uint32_t, double *> total_observations;
+		std::pair<std::uint32_t, double *> total_targets; // output layer size and the complete set of targets for each input
+		std::pair<std::uint32_t, double *> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
+		std::pair<std::uint32_t, double *> total_activations;//this is the sum of all the hidden layers and the output layer neurons
+		std::pair<std::uint32_t, double *> total_error;
+		std::pair<std::uint32_t, double *> total_gradient;
+		std::pair<std::uint32_t, double *> total_deltas;
 	  public:
 		ann() = default;
-		ann(const ann<model_type> &) = default;
-		ann(ann<model_type> &&) = default;
-		ann<model_type> & operator = (const ann<model_type>&) = default;
-		ann<model_type> & operator = (ann<model_type> &&) = default;
+		ann(const ann<model_type> &) = delete;
+		ann(ann<model_type> &&) = delete;
+		ann<model_type> & operator = (const ann<model_type>&) = delete;
+		ann<model_type> & operator = (ann<model_type> &&) = delete;
 		~ann() = default;
 
 		//debugging functions
 		const std::vector<LAYER_INFO> & get_total_layers()const
 		{return total_layers; }
-		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_observations()const
+		const std::pair<std::uint32_t, double *> & get_total_observations()const
 		{return total_observations;}
-		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_hidden_weights()const
+		const std::pair<std::uint32_t, double *> & get_total_hidden_weights()const
 		{return total_hidden_weights;}
-		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_activations()const
+		const std::pair<std::uint32_t, double *> & get_total_activations()const
 		{return total_activations;}
-		const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_error()const
+		const std::pair<std::uint32_t, double *> & get_total_error()const
 		{return total_error;}
-	    const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_gradient()const
+	    const std::pair<std::uint32_t, double *> & get_total_gradient()const
 		{return total_gradient;}
-	    const std::pair<std::uint32_t, std::shared_ptr<double>> & get_total_deltas()const
+	    const std::pair<std::uint32_t, double *> & get_total_deltas()const
 		{return total_deltas;}
 		//end debugging functions
 
@@ -71,9 +71,55 @@ namespace zinhart
 		//I assume the first layer will be an input layer
 		HOST void add_layer(const LAYER_INFO & ith_layer)
 		{ total_layers.push_back(ith_layer); }
+
+#if CUDA_ENABLED == 1
 		HOST std::int32_t init(
-		         std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
-				 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets
+		         std::pair<std::uint32_t, double *> & total_observations,
+				 std::pair<std::uint32_t, double *> & total_targets,
+				 std::uint32_t device_id = 0
+				)
+		{
+		
+		  if ( check_cuda_api( cudaSetDevice(device_id),__FILE__, __LINE__) == 1) // set device
+		      return 1;
+		  std::uint32_t ith_layer;
+		  this->total_observations.first = total_observations.first;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_observations.second, sizeof(double) * this->total_observations.first, cudaHostAllocDefault),__FILE__,__LINE__);
+		  this->total_targets.first = total_targets.first;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_targets.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
+
+		 // std::swap(this->total_observations,total_observations);
+		 // std::swap(this->total_targets, total_targets);
+
+		  //of course the last layer should have the same number of neurons as their are targets,
+		  //additionally the user may make the mistake on to doing this and the correction is not the
+		  //responsibility of ann
+
+		  //calc number of activations, number of deltas is the same
+		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
+			this->total_activations.first += total_layers[ith_layer].second;// accumulate neurons in the hidden layers and output layers
+	  	  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_activations.second, sizeof(double) * this->total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__);// allocate activations
+
+          this->total_deltas.first = this->total_activations.first;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_deltas.second, sizeof(double) * this->total_deltas.first,cudaHostAllocDefault),__FILE__,__LINE__);// allocate deltas
+
+
+		  //calc number of hidden weights, number of gradients is the same
+		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_hidden_weights.second, sizeof(double) * this->total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__);
+
+		  this->total_gradient.first = this->total_hidden_weights.first;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_gradient.second, sizeof(double) * this->total_gradient.first,cudaHostAllocDefault),__FILE__,__LINE__);// allocate gradients
+
+		  //the error
+		  this->total_error.first = this->total_targets.first;
+		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_error.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
+		  return cuda_init();
+#else
+		HOST std::int32_t init(
+		         std::pair<std::uint32_t, double *> & total_observations,
+				 std::pair<std::uint32_t, double *> & total_targets
 				)
 		{
 		  std::uint32_t ith_layer;
@@ -87,25 +133,21 @@ namespace zinhart
 		  //calc number of activations, number of deltas is the same
 		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
 			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layers
-	  	  this->total_activations.second  = std::shared_ptr<double>(new double[this->total_activations.first], std::default_delete<double[]>());//allocate activations
+	  	  this->total_activations.second  = new double[this->total_activations.first];//allocate activations
           this->total_deltas.first = this->total_activations.first;
-		  this->total_deltas.second = std::shared_ptr<double>(new double[this->total_deltas.first], std::default_delete<double[]>());//allocate deltas
+		  this->total_deltas.second = new double[this->total_deltas.first];//allocate deltas
 
 		  //calc number of hidden weights, number of gradients is the same
 		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
 			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
 
- 		  this->total_hidden_weights.second = std::shared_ptr<double> ( new double[this->total_hidden_weights.first], std::default_delete<double[]>() );//allocate weights
+ 		  this->total_hidden_weights.second = new double[this->total_hidden_weights.first];//allocate weights
 		  this->total_gradient.first = this->total_hidden_weights.first;
-		  this->total_gradient.second = std::shared_ptr<double>(new double[this->total_gradient.first], std::default_delete<double[]>());//allocate gradients
+		  this->total_gradient.second = new double[this->total_gradient.first];//allocate gradients
 
 		  //the error
 		  this->total_error.first = this->total_targets.first;
-		  this->total_error.second = std::shared_ptr<double>(new double[this->total_targets.first], std::default_delete<double[]>());//allocate gradients
-		
-#if CUDA_ENABLED == 1
-		  return cuda_init();
-#else
+		  this->total_error.second = new double[this->total_targets.first];//allocate gradients
 		  return 0;
 #endif
 		}
@@ -114,49 +156,47 @@ namespace zinhart
 		HOST std::int32_t cuda_init()
 		{
 		  std::int32_t ret;
-		  if ( check_cuda_api( cudaSetDevice(0),__FILE__, __LINE__) == 1) // set device
-		      return 1;
 		  // allocate space for observations		
-  		  else if( check_cuda_api(cudaMalloc( (void **) &global_device_total_observations, total_observations.first * total_layers[0].second * sizeof(double)),__FILE__, __LINE__) == 1)
+  		  if( check_cuda_api(cudaMalloc( (void **) &global_device_total_observations, total_observations.first * total_layers[0].second * sizeof(double)),__FILE__, __LINE__) == 1)
   			return 1;	
 		  // copy allocations from host to device
-		  else if(check_cuda_api(cudaMemcpy(global_device_total_observations, total_observations.second.get(), total_observations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
+		  else if(check_cuda_api(cudaMemcpy(global_device_total_observations, total_observations.second, total_observations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
 			return 1;			
 		  // allocate space for targets	
 		  else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_targets, total_targets.first * sizeof(double)),__FILE__, __LINE__) == 1) 
 			return 1;	  
 		  //copy targets from host to device
-		  else if ( check_cuda_api(cudaMemcpy(global_device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1 )
+		  else if ( check_cuda_api(cudaMemcpy(global_device_total_targets, total_targets.second, total_targets.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1 )
 			return 1;
 		  //allocate space for hidden weights
 		  else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_hidden_weights, total_hidden_weights.first * sizeof(double)),__FILE__, __LINE__) == 1)
 			return 1;
 		 //copy hidden_weights from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_hidden_weights, total_hidden_weights.second.get(), total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
+		 else if ( check_cuda_api(cudaMemcpy(global_device_total_hidden_weights, total_hidden_weights.second, total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
 		   return 1;
 		 //allocate space for activations
 		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_activations, total_activations.first * sizeof(double)),__FILE__, __LINE__) == 1 )
 		   return 1;
 		 //copy activations from host to device
-		 else if( check_cuda_api(cudaMemcpy(global_device_total_activations, total_activations.second.get(), total_activations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
+		 else if( check_cuda_api(cudaMemcpy(global_device_total_activations, total_activations.second, total_activations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
 		   return 1;
 		 //allocate space for error
 		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_error, total_error.first * sizeof(double)),__FILE__, __LINE__) == 1)
 		   return 1;
    		 //copy error from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_error, total_error.second.get(), total_error.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
+		 else if ( check_cuda_api(cudaMemcpy(global_device_total_error, total_error.second, total_error.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
 		   return 1;
 	  	 //allocate space for gradients
 		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_gradient, total_gradient.first * sizeof(double)),__FILE__, __LINE__) == 1)
 		   return 1;
 		 //copy gradients from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_gradient, total_gradient.second.get(), total_gradient.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
+		 else if ( check_cuda_api(cudaMemcpy(global_device_total_gradient, total_gradient.second, total_gradient.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
 			 return 1;
 	     //allocate space for deltas
 		 else if (check_cuda_api(cudaMalloc((void **) &global_device_total_deltas, total_deltas.first * sizeof(double)),__FILE__, __LINE__) == 1)
   		   return 1;
   		 //copy deltas from host to device
-		 else if (check_cuda_api(cudaMemcpy(global_device_total_deltas, total_deltas.second.get(), sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
+		 else if (check_cuda_api(cudaMemcpy(global_device_total_deltas, total_deltas.second, sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
 		   return 1;
 		 //allocate space for bias
 		 else if(check_cuda_api(cudaMalloc((void**)&global_device_total_bias, total_activations.first * sizeof(double)),__FILE__, __LINE__) == 1)
@@ -168,7 +208,22 @@ namespace zinhart
 		}
 		HOST std::int32_t cuda_cleanup()
 		{
-		  if(check_cuda_api(cudaFree(global_device_total_observations),__FILE__, __LINE__) == 1)
+
+		  if(check_cuda_api(cudaFreeHost(total_observations.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if(check_cuda_api(cudaFreeHost(total_targets.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if(check_cuda_api(cudaFreeHost(total_hidden_weights.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if(check_cuda_api(cudaFreeHost(total_activations.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if(check_cuda_api(cudaFreeHost(total_error.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if (check_cuda_api(cudaFreeHost(total_gradient.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if (check_cuda_api(cudaFreeHost(total_deltas.second),__FILE__,__LINE__) == 1)
+			return 1;
+		  else if(check_cuda_api(cudaFree(global_device_total_observations),__FILE__, __LINE__) == 1)
 		   return 1;	
 		  else if (check_cuda_api(cudaFree(global_device_total_targets),__FILE__, __LINE__) == 1)
 		   return 1;
@@ -194,9 +249,9 @@ namespace zinhart
 #if CUDA_ENABLED == 1
 		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
-			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   const std::pair<std::uint32_t, double *> & total_targets, 
+			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
+							   const std::pair<std::uint32_t, double *> & total_activations,
 							   double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight)
 		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
 			,device_total_observation, device_total_activation, device_total_bia, device_total_hidden_weight); }
@@ -284,9 +339,9 @@ namespace zinhart
 #if CUDA_ENABLED == 1
 		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
-			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   const std::pair<std::uint32_t, double *> & total_targets, 
+			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
+							   const std::pair<std::uint32_t, double *> & total_activations,
 							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights
 							  )
 
@@ -440,7 +495,7 @@ namespace zinhart
 			                   const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
 							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
-			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights
+			                   const std::pair<std::uint32_t, double *> & total_hidden_weights
 					          )
 		{
 		  std::cout<<"IN CPU\n";
@@ -459,31 +514,32 @@ namespace zinhart
 	template <class T>
 	  HOST std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_observations(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_observations(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_hidden_weights(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_hidden_weights(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_activations(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_activations(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_error(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_error(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_gradient(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_gradient(const ann<T> & model);
 	template <class T>
-	  HOST std::pair<std::uint32_t, std::shared_ptr<double>> get_total_deltas(const ann<T> & model);
+	  HOST std::pair<std::uint32_t, double *> get_total_deltas(const ann<T> & model);
 	//End debugging functions
 	template<class T>
   	  HOST void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
-	template<class T>
-	  HOST int initialize_model(ann<T> & model,  
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_observations,
-							 std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets );
+
 #if CUDA_ENABLED == 1
+	template<class T>
+	  HOST std::int32_t initialize_model(ann<T> & model,  
+							 std::pair<std::uint32_t, double *> & total_observations,
+							 std::pair<std::uint32_t, double *> & total_targets, std::uint32_t device_id = 0 );
 	template<class T>
 	  HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_targets, 
-			                   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_hidden_weights,
-							   const std::pair<std::uint32_t, std::shared_ptr<double>> & total_activations,
+							   const std::pair<std::uint32_t, double *> & total_targets, 
+			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
+							   const std::pair<std::uint32_t, double *> & total_activations,
 							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights);
 #endif
 	template<class T>
