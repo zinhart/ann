@@ -88,9 +88,6 @@ namespace zinhart
 		  this->total_targets.first = total_targets.first;
 		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_targets.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
 
-		 // std::swap(this->total_observations,total_observations);
-		 // std::swap(this->total_targets, total_targets);
-
 		  //of course the last layer should have the same number of neurons as their are targets,
 		  //additionally the user may make the mistake on to doing this and the correction is not the
 		  //responsibility of ann
@@ -155,7 +152,6 @@ namespace zinhart
 #if CUDA_ENABLED == 1
 		HOST std::int32_t cuda_init()
 		{
-		  std::int32_t ret;
 		  // allocate space for observations		
   		  if( check_cuda_api(cudaMalloc( (void **) &global_device_total_observations, total_observations.first * total_layers[0].second * sizeof(double)),__FILE__, __LINE__) == 1)
   			return 1;	

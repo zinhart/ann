@@ -11,11 +11,11 @@
 #endif
 namespace zinhart
 {
-  enum class ACTIVATION_NAME : std::uint8_t {INPUT = 0, IDENTITY, SIGMOID, SOFTMAX, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU};
-  enum class ACTIVATION_TYPE : std::uint8_t {OBJECTIVE = 0, DERIVATIVE}; 
+  enum class ACTIVATION_NAME : std::uint8_t {INPUT = std::uint8_t(0), IDENTITY, SIGMOID, SOFTMAX, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU};
+  enum class ACTIVATION_TYPE : std::uint8_t {OBJECTIVE = std::uint8_t(0), DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
-  //activation will be the common interface!
+  // activation will be the common interface!
   template <class ACTIVATION_FUNCTION>
 	class activation
 	{
