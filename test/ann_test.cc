@@ -172,7 +172,7 @@ TEST(ann_test, forward_propagate)
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double) ) ,__FILE__,__LINE__));
   // initialize host vectors
   
-/*  for(i = 0; i < total_observations_length ++i)
+  for(i = 0; i < total_observations_length; ++i)
 	total_observations.second[i] = real_dist(mt); // random training set
     for(i = 0; i < total_activations.first; ++i)
 	total_activations.second[i] = 0.0f; // start at zero since these values have not been calculated yet
@@ -180,8 +180,24 @@ TEST(ann_test, forward_propagate)
 	total_hidden_weights.second[i] = real_dist(mt); // random weights
   for(i = 0; i < total_bias.first; ++i)
 	total_bias.second[i] = real_dist(mt); // random bias (which is an oxymoron?)
-  
-  total_observations.second = std::shared_ptr<double> ( new double[total_observations_length], std::default_delete<double[]>() );//observations themselves 
+
+ //ASSERT_EQ(0,zinhart::check_cuda_api(cudaMemcpy(device_total_observations, total_observations.second, total_observations_length * sizeof(double), cudaMemcpyHostToDevice))); 
+
+  // copy host memory to device
+/*  error_id = cudaMemcpy(device_total_observations, total_observations.second.get(), total_observations_length * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device_total_observations (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  error_id = cudaMemcpy(device_total_activations, total_activations.second.get(), total_activations.first * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device_total_activations (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  error_id = cudaMemcpy(device_total_bias, total_bias.second.get(), total_bias.first *  sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device_total_bias (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  error_id = cudaMemcpy(device_total_hidden_weights, total_hidden_weights.second.get(), total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice);
+  if(error_id != cudaSuccess)
+	std::cerr<<"device_total_hidden_weights (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";*/
+
+/*  total_observations.second = std::shared_ptr<double> ( new double[total_observations_length], std::default_delete<double[]>() );//observations themselves 
 
   // calc bias neurons
   total_bias.first = total_layers.size() - 1;
