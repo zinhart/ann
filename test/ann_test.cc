@@ -125,7 +125,7 @@ TEST(ann_test, forward_propagate)
   total_observations.first = neuron_dist(mt);// number of observations
   total_targets.first = total_num_targets; // number of targets
   total_observations_length = total_observations.first * total_layers[0].second;
-  
+ 
   // calc number of activations
   for(ith_layer = 1, total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations.first += total_layers[ith_layer].second;// accumulate neurons in the hidden layers and output layer
@@ -181,6 +181,35 @@ TEST(ann_test, forward_propagate)
   for(i = 0; i < total_bias.first; ++i)
 	total_bias.second[i] = real_dist(mt); // random bias (which is an oxymoron?)
   
+  total_observations.second = std::shared_ptr<double> ( new double[total_observations_length], std::default_delete<double[]>() );//observations themselves 
+
+  // calc bias neurons
+  total_bias.first = total_layers.size() - 1;
+
+  // allocate host vectors
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_observations.second, sizeof(double) * total_observations.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets.second, sizeof(double) * total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations.second, sizeof(double) * total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights.second, sizeof(double) * total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias.second, sizeof(double) * total_bias.first,cudaHostAllocDefault),__FILE__,__LINE__);
+
+  // allocate validation vectors
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_observations_copy, sizeof(double) * total_observations.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets_copy, sizeof(double) * total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations_copy, sizeof(double) * total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights_copy, sizeof(double) * total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias_copy, sizeof(double) * total_bias.first,cudaHostAllocDefault),__FILE__,__LINE__);
+
+
+  // allocate device vectors
+  zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_observations, total_observations_length * sizeof(double) ),__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_activations, total_activations.first * sizeof(double) ) ,__FILE__,__LINE__ );
+  zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_bias, total_bias.first * sizeof(double) ) ,__FILE__,__LINE__);
+  zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double) ) ,__FILE__,__LINE__);
+
+  // initialize host vectors
+  //
+  //
   total_observations.second = std::shared_ptr<double> ( new double[total_observations_length], std::default_delete<double[]>() );//observations themselves 
     total_targets.second = std::shared_ptr<double> ( new double[total_targets.first], std::default_delete<double[]>() );//targets themselves 
   
@@ -339,7 +368,6 @@ TEST(ann_test, forward_propagate)
   ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_total_hidden_weights), __FILE__, __LINE__));
 
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaDeviceReset(), __FILE__, __LINE__));
-
 }
 #endif
 /*
