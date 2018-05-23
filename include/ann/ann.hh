@@ -1,5 +1,6 @@
 #ifndef ANN_HH
 #define ANN_HH
+#include "concurrent_routines/concurrent_routines.hh"
 #include "concurrent_routines/concurrent_routines_error.hh"
 #include "loss_function.hh"
 #include "activation.hh"
@@ -7,8 +8,6 @@
 #include <memory>
 //#include <zinhart/vector_space>
 #include <vector>
-//#define MAXPOSNUM 2137483647
-//#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #if CUDA_ENABLED == true
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
