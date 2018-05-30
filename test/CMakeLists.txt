@@ -8,6 +8,7 @@ set(test_src
   optimizer_test.cc
   activation_test.cc
   ann_test.cc
+  ffn_test.cc
 )
 
 add_executable(ann_tests ${test_src})
