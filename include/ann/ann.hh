@@ -13,6 +13,7 @@
 #include <cublas_v2.h>
 //#include <thrust>
 #endif
+#include <cassert>
 namespace zinhart
 {
 
@@ -464,6 +465,80 @@ namespace zinhart
 			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
 		  } 
 		  //copy activations back to host
+		  if(copy_device_to_host == true)
+		  {
+		    
+			//copy activations from device to host
+		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
+			if(error_id != cudaSuccess)
+			{
+			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+			  return ERROR_CUDA_ERROR;
+			}
+			
+		  }
+*/		
+		  return 0;
+		}
+
+		HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
+							   const cudaStream_t & stream, cublasHandle_t & context, 
+			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+							   const std::uint32_t & total_targets, const double * host_total_targets, 
+			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights,
+							   const std::uint32_t & total_activations, double * host_total_activations, // when copy_device_to_host is true activations will be written here
+							   const double * device_total_observations, double * device_total_activations, const double * device_total_bias, const double * device_total_hidden_weights
+							  )
+
+		{
+		  // layer counters
+		  std::uint32_t current_layer{1}, prior_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
+		  const std::uint32_t input_layer{0};
+		  const std::uint32_t output_layer{total_layers.size() - 1};
+		  
+		  // declarations for dgemm and dgeam
+		  std::int32_t  m{0}, n{0}, k{0}, lda{0}, ldb{0},ldc{0};// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
+
+		  std::uint32_t weight_offset = {0};// number of weights connection between layer i and layer i + 1
+		  std::uint32_t case_begin = {total_layers[input_layer].second * ith_observation_index};// where a case begins, when ith_obs_index is 0 this is the first case
+
+	 	  // coefficients for gemm and geam
+		  const double alpha{1};
+		  const double beta_mult{0};
+		  const double beta_add{1};
+
+
+		  // get col major coordinates without explicitly transposing 
+		  // ( total_layers[1].second is rows of the weight matrix and the number of neurons in the first hidden layer )
+		  // ( total_layers[0].second is the columns of the weight matrix and the number of neurons in the input layer )
+		  zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[input_layer].second, total_layers[input_layer].second, 1);
+
+		  // set cublasStream
+		  if(zinhart::check_cublas_api(cublasSetStream(context, stream), __FILE__, __LINE__) != 0 )
+			return 1;
+
+		  // do Wx for first hidden layer and input layer
+		  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+					  m, n, k, 
+			          &alpha, 
+					  device_total_hidden_weights, lda,
+					  device_total_observations + case_begin, ldb, 
+					  &beta_mult,
+					  device_total_activations, ldc
+					  ),__FILE__, __LINE__) != 0)
+		  {
+			return 1;
+		  }
+		  // add in bias
+		  
+		  // call activation
+		  // f(Wx + b) complete for first hidden layer and input layer
+		  
+
+
+		  //do  first hidden layer and input layer
+
+/*		  		  //copy activations back to host
 		  if(copy_device_to_host == true)
 		  {
 		    

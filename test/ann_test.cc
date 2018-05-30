@@ -8,7 +8,7 @@
 using namespace zinhart;
 
 #if CUDA_ENABLED == 1
-
+/*
 TEST(ann_test,ann_test_constructor)
 {
   ann< ffn > model;
@@ -69,7 +69,7 @@ TEST(ann_test, initialize_model)
   ASSERT_EQ(total_activations, get_total_activations(model).first);
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);
   ASSERT_EQ(cleanup(model), 0);
-} 
+}*/ 
 
 
 TEST(ann_test, forward_propagate)
