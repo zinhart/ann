@@ -173,23 +173,6 @@ TEST(ffn_test, async_forward_propagate)
   // prepare for forward propagate
   ffn net;
   bool copy_to_host = false;
-  auto async_forward_propagate_wrapper = [](ffn & n, const bool & copy_dev_to_host, 
-											const cudaStream_t & strm, const cublasHandle_t & contxt, 
-										    const std::uint32_t & ith_obs_index, const std::vector<LAYER_INFO> & total_layrs,
-										    const std::uint32_t & total_targs, const double * host_total_targs, 
-										    const std::uint32_t & total_hidden_wts, const double * host_total_hidden_wts,
-										    const double * device_total_obs,  const double * device_total_bia, const double * device_total_hidden_wts,
-										    const std::uint32_t & total_acts, double * host_total_acts, double * device_total_acts
-										   )
-										 {
-										   return n.forward_propagate_async(copy_dev_to_host, strm, contxt,
-																			  ith_obs_index, total_layrs,
-																			  total_targs, host_total_targs,
-																			  total_hidden_wts, host_total_hidden_wts,
-																			  device_total_obs, device_total_bia, device_total_hidden_wts,
-																			  total_acts, host_total_acts, device_total_acts
-																			 ); 
-										 };
   // for each case for each stream forward propogate
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
@@ -207,34 +190,45 @@ TEST(ffn_test, async_forward_propagate)
 						                )
 					 );
 	  // this is necesarry to ensure that for example all async forward propagates return before the cuda context they are using is destroyed
-	  auto res = tasks.back().get();
-	  ASSERT_EQ(0, res);
+	  // auto res = tasks.back().get();
+	  // ASSERT_EQ(0, res);
 	}
   }
 
-  // validation loop
-  for(ith_stream = 0; ith_stream < 1/*n_cuda_streams*/; ++ith_stream )
+  // validation loop will check the results of forward propagate for each training case in each stream (in each thread)
+  for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
-	// copy device memory back to host at each iteration
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_observations, device_total_observations, total_observations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_activations, device_total_activations, total_activations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_bias, device_total_bias, total_bias_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_hidden_weights, device_total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
-	
-  	// synchronize the host thread wrt each stream to ensure the asynchronous memory transactions (DeviceToHost) above have been completed
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaStreamSynchronize(streams[ith_stream]), __FILE__, __LINE__));
+	for(ith_stream = 0; ith_stream < 1/*n_cuda_streams*/; ++ith_stream )
+	{
 
-	// since each stream is synchronized here it will be best to validate here
+	  // block the main thread until forward propagate has been completed for all training cases, will start at the front since this is the most likely task to be completed
+	  ASSERT_EQ(0, tasks.front().get());
 
-	// do serial forward propagate operation for each layer for each stream on a different host thread
-	
-	// get serial results 
-	
-	// validate cpu and cpu activation vectors
-	
-	// validate output vector
+	  // copy device memory back to host at each iteration
+	  ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_observations, device_total_observations, total_observations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
+	  ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_activations, device_total_activations, total_activations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
+	  ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_bias, device_total_bias, total_bias_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
+	  ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_hidden_weights, device_total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
+	  
+	  // synchronize the host thread wrt each stream to ensure the asynchronous memory transactions (DeviceToHost) above have been completed
+	  ASSERT_EQ(0, zinhart::check_cuda_api( cudaStreamSynchronize(streams[ith_stream]), __FILE__, __LINE__));
 
+
+	  // do serial forward propagate operation for each layer for each stream on a different host thread
+	  
+	  // get serial results 
+	  
+	  // validate cpu and gpu activation vectors
+	  
+	  // validate output vector
+	  
+	  // setup for the next iteration i.e the future has been consumed by this point 
+	  tasks.pop_front();
+
+	}
   }
+
+
  
 
   // release cublas resources and check for errors
