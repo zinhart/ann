@@ -518,11 +518,11 @@ namespace zinhart
 			return 1;
 
 
-		  std::cout<<"In forward_propagate_async Total layers size: "<<total_layers.size()<<"\n";
+		  /*std::cout<<"In forward_propagate_async Total layers size: "<<total_layers.size()<<"\n";
 		  for(current_layer = 0; current_layer < total_layers.size() ; ++current_layer)
 		  	std::cout<<"Neurons in layer "<<current_layer + 1<<": "<<total_layers[current_layer].second<<"\n";
   		  for(current_layer = 1, prior_layer = 0; prior_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
-			std::cout<<"weight matrix between layer "<<current_layer + 1<<" and "<<prior_layer + 1<<" dimensions: "<<total_layers[current_layer].second<<" by "<<total_layers[prior_layer].second<<"\n";
+			std::cout<<"weight matrix between layer "<<current_layer + 1<<" and "<<prior_layer + 1<<" dimensions: "<<total_layers[current_layer].second<<" by "<<total_layers[prior_layer].second<<"\n";*/
 
 		  // do Wx for first hidden layer and input layer
 		  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
@@ -536,8 +536,23 @@ namespace zinhart
 		  {
 			return 1;
 		  }
-		  // add in bias
-		  
+		  // The dimensions of Wx is m x n, parameters updated for dgeam
+		  current_layer = 1;
+		  lda = total_layers[current_layer].second;
+		  ldb = total_layers[current_layer].second;
+		  ldc = total_layers[current_layer].second;
+		  //add in bias
+		  /*if(zinhart::check_cublas_api(cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+								 m, n,
+			                     &alpha, 
+								 device_total_activations, lda,
+								 &beta_add, 
+								 device_total_bias, ldb,
+								 device_total_activations, ldc
+			                    ),__FILE__, __LINE__) != 0)
+		  {
+			return 1;
+		  }*/		
 		  // call activation
 		  // f(Wx + b) complete for first hidden layer and input layer
 		  

@@ -17,6 +17,7 @@ TEST(ffn_test, async_forward_propagate)
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1,5000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
+  std::uniform_int_distribution<std::uint32_t> case_dist(1,25);
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
   std::uniform_int_distribution<std::uint8_t> layer_num_dist(2,5/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
   std::uniform_int_distribution<std::uint8_t> activation_dist(1,8);// currently there are 8 different activation functions not counting the input layer
@@ -81,7 +82,7 @@ TEST(ffn_test, async_forward_propagate)
   ASSERT_EQ(total_layers[input_layer].first, ACTIVATION_NAME::INPUT);
 
   // total training cases
-  total_cases = neuron_dist(mt);
+  total_cases = case_dist(mt);
 
   // calculate array sizes
   total_observations_length = total_cases * a_layer.second;// number of observations matrix 
@@ -99,8 +100,9 @@ TEST(ffn_test, async_forward_propagate)
   // calc bias neurons
   total_bias_length = total_layers.size() - 1;
 
-
-  std::cout<<" In test Total layers size: "<<total_layers.size()<<"\n";
+  std::cout<<"In test\n";
+  std::cout<<"Total cases: "<<total_cases<<"\n";
+  std::cout<<"Total layers size: "<<total_layers.size()<<"\n";
   for(current_layer = 0; current_layer < total_layers.size() ; ++current_layer)
 	std::cout<<"Neurons in layer "<<current_layer + 1<<": "<<total_layers[current_layer].second<<"\n";
   std::cout<<"Total hidden weights: "<<total_hidden_weights_length<<"\n";
@@ -147,18 +149,18 @@ TEST(ffn_test, async_forward_propagate)
 	host_total_bias[i] = real_dist(mt); // random bias (which is an oxymoron?)
 
   // copy host memory to device for each stream
-  for(i = 0; i < n_cuda_streams; ++i )
+  for(ith_stream = 0; ith_stream < n_cuda_streams; ++ith_stream )
   {
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_observations, host_total_observations, total_observations_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_activations, host_total_activations, total_activations_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_bias, host_total_bias, total_bias_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_hidden_weights, host_total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__)); /**/
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_observations, host_total_observations, total_observations_length * sizeof(double), cudaMemcpyHostToDevice, streams[ith_stream]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_activations, host_total_activations, total_activations_length * sizeof(double), cudaMemcpyHostToDevice, streams[ith_stream]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_bias, host_total_bias, total_bias_length * sizeof(double), cudaMemcpyHostToDevice, streams[ith_stream]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_hidden_weights, host_total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyHostToDevice, streams[ith_stream]), __FILE__, __LINE__)); /**/
   }
 
   // synchronize the host thread wrt each stream to ensure the memory transactions (HostToDevice) above have been completed 
-  for(i = 0; i < n_cuda_streams; ++i )
+  for(ith_stream = 0; ith_stream < n_cuda_streams; ++ith_stream )
   {
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaStreamSynchronize(streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaStreamSynchronize(streams[ith_stream]), __FILE__, __LINE__));
   } 
 
   // cublas initialization and error check
@@ -168,10 +170,11 @@ TEST(ffn_test, async_forward_propagate)
   ffn net;
 
   // for each case for each stream forward propogate
-  for(ith_case = 0; ith_case < /*total_cases*/1; ++ith_case)
+  for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
 	for (ith_stream = 0; ith_stream < /*n_cuda_streams*/1; ++ith_stream)
 	{
+	  // assert proper return codes
 	  ASSERT_EQ(0, net.forward_propagate_async(
 												false, streams[ith_stream], context, ith_case, total_layers,
 												total_targets_length, host_total_targets,
@@ -179,20 +182,13 @@ TEST(ffn_test, async_forward_propagate)
 												total_activations_length, host_total_activations,
 												device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights)
 		  );
-	  /*	// call gemm wrapper to get column major info for the ith stream
-	  zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, a_row, a_col, b_row, b_col);	
-	
-	  // set the stream for the current iteration
-	  ASSERT_EQ(0, zinhart::check_cublas_api(cublasSetStream(context, streams[i]),__FILE__,__LINE__));
-	
-	  // call dgemm and check for errors*/
 	}
   }
   // release cublas resources and check for errors
   ASSERT_EQ(0,zinhart::check_cublas_api(cublasDestroy(context),__FILE__, __LINE__));
 
   // validation loop
-  for(ith_stream = 0; ith_stream < n_cuda_streams; ++ith_stream )
+  for(ith_stream = 0; ith_stream < 1/*n_cuda_streams*/; ++ith_stream )
   {
 	// copy device memory back to host at each iteration
 	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(host_total_observations, device_total_observations, total_observations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[ith_stream]), __FILE__, __LINE__));
