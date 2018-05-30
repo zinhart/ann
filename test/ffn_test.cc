@@ -18,7 +18,7 @@ TEST(ffn_test, async_forward_propagate)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1,5000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  std::uniform_int_distribution<std::uint8_t> layer_num_dist(1,3/*std::numeric_limits<std::uint8_t>::max()*/);
+  std::uniform_int_distribution<std::uint8_t> layer_num_dist(2,5/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
   std::uniform_int_distribution<std::uint8_t> activation_dist(1,8);// currently there are 8 different activation functions not counting the input layer
   //std::uniform_int_distribution<std::uint8_t> cuda_stream_dist(1, MAX_CPU_THREADS); 
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
@@ -92,12 +92,20 @@ TEST(ffn_test, async_forward_propagate)
 	total_activations_length += total_layers[current_layer].second;// accumulate neurons in the hidden layers and output layer
   
   // calc number of hidden weights
-  for(current_layer = 1, prior_layer = 0, total_hidden_weights_length = 0; current_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
+  for(current_layer = 1, prior_layer = 0, total_hidden_weights_length = 0; prior_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
   {
 	total_hidden_weights_length += total_layers[current_layer].second * total_layers[prior_layer].second;
   }
   // calc bias neurons
   total_bias_length = total_layers.size() - 1;
+
+
+  std::cout<<" In test Total layers size: "<<total_layers.size()<<"\n";
+  for(current_layer = 0; current_layer < total_layers.size() ; ++current_layer)
+	std::cout<<"Neurons in layer "<<current_layer + 1<<": "<<total_layers[current_layer].second<<"\n";
+  std::cout<<"Total hidden weights: "<<total_hidden_weights_length<<"\n";
+  for(current_layer = 1, prior_layer = 0; prior_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
+	std::cout<<"weight matrix between layer "<<current_layer + 1<<" and "<<prior_layer + 1<<" dimensions: "<<total_layers[current_layer].second<<" by "<<total_layers[prior_layer].second<<"\n";
 
   // allocate host vectors
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_observations, sizeof(double) * total_observations_length, cudaHostAllocDefault),__FILE__,__LINE__));
@@ -160,7 +168,7 @@ TEST(ffn_test, async_forward_propagate)
   ffn net;
 
   // for each case for each stream forward propogate
-  for(ith_case = 0; ith_case < total_cases; ++ith_case)
+  for(ith_case = 0; ith_case < /*total_cases*/1; ++ith_case)
   {
 	for (ith_stream = 0; ith_stream < /*n_cuda_streams*/1; ++ith_stream)
 	{
