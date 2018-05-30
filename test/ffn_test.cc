@@ -211,8 +211,6 @@ TEST(ffn_test, async_forward_propagate)
 	  ASSERT_EQ(0, res);
 	}
   }
-  // release cublas resources and check for errors
-  ASSERT_EQ(0,zinhart::check_cublas_api(cublasDestroy(context),__FILE__, __LINE__));
 
   // validation loop
   for(ith_stream = 0; ith_stream < 1/*n_cuda_streams*/; ++ith_stream )
@@ -238,6 +236,9 @@ TEST(ffn_test, async_forward_propagate)
 
   }
  
+
+  // release cublas resources and check for errors
+  ASSERT_EQ(0,zinhart::check_cublas_api(cublasDestroy(context),__FILE__, __LINE__));
 
   // deallocate host memory and check for errors
   ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(host_total_observations),__FILE__,__LINE__));
