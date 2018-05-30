@@ -7,7 +7,7 @@
 #include <algorithm>
 using namespace zinhart;
 
-TEST(ann_test,ann_test_constructor)
+/*TEST(ann_test,ann_test_constructor)
 {
   ann< ffn > model;
 }
@@ -66,7 +66,7 @@ TEST(ann_test, initialize_model)
   ASSERT_EQ(total_activations, get_total_activations(model).first);
   ASSERT_EQ(total_hidden_weights, get_total_hidden_weights(model).first);
   ASSERT_EQ(cleanup(model), 0);
-}
+}*/
 #if CUDA_ENABLED == 1
 
 TEST(ann_test, forward_propagate)
@@ -88,24 +88,42 @@ TEST(ann_test, forward_propagate)
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
   cudaStream_t * streams; 
 
-  // host vectors 
-  std::pair<std::uint32_t, double *> total_observations;
-  std::pair<std::uint32_t, double *> total_targets;
-  std::pair<std::uint32_t, double *> total_activations;
-  std::pair<std::uint32_t, double *> total_bias;
-  std::pair<std::uint32_t, double *> total_hidden_weights;
+/*  // host vectors 
+  double * total_observations = 0;
+  double * total_targets = 0;
+  double * total_activations = 0;
+  double * total_bias = 0;
+  double * total_hidden_weights = 0;
 
   // host validation vectors
-  double * total_observations_copy;
-  double * total_targets_copy;
-  double * total_activations_copy;
-  double * total_bias_copy;
-  double * total_hidden_weights_copy;
+  double * total_observations_copy = 0;
+  double * total_targets_copy = 0;
+  double * total_activations_copy = 0;
+  double * total_bias_copy = 0;
+  double * total_hidden_weights_copy = 0;*/
+
+
+  // host vectors 
+  double * total_observations = nullptr;
+  double * total_targets = nullptr;
+  double * total_activations = nullptr;
+  double * total_bias = nullptr;
+  double * total_hidden_weights = nullptr;
+
+  // host validation vectors
+  double * total_observations_copy = nullptr;
+  double * total_targets_copy = nullptr;
+  double * total_activations_copy = nullptr;
+  double * total_bias_copy = nullptr;
+  double * total_hidden_weights_copy = nullptr;
 
   // device vectors
-  double * device_total_observations, * device_total_activations, * device_total_bias, * device_total_hidden_weights;
+  double * device_total_observations = nullptr; 
+  double * device_total_activations = nullptr;
+  double * device_total_bias = nullptr;
+  double * device_total_hidden_weights = nullptr;
 
-  std::uint32_t  i, ith_layer, ith_observation, total_observations_length;
+  std::uint32_t  i, ith_layer, ith_observation, total_observations_length, total_targets_length, total_activations_length, total_hidden_weights_length, total_bias_length;
   std::int32_t error;
 
   //first layer is always input layer
@@ -124,35 +142,34 @@ TEST(ann_test, forward_propagate)
   ASSERT_EQ(total_layers[0].first, ACTIVATION_NAME::INPUT);
 
   // calculate array sizes
-  total_observations.first = neuron_dist(mt);// number of observations
-  total_targets.first = total_num_targets; // number of targets
-  total_observations_length = total_observations.first * total_layers[0].second;
+  total_observations_length = neuron_dist(mt) * a_layer.second;// number of observations matrix 
+  total_targets_length = total_num_targets; // number of targets
  
   // calc number of activations
-  for(ith_layer = 1, total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
-	total_activations.first += total_layers[ith_layer].second;// accumulate neurons in the hidden layers and output layer
+  for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
+	total_activations_length += total_layers[ith_layer].second;// accumulate neurons in the hidden layers and output layer
   
   // calc number of hidden weights
-  for(ith_layer = 0, total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+  for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
   {
-	total_hidden_weights.first += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
+	total_hidden_weights_length += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;
   }
   // calc bias neurons
-  total_bias.first = total_layers.size() - 1;
+  total_bias_length = total_layers.size() - 1;
 
   // allocate host vectors
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_observations.second, sizeof(double) * total_observations_length, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets.second, sizeof(double) * total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations.second, sizeof(double) * total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights.second, sizeof(double) * total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias.second, sizeof(double) * total_bias.first,cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_observations, sizeof(double) * total_observations_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets, sizeof(double) * total_targets_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations, sizeof(double) * total_activations_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights, sizeof(double) * total_hidden_weights_length,cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias, sizeof(double) * total_bias_length, cudaHostAllocDefault),__FILE__,__LINE__));
 
   // allocate validation vectors
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_observations_copy, sizeof(double) * total_observations_length, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets_copy, sizeof(double) * total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations_copy, sizeof(double) * total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights_copy, sizeof(double) * total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias_copy, sizeof(double) * total_bias.first,cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_targets_copy, sizeof(double) * total_targets_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_activations_copy, sizeof(double) * total_activations_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_hidden_weights_copy, sizeof(double) * total_hidden_weights_length, cudaHostAllocDefault),__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&total_bias_copy, sizeof(double) * total_bias_length, cudaHostAllocDefault),__FILE__,__LINE__));
 /**/
 
 /*  total_activations_copy = new double[total_observations_length];
@@ -160,9 +177,9 @@ TEST(ann_test, forward_propagate)
   total_bias_copy = new double[total_bias.first];*/
   // allocate device vectors
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_observations, total_observations_length * sizeof(double) ),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_activations, total_activations.first * sizeof(double) ) ,__FILE__,__LINE__ ));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_bias, total_bias.first * sizeof(double) ) ,__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_hidden_weights, total_hidden_weights.first * sizeof(double) ) ,__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_activations, total_activations_length * sizeof(double) ) ,__FILE__,__LINE__ ));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_bias, total_bias_length * sizeof(double) ) ,__FILE__,__LINE__));
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaMalloc( (void **) &device_total_hidden_weights, total_hidden_weights_length * sizeof(double) ) ,__FILE__,__LINE__));
 
   // allocate streams 
   streams = new cudaStream_t[n_cuda_streams];
@@ -175,23 +192,23 @@ TEST(ann_test, forward_propagate)
 
   // initialize host vectors
   for(i = 0; i < total_observations_length; ++i)
-	total_observations.second[i] = real_dist(mt); // random training set
-    for(i = 0; i < total_activations.first; ++i)
-	total_activations.second[i] = 0.0f; // start at zero since these values have not been calculated yet
-  for(i = 0; i < total_hidden_weights.first; ++i)
-	total_hidden_weights.second[i] = real_dist(mt); // random weights
-  for(i = 0; i < total_bias.first; ++i)
-	total_bias.second[i] = real_dist(mt); // random bias (which is an oxymoron?)
+	total_observations[i] = real_dist(mt); // random training set
+    for(i = 0; i < total_activations_length; ++i)
+	total_activations[i] = 0.0f; // start at zero since these values have not been calculated yet
+  for(i = 0; i < total_hidden_weights_length; ++i)
+	total_hidden_weights[i] = real_dist(mt); // random weights
+  for(i = 0; i < total_bias_length; ++i)
+	total_bias[i] = real_dist(mt); // random bias (which is an oxymoron?)
 
   //ASSERT_EQ(0,zinhart::check_cuda_api(cudaMemcpy(device_total_observations, total_observations.second, total_observations_length * sizeof(double), cudaMemcpyHostToDevice))); 
   
   // copy host memory to device for each stream
-  for(i = 0; i < 1/*n_cuda_streams*/; ++i )
+  for(i = 0; i < n_cuda_streams; ++i )
   {
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_observations, total_observations.second, total_observations_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_activations, total_activations.second, total_activations.first * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_bias, total_bias.second, total_bias.first * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_hidden_weights, total_hidden_weights.second, total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__)); /**/
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_observations, total_observations, total_observations_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_activations, total_activations, total_activations_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_bias, total_bias, total_bias_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(device_total_hidden_weights, total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyHostToDevice, streams[i]), __FILE__, __LINE__)); /**/
   }
 
   // synchronize the host thread wrt each stream to ensure the memory transactions (HostToDevice) above have been completed 
@@ -219,11 +236,11 @@ TEST(ann_test, forward_propagate)
   // copy device memory back to host
   for(i = 0; i < n_cuda_streams; ++i )
   {
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_observations.second, device_total_observations, total_observations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_activations.second, device_total_activations, total_activations.first * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_bias.second, device_total_bias, total_bias.first * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
-	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_hidden_weights.second, device_total_hidden_weights, total_hidden_weights.first * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));/**/
-  } 
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_observations, device_total_observations, total_observations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_activations, device_total_activations, total_activations_length * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_bias, device_total_bias, total_bias_length * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
+	ASSERT_EQ(0, zinhart::check_cuda_api( cudaMemcpyAsync(total_hidden_weights, device_total_hidden_weights, total_hidden_weights_length * sizeof(double), cudaMemcpyDeviceToHost, streams[i]), __FILE__, __LINE__));
+  }
 
   // synchronize the host thread wrt each stream to ensure the asynchronous memory transactions (DeviceToHost) above have been completed 
   for(i = 0; i < n_cuda_streams; ++i )
@@ -240,11 +257,11 @@ TEST(ann_test, forward_propagate)
   // validate output vector
 
   // deallocate host memory and check for errors
-  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_observations.second),__FILE__,__LINE__));
-  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_targets.second),__FILE__,__LINE__));
-  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_activations.second),__FILE__,__LINE__));
-  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_hidden_weights.second),__FILE__,__LINE__));
-  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_bias.second),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_observations),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_targets),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_activations),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_hidden_weights),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_bias),__FILE__,__LINE__));
 
   // deallocate host validation memory and check for errors
  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(total_observations_copy),__FILE__,__LINE__));
