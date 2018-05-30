@@ -1,4 +1,6 @@
 #include "ann/activation.hh"
+#include "concurrent_routines/concurrent_routines.hh"
+#include "concurrent_routines/concurrent_routines_error.hh"
 #include<cublas_v2.h>
 //#include "ann/random_input.hh"
 #include "gtest/gtest.h"
@@ -25,50 +27,110 @@ TEST(activation_test, call_activation_identity_objective)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<identity> act_identity;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in identity objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__));
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
-	activation_vector.get()[i] = act_identity(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
+	// values post-activation
+	activation_vector.get()[i] = act_identity(activation_vector.get()[i], ACTIVATION_TYPE::OBJECTIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
+  ASSERT_EQ(0, call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size));
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
-	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
+	ASSERT_EQ(activation_vector.get()[i], activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Identity_Objective) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
+}
+
+TEST(activation_test, async_call_activation_identity_objective)
+{
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
+  std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
+  // the activation function itself
+  activation<identity> act_identity;
+  double * activation_vector;
+  double * activation_vector_copy;
+  double * device_activation_vector;
+
+  // cuda stream
+  cudaStream_t stream;
+
+  // create stream
+  cudaStreamCreate(&stream);
+
+  // arbitrary layer size  based on ushort max
+  std::uint16_t activation_vector_size = Z_plus(mt);
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&activation_vector, sizeof(double) * activation_vector_size, cudaHostAllocDefault),__FILE__, __LINE__));
+  // will store the results of call activation
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&activation_vector_copy, sizeof(double) * activation_vector_size, cudaHostAllocDefault),__FILE__, __LINE__));
+  std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__));
+  // randomly initialize activations
+  for(std::int16_t i = 0; i < activation_vector_size; ++i)
+  {	
+	// values pre-activation
+	activation_vector[i] = real(mt);
+	activation_vector_copy[i] = activation_vector[i];
+	// values post-activation
+	activation_vector[i] = act_identity(activation_vector[i], ACTIVATION_TYPE::OBJECTIVE);
+  }
+  // copy pre-activation values to device
+  //ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpyAsync(device_activation_vector, activation_vector_copy, activation_vector_size * sizeof(double), cudaMemcpyHostToDevice, stream),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
+  ASSERT_EQ(0, call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size, stream));
+  // copy activations from device to host
+  //ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy, device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpyAsync(activation_vector_copy, device_activation_vector, activation_vector_size * sizeof(double), cudaMemcpyDeviceToHost, stream),__FILE__,__LINE__));
+
+  // synchronize stream
+  cudaStreamSynchronize(stream);
+
+  // validate each value in activation copy is the same since this is the identity function
+  for(std::int16_t i = 0; i < activation_vector_size; ++i)
+  {
+	ASSERT_EQ(activation_vector[i], activation_vector_copy[i]);
+  }
+
+  // release pinned host  memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(activation_vector),__FILE__,__LINE__));
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFreeHost(activation_vector_copy),__FILE__,__LINE__));
+
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+
+  // destroy cuda stream
+  cudaStreamDestroy(stream);
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 /*
@@ -80,50 +142,44 @@ TEST(activation_test, call_activation_identity_derivative)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<identity> act_identity;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in identity derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_identity(activation_vector.get()[i], ACTIVATION_TYPE::DERIVATIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::IDENTITY, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i], activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation failed (In Identity_Derivative) with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 
@@ -136,50 +192,44 @@ TEST(activation_test, call_activation_sigmoid_objective)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<sigmoid> act_sigmoid;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in sigmoid objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_sigmoid(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Sigmoid_Objective) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 /*
@@ -191,82 +241,45 @@ TEST(activation_test, call_activation_sigmoid_derivative)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<sigmoid> act_sigmoid;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in sigmoid derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_sigmoid(activation_vector.get()[i], ACTIVATION_TYPE::DERIVATIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
+  ASSERT_EQ(0, call_activation(ACTIVATION_NAME::SIGMOID, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size) );
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i], activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation failed (In Sigmoid_Derivative) with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //to do
@@ -316,50 +329,44 @@ TEST(activation_test, call_activation_softplus_objective)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<softplus> act_softplus;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in softplus objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_softplus(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
-  ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
+  ASSERT_EQ(0, call_activation(ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size));
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Softplus_Objective) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 TEST(activation_test, call_activation_softplus_derivative)
@@ -368,50 +375,44 @@ TEST(activation_test, call_activation_softplus_derivative)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<softplus> act_softplus;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in softplus derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
   //randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_softplus(activation_vector.get()[i],ACTIVATION_TYPE::DERIVATIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTPLUS, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Softplus_Derivative) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 TEST(activation_test, call_activation_tanh_objective)
 {
@@ -419,50 +420,44 @@ TEST(activation_test, call_activation_tanh_objective)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<hyperbolic_tangent> act_tanh;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in tanh objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_tanh(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::TANH, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Tanh_Objective) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 TEST(activation_test, call_activation_tanh_derivative)
@@ -477,44 +472,38 @@ TEST(activation_test, call_activation_tanh_derivative)
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in tanh derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_tanh(activation_vector.get()[i],ACTIVATION_TYPE::DERIVATIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::TANH, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Tanh_Derivative) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 TEST(activation_test, call_activation_relu_objective)
 {
@@ -522,50 +511,44 @@ TEST(activation_test, call_activation_relu_objective)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<relu> act_relu;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in relu objective failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_relu(activation_vector.get()[i],ACTIVATION_TYPE::OBJECTIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //call activation function make sure the kernel wrapper returns 0
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
+  // call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::RELU, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Relu_Objective) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }
 
 TEST(activation_test, call_activation_relu_derivative)
@@ -574,48 +557,42 @@ TEST(activation_test, call_activation_relu_derivative)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint16_t> Z_plus(1, std::numeric_limits<std::uint16_t>::max() / 2  );
   std::uniform_real_distribution<float> real(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );
-  //the activation function itself
+  // the activation function itself
   activation<relu> act_relu;
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
   cudaError_t error_id;
-  //arbitrary layer size  based on ushort max
+  // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
-  //will store the results of call activation
+  // will store the results of call activation
   activation_vector_copy = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );
   std::cout<<"max value of ushort: "<<std::numeric_limits<std::uint16_t>::max() <<" activation vector size: "<<activation_vector_size<<" total bytes: "<<std::uint32_t(activation_vector_size) * sizeof(double)<<"\n";
-  //allocate device activation vector
-  error_id = cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) );
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector allocation in relu derivative failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //randomly initialize activations
+  // allocate device activation vector
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMalloc( (void **) &device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double) ),__FILE__,__LINE__)); 
+  // randomly initialize activations
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {	
-	//values pre-activation
+	// values pre-activation
 	activation_vector.get()[i] = real(mt);
 	activation_vector_copy.get()[i] = activation_vector.get()[i];
-	//values post-activation
+	// values post-activation
 	activation_vector.get()[i] = act_relu(activation_vector.get()[i],ACTIVATION_TYPE::DERIVATIVE);
   }
-  //copy pre-activation values to device
-  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (HostToDevice) memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // copy pre-activation values to device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice),__FILE__,__LINE__));
   //call activation function make sure the kernel wrapper returns 0
   ASSERT_EQ(call_activation(ACTIVATION_NAME::RELU, ACTIVATION_TYPE::DERIVATIVE, device_activation_vector, activation_vector_size), 0);
-  //copy activations from device to host
-  error_id = cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector (DeviceToHost) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-  //validate each value in activation copy is the same since this is the identity function
+  // copy activations from device to host
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaMemcpy( activation_vector_copy.get(), device_activation_vector, std::uint32_t(activation_vector_size) * sizeof(double), cudaMemcpyDeviceToHost),__FILE__,__LINE__));
+  // validate each value in activation copy is the same since this is the identity function
   for(std::int16_t i = 0; i < activation_vector_size; ++i)
   {
 	ASSERT_EQ(activation_vector.get()[i],activation_vector_copy.get()[i]);
   }
-  //release device memory
-  error_id = cudaFree(device_activation_vector);
-  if(error_id != cudaSuccess)
-	std::cerr<<"device_activation_vector deallocation (In Relu_Derivative) failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+  // release device memory
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaFree(device_activation_vector),__FILE__,__LINE__));
+  // reset device
+  ASSERT_EQ(0, zinhart::check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__));
 }

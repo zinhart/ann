@@ -5,5 +5,5 @@ printf "\nProceding with cmake\n"
 cmake .. >> ../release-build-output.txt 2>&1
 printf "Finished with cmake\n"
 printf "Proceding with make\n"
-make >> ../release-build-output.txt 2>&1
+make -j 12 >> ../release-build-output.txt 2>&1
 printf "Finished make\n"
