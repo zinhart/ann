@@ -482,12 +482,12 @@ namespace zinhart
 		}
 
 		HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
-							   const cudaStream_t & stream, cublasHandle_t & context, 
+							   const cudaStream_t & stream, const cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::uint32_t & total_targets, const double * host_total_targets, 
 			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights,
-							   const std::uint32_t & total_activations, double * host_total_activations, // when copy_device_to_host is true activations will be written here
-							   const double * device_total_observations, double * device_total_activations, const double * device_total_bias, const double * device_total_hidden_weights
+							   const double * device_total_observations,  const double * device_total_bias, const double * device_total_hidden_weights,
+							   const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations
 							  )
 
 		{

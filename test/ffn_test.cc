@@ -1,9 +1,11 @@
 #include "ann/ann.hh"
+#include "concurrent_routines/concurrent_routines.hh"
 #include "gtest/gtest.h"
 #include <limits>
 #include <random>
 #include <memory>
 #include <algorithm>
+#include <list>
 using namespace zinhart;
 #if CUDA_ENABLED == 1
 
@@ -24,6 +26,7 @@ TEST(ffn_test, async_forward_propagate)
   //std::uniform_int_distribution<std::uint8_t> cuda_stream_dist(1, MAX_CPU_THREADS); 
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
   cudaStream_t * streams{nullptr}; 
+  std::list<zinhart::thread_pool::task_future<std::int32_t>> tasks;
 
   // host vectors 
   double * host_total_observations{nullptr};
@@ -167,21 +170,45 @@ TEST(ffn_test, async_forward_propagate)
   cublasHandle_t context;
   ASSERT_EQ(0, zinhart::check_cublas_api(cublasCreate(&context),__FILE__, __LINE__)); 
 
+  // prepare for forward propagate
   ffn net;
-
+  bool copy_to_host = false;
+  auto async_forward_propagate_wrapper = [](ffn & n, const bool & copy_dev_to_host, 
+											const cudaStream_t & strm, const cublasHandle_t & contxt, 
+										    const std::uint32_t & ith_obs_index, const std::vector<LAYER_INFO> & total_layrs,
+										    const std::uint32_t & total_targs, const double * host_total_targs, 
+										    const std::uint32_t & total_hidden_wts, const double * host_total_hidden_wts,
+										    const double * device_total_obs,  const double * device_total_bia, const double * device_total_hidden_wts,
+										    const std::uint32_t & total_acts, double * host_total_acts, double * device_total_acts
+										   )
+										 {
+										   return n.forward_propagate_async(copy_dev_to_host, strm, contxt,
+																			  ith_obs_index, total_layrs,
+																			  total_targs, host_total_targs,
+																			  total_hidden_wts, host_total_hidden_wts,
+																			  device_total_obs, device_total_bia, device_total_hidden_wts,
+																			  total_acts, host_total_acts, device_total_acts
+																			 ); 
+										 };
   // for each case for each stream forward propogate
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
 	for (ith_stream = 0; ith_stream < /*n_cuda_streams*/1; ++ith_stream)
 	{
 	  // assert proper return codes
-	  ASSERT_EQ(0, net.forward_propagate_async(
-												false, streams[ith_stream], context, ith_case, total_layers,
-												total_targets_length, host_total_targets,
-												total_hidden_weights_length, host_total_hidden_weights,
-												total_activations_length, host_total_activations,
-												device_total_observations, device_total_activations, device_total_bias, device_total_hidden_weights)
-		  );
+	  tasks.push_back(zinhart::default_thread_pool::push_task([&](){return net.forward_propagate_async(copy_to_host, 
+															   streams[ith_stream], context, 
+																ith_case, total_layers,
+																total_targets_length, host_total_targets,
+																total_hidden_weights_length, host_total_hidden_weights,
+																device_total_observations, device_total_bias, device_total_hidden_weights,
+																total_activations_length, host_total_activations, device_total_activations);
+                                              }
+						                )
+					 );
+	  // this is necesarry to ensure that for example all async forward propagates return before the cuda context they are using is destroyed
+	  auto res = tasks.back().get();
+	  ASSERT_EQ(0, res);
 	}
   }
   // release cublas resources and check for errors
