@@ -486,8 +486,9 @@ namespace zinhart
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::uint32_t & total_targets, const double * host_total_targets, 
 			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights,
-							   const double * device_total_observations,  const double * device_total_bias, const double * device_total_hidden_weights,
-							   const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations
+							   const std::uint32_t & total_activations, double * host_total_activations,
+							   const double * host_total_bias,
+							   const double * device_total_observations, const double * device_total_hidden_weights, double * device_total_activations
 							  )
 
 		{
@@ -536,31 +537,16 @@ namespace zinhart
 		  {
 			return 1;
 		  }
-		  // The dimensions of Wx is m x n, parameters updated for dgeam
-		  current_layer = 1;
-		  lda = total_layers[current_layer].second;
-		  ldb = total_layers[current_layer].second;
-		  ldc = total_layers[current_layer].second;
-		  //add in bias
-		  /*if(zinhart::check_cublas_api(cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, 
-								 m, n,
-			                     &alpha, 
-								 device_total_activations, lda,
-								 &beta_add, 
-								 device_total_bias, ldb,
-								 device_total_activations, ldc
-			                    ),__FILE__, __LINE__) != 0)
-		  {
-			return 1;
-		  }*/		
+		  // add in bias
+		  if(call_axps_async(1.0, device_total_activations, host_total_bias[0], total_layers[1].second, stream) != 0)
+			return 1;		
 		  // call activation
 		  // f(Wx + b) complete for first hidden layer and input layer
 		  
 
 
-		  //do  first hidden layer and input layer
 
-/*		  		  //copy activations back to host
+/*		  //copy activations back to host
 		  if(copy_device_to_host == true)
 		  {
 		    
