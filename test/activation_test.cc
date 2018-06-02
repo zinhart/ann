@@ -147,7 +147,6 @@ TEST(activation_test, call_activation_identity_derivative)
   std::shared_ptr<double> activation_vector;
   std::shared_ptr<double> activation_vector_copy;
   double * device_activation_vector;
-  cudaError_t error_id;
   // arbitrary layer size  based on ushort max
   std::uint16_t activation_vector_size = Z_plus(mt);
   activation_vector = std::shared_ptr<double> ( new double[activation_vector_size], std::default_delete<double[]>() );

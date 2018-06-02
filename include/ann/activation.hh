@@ -438,16 +438,12 @@ namespace zinhart
 
 #if CUDA_ENABLED == 1
   //wrappers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
-  std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, double * device_Wx_plus_b, std::uint32_t current_layer_size);
-
-  std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, double * device_Wx_plus_b, std::uint32_t current_layer_size, const cudaStream_t & stream);
+  template <class Precision_Type>
+	HOST std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t & current_layer_size, const std::uint32_t & device_id = 0);
+  template <class Precision_Type>
+	HOST std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t & current_layer_size, const cudaStream_t & stream, const std::uint32_t & device_id = 0);
 
   std::int32_t call_activation(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t layer_size);
-  //activation function kernels here
-  __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, std::uint32_t size); //everything that's not leaky relu, elu, or softmax
-  __global__ void activation_kernel_coeff(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, double * Wx_plus_b, double coefficient, std::uint32_t size);//leaky relu or elu
-  __global__ void activation_kernel_softmax(ACTIVATION_TYPE activation_type,double * Wx_plus_b, std::uint32_t size);//not sure atm what other parameters are necesary 12/28/17
-  //end activation function kernels
-#endif
+  #endif
 }
 #endif
