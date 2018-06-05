@@ -13,6 +13,8 @@ namespace zinhart
    template <class Precision_Type>
  	 __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
 	 {
+	   extern __shared__ std::uint8_t device_Wx_plus_b_shared[];
+	   Precision_Type * tile = reinterpret_cast<Precision_Type*>(tile);
  	   const std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 	   //printf("thread_id: %d\n", thread_id);
 	   if(thread_id >= layer_size)
@@ -130,29 +132,13 @@ namespace zinhart
    template <class Precision_Type>
 	HOST std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t & current_layer_size, const cudaStream_t & stream, const std::uint32_t & device_id)
 	{
-	  cudaError_t error_id;
-	  cudaDeviceProp properties;
-	  cudaGetDeviceProperties(&properties, 0);
-	  dim3 block_launch;
-	  std::int32_t warp_size = properties.warpSize;
-	  std::int32_t threads_per_block = (current_layer_size + warp_size -1) / warp_size * warp_size;
-	  if(threads_per_block > 4 * warp_size)
-		threads_per_block = 4 * warp_size;
-	  block_launch.x = (current_layer_size + threads_per_block - 1) / threads_per_block;// number of blocks
-	  block_launch.y = 1;
-	  block_launch.z = 1;
-	  //std::cout<<"current_layer_size: "<<current_layer_size<<" threads_per_block: "<<threads_per_block<<" warp_size: "<<warp_size <<" block_launch.x: " <<block_launch.x<< " block_launch.y: " <<block_launch.y<< " block_launch.z: " <<block_launch.z<<"\n";
-	  //call kernel
-	  std::uint32_t temp{0};
-	  activation_kernel<<<block_launch, threads_per_block,0, stream>>>(activation_name, activation_type, device_Wx_plus_b, current_layer_size, temp);
-	  //cudaDeviceSynchronize();
-	  error_id = cudaGetLastError();
-	  if(error_id != cudaSuccess)
-	  {
-		std::cerr<<"activation_kernel failed to launch with error: "<<cudaGetErrorString(error_id)<<"\n";
-		return 1;
-	  }
-	  return 0;
+	  dim3 num_blocks;
+	  dim3 threads_per_block;
+	  std::uint32_t shared_memory_bytes{0};
+	  grid_space::get_launch_params(num_blocks, threads_per_block, current_layer_size, shared_memory_bytes, device_id, Precision_Type{});
+	  const std::uint32_t shared_memory_length =  shared_memory_bytes / sizeof(Precision_Type);
+	  activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, current_layer_size);
+	  return zinhart::check_cuda_api(cudaError_t(cudaGetLastError()),__FILE__,__LINE__);
 	}
 
  /* 
