@@ -508,7 +508,6 @@ namespace zinhart
 		  const double beta_mult{0};
 		  const double beta_add{1};
 
-
 		  // get col major coordinates without explicitly transposing 
 		  // ( total_layers[1].second is rows of the weight matrix and the number of neurons in the first hidden layer )
 		  // ( total_layers[0].second is the columns of the weight matrix and the number of neurons in the input layer )
