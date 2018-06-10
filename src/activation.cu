@@ -10,16 +10,18 @@ namespace zinhart
 
 
   //activation function kernels here
-   template <class Precision_Type>
- 	 __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
+   template <class Precision_Type, template <class> class activation_function, class ACT>
+ 	 __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, activation_function<ACT> f,const std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
 	 {
-	   extern __shared__ std::uint8_t device_Wx_plus_b_shared[];
-	   Precision_Type * tile = reinterpret_cast<Precision_Type*>(tile);
+	 //  extern __shared__ std::uint8_t device_Wx_plus_b_shared[];
+	 //  Precision_Type * tile = reinterpret_cast<Precision_Type*>(tile);
  	   const std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 	   //printf("thread_id: %d\n", thread_id);
 	   if(thread_id >= layer_size)
 		 return;
-	   if(activation_name == ACTIVATION_NAME::IDENTITY)
+	   device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
+
+/*	   if(activation_name == ACTIVATION_NAME::IDENTITY)
 	   {
 		 activation<identity> f;
 		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
@@ -45,7 +47,7 @@ namespace zinhart
 		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
 	   }
 	   else
-		 return;
+		 return;*/
 	 }
    //everything that's not leaky relu, elu, or softmax
    template <class Precision_Type>
@@ -95,6 +97,7 @@ namespace zinhart
 	  return;
 	switch(activation_name)
 	{
+	  /*
 	  case ACTIVATION_NAME::LEAKY_RELU:
 		device_Wx_plus_b[thread_id] = activation_leaky_relu(activation_type, device_Wx_plus_b[thread_id], coefficient);
 		break;
@@ -102,7 +105,7 @@ namespace zinhart
 		device_Wx_plus_b[thread_id] = activation_exponential_leaky_relu(activation_type, device_Wx_plus_b[thread_id], coefficient);
 		break;
 	  default:
-		return;
+		return;*/
 	}
   }
   __global__ void activation_kernel_softmax(ACTIVATION_TYPE activation_type, double * device_Wx_plus_b, std::uint32_t layer_size)
@@ -121,9 +124,54 @@ namespace zinhart
 	  dim3 num_blocks;
 	  dim3 threads_per_block;
 	  grid_space::get_launch_params(num_blocks, threads_per_block, current_layer_size, device_id);
+	  if(activation_name == ACTIVATION_NAME::IDENTITY)
+	  {
+	    activation<identity> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SIGMOID)
+	  {
+	    activation<sigmoid> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SOFTMAX)
+	  {
+		activation<softmax> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SOFTPLUS)
+	  {
+	    activation<softplus> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::TANH)
+	  {
+	    activation<hyperbolic_tangent> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::RELU)
+	  {
+	    activation<relu> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::LEAKY_RELU)
+	  {
+	    activation<leaky_relu> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::EXP_LEAKY_RELU)
+	  {
+	    activation<exp_leaky_relu> f;
+		activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else
+	  {
+		// probably the input layer was passed
+		return 1;
+	  }
+	  
 	  //std::cout<<"current_layer_size: "<<current_layer_size<<" threads_per_block: "<<threads_per_block<<" warp_size: "<<warp_size <<" block_launch.x: " <<block_launch.x<< " block_launch.y: " <<block_launch.y<< " block_launch.z: " <<block_launch.z<<"\n";
 	  //call kernel
-	  activation_kernel<<<num_blocks, threads_per_block>>>(activation_name, activation_type, device_Wx_plus_b, current_layer_size);
 	  cudaDeviceSynchronize();
 	  return zinhart::check_cuda_api(cudaError_t(cudaGetLastError()),__FILE__,__LINE__);
 	}
@@ -137,7 +185,51 @@ namespace zinhart
 	  std::uint32_t shared_memory_bytes{0};
 	  grid_space::get_launch_params(num_blocks, threads_per_block, current_layer_size, shared_memory_bytes, device_id, Precision_Type{});
 	  const std::uint32_t shared_memory_length =  shared_memory_bytes / sizeof(Precision_Type);
-	  activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, current_layer_size);
+	  if(activation_name == ACTIVATION_NAME::IDENTITY)
+	  {
+	    activation<identity> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SIGMOID)
+	  {
+	    activation<sigmoid> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SOFTMAX)
+	  {
+		activation<softmax> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::SOFTPLUS)
+	  {
+	    activation<softplus> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::TANH)
+	  {
+	    activation<hyperbolic_tangent> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::RELU)
+	  {
+	    activation<relu> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::LEAKY_RELU)
+	  {
+	    activation<leaky_relu> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else if(activation_name == ACTIVATION_NAME::EXP_LEAKY_RELU)
+	  {
+	    activation<exp_leaky_relu> f;
+		activation_kernel<<<num_blocks, threads_per_block, shared_memory_bytes, stream>>>(activation_name, activation_type, device_Wx_plus_b, f,current_layer_size);
+	  }
+	  else
+	  {
+		// probably the input layer was passed
+		return 1;
+	  }
 	  return zinhart::check_cuda_api(cudaError_t(cudaGetLastError()),__FILE__,__LINE__);
 	}
 

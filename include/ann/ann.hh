@@ -541,7 +541,7 @@ namespace zinhart
 		  if(call_axps_async(1.0, device_total_activations, host_total_bias[0], total_layers[1].second, stream) != 0)
 			return 1;		
 		  // call activation
-		  //call_activation(total_layers[1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[1].second);
+		  call_activation(total_layers[1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[1].second);
 
 		  // f(Wx + b) complete for first hidden layer and input layer
 		  

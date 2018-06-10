@@ -15,6 +15,7 @@ namespace zinhart
   enum class ACTIVATION_TYPE : std::uint8_t {OBJECTIVE = std::uint8_t(0), DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
+
   // activation will be the common interface!
   template <class ACTIVATION_FUNCTION>
 	class activation
@@ -25,8 +26,9 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER activation(activation&&) = default;
 		CUDA_CALLABLE_MEMBER activation & operator = (const activation&) = default;
 		CUDA_CALLABLE_MEMBER activation & operator = (activation&&) = default;
-		CUDA_CALLABLE_MEMBER double operator ()(double x, ACTIVATION_TYPE at)
-		{ return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x); };
+		template <class Precision_Type>
+		  CUDA_CALLABLE_MEMBER Precision_Type operator ()(Precision_Type x, ACTIVATION_TYPE at)
+		  { return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x); };
 	};
 
   class identity : public activation<identity>
@@ -37,10 +39,12 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER identity(identity&&) = default;
 	   CUDA_CALLABLE_MEMBER identity & operator = (const identity&) = default;
 	   CUDA_CALLABLE_MEMBER identity & operator = (identity&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {return x;};
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {return 1;};
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+	     {return x;};
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
+	     {return Precision_Type{1};};
   };
 
   class sigmoid : public activation<sigmoid>
@@ -51,18 +55,20 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER sigmoid(sigmoid&&) = default;
 	   CUDA_CALLABLE_MEMBER sigmoid & operator = (const sigmoid&) = default;
 	   CUDA_CALLABLE_MEMBER sigmoid & operator = (sigmoid&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 {
 #if CUDA_ENABLED == 1
-		  return double(1.0) / ( double(1.0) + exp(-x) );
+			return Precision_Type(1.0) / ( Precision_Type(1.0) + exp(-x) );
 #else
-		  return double(1.0) / ( double(1.0) + std::exp(-x) );
+			return Precision_Type(1.0) / ( Precision_Type(1.0) + std::exp(-x) );
 #endif
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {
-		 return x * (double(1.0) - x);
-	   };
+		 };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
+		 {
+		   return x * (Precision_Type(1.0) - x);
+		 };
   };
   class softmax : public activation<softmax>
   {
@@ -72,17 +78,19 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER softmax(softmax&&) = default;
 	   CUDA_CALLABLE_MEMBER softmax & operator = (const softmax&) = default;
 	   CUDA_CALLABLE_MEMBER softmax & operator = (softmax&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 {
 #if CUDA_ENABLED == 1
-		  return exp(x);
+			return exp(x);
 #else
-		  return std::exp(x);
+			return std::exp(x);
 #endif
-	   };
-	   //to do
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {return x;};
+		 };
+	   template <class Precision_Type>
+		 //to do
+	     CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
+	     {return x;};
   };
 
 
@@ -94,20 +102,22 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER softplus(softplus&&) = default;
 	   CUDA_CALLABLE_MEMBER softplus & operator = (const softplus&) = default;
 	   CUDA_CALLABLE_MEMBER softplus & operator = (softplus&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 {
 #if CUDA_ENABLED == 1
-		  return log(double(1.0) + exp(x));
+			return log(Precision_Type(1.0) + exp(x));
 #else
-		  return std::log(double(1.0) + std::exp(x));
+			return std::log(Precision_Type(1.0) + std::exp(x));
 #endif
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
+		 };
+	template <class Precision_Type>
+	   CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
 	   {
 #if CUDA_ENABLED == 1
-		 return double(1.0) / (double(1.0) + exp(-x));
+		 return Precision_Type(1.0) / (Precision_Type(1.0) + exp(-x));
 #else
-		 return double(1.0) / (double(1.0) + std::exp(-x));
+		 return Precision_Type(1.0) / (Precision_Type(1.0) + std::exp(-x));
 #endif
 	   };
   };
@@ -120,18 +130,20 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER hyperbolic_tangent(hyperbolic_tangent&&) = default;
 	   CUDA_CALLABLE_MEMBER hyperbolic_tangent & operator = (const hyperbolic_tangent&) = default;
 	   CUDA_CALLABLE_MEMBER hyperbolic_tangent & operator = (hyperbolic_tangent&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 {
 #if CUDA_ENABLED == 1
-		  return tanh(-x);
+			return tanh(-x);
 #else
-		  return std::tanh(-x);
+			return std::tanh(-x);
 #endif
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {
-		 return double(1.0) - (x * x);
-	   };
+		 };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
+		 {
+		   return Precision_Type(1.0) - (x * x);
+		 };
   };
 
   class relu : public activation<relu>
@@ -142,14 +154,16 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER relu(relu&&) = default;
 	   CUDA_CALLABLE_MEMBER relu & operator = (const relu&) = default;
 	   CUDA_CALLABLE_MEMBER relu & operator = (relu&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x)
-	   {
-		 return (x >= double(0.0) ) ? x : double(0.0);
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x)
-	   {
-		 return (x >= double(0.0) ) ? double(1.0) : double(0.0);
-	   };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 {
+		   return (x >= Precision_Type(0.0) ) ? x : Precision_Type(0.0);
+		 };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
+		 {
+		   return (x >= Precision_Type(0.0) ) ? Precision_Type(1.0) : Precision_Type(0.0);
+		 };
   };
 
 
@@ -162,14 +176,16 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER leaky_relu(leaky_relu&&) = default;
 	   CUDA_CALLABLE_MEMBER leaky_relu & operator = (const leaky_relu&) = default;
 	   CUDA_CALLABLE_MEMBER leaky_relu & operator = (leaky_relu&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x, double leakage_coefficient = 0.1)
-	   {
-		 return (x >= double(0.0) ) ? x : leakage_coefficient * x;
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x, double leakage_coefficient = 0.1)
-	   {
-   		 return (x >= double(0.0) ) ? double(1.0) : leakage_coefficient;
-	   };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x, Precision_Type leakage_coefficient = 0.1)
+		 {
+		   return (x >= Precision_Type(0.0) ) ? x : leakage_coefficient * x;
+		 };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x, Precision_Type leakage_coefficient = 0.1)
+		 {
+		   return (x >= Precision_Type(0.0) ) ? Precision_Type(1.0) : leakage_coefficient;
+		 };
   };
 
 
@@ -182,262 +198,29 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER exp_leaky_relu(exp_leaky_relu&&) = default;
 	   CUDA_CALLABLE_MEMBER exp_leaky_relu & operator = (const exp_leaky_relu&) = default;
 	   CUDA_CALLABLE_MEMBER exp_leaky_relu & operator = (exp_leaky_relu&&) = default;
-	   CUDA_CALLABLE_MEMBER double objective(const double & x, double leakage_coefficient = 0.1)
-	   {
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x, Precision_Type leakage_coefficient = 0.1)
+		 {
 #if CUDA_ENABLED == 1
-		 return (x >= double(0.0) ) ? x : leakage_coefficient * (exp(x) - double(1.0));
+		   return (x >= Precision_Type(0.0) ) ? x : leakage_coefficient * (exp(x) - Precision_Type(1.0));
 #else
-		 return (x >= double(0.0) ) ? x : leakage_coefficient * (std::exp(x) - double(1.0));
+		   return (x >= Precision_Type(0.0) ) ? x : leakage_coefficient * (std::exp(x) - Precision_Type(1.0));
 #endif
-	   };
-	   CUDA_CALLABLE_MEMBER double derivative(const double & x, double leakage_coefficient = 0.1)
-	   {
+		 };
+	   template <class Precision_Type>
+		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x, Precision_Type leakage_coefficient = 0.1)
+		 {
 
 #if CUDA_ENABLED == 1
-		 return (x >= double(0.0) ) ? x : leakage_coefficient * (exp(x) - double(1.0));
+		   return (x >= Precision_Type(0.0) ) ? x : leakage_coefficient * (exp(x) - Precision_Type(1.0));
 #else
-		 return (x >= double(0.0) ) ? x : leakage_coefficient * (std::exp(x) - double(1.0));
+		   return (x >= Precision_Type(0.0) ) ? x : leakage_coefficient * (std::exp(x) - Precision_Type(1.0));
 #endif
-	   };
+		 };
   };
 
-
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_identity(ACTIVATION_TYPE activation_type, Numeric_Type & input)	
-	{
-#if CUDA_ENABLED == 1	
-	  printf("CUDA_ENABLED activation_identity\n");
-#else	
-	  printf("CUDA_DISABLED activation_identity\n");
-#endif
-	  switch(activation_type)
-	  {
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return input;
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return Numeric_Type(1);
-#if CUDA_ENABLED == 1	
-		default:
-		  printf("default case called in activation_identity\n");
-		  return 0;
-#else	
-		default:
-		  std::cerr<<"default case called in activation_identity\n";
-		  return 0;
-#endif
-	  }
-	}
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_softmax(ACTIVATION_TYPE activation_type, Numeric_Type & input_i, Numeric_Type & input_j, Numeric_Type & kronecker_delta)
-	{
 #if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_softmax\n");
-#else
-	  printf("CUDA_DISABLED activation_softmax\n");
-#endif
-	  switch(activation_type)
-	  {
-#if CUDA_ENABLED == 1
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return exp(input_i);
-		default:
-		  printf("default case called in activation_softmax\n");
-		  return 0;
-#else
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return std::exp(input_i);
-		default:
-		  std::cerr<<"default case called in activation_identity\n";
-		  return 0;
-#endif
-  		case ACTIVATION_TYPE::DERIVATIVE:
-  		  return input_i * (kronecker_delta - input_j);
-	}
-  }
-
-  template<class Numeric_Type>
-   	CUDA_CALLABLE_MEMBER Numeric_Type activation_sigmoid(ACTIVATION_TYPE activation_type, Numeric_Type & input)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_sigmoid\n");
-#else
-	  printf("CUDA_DISABLED activation_sigmoid\n");
-#endif
-	  switch(activation_type)
-	  {
-#if CUDA_ENABLED == 1
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + exp(-input));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return input * (Numeric_Type(1.0) - input);
-		default:
-		  printf("default case called in activation_sigmoid\n");
-		  return 0;
-#else
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + std::exp(-input));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return input * (Numeric_Type(1.0) - input);
-		default:
-		  std::cerr<<"default case called in activation_sigmoid\n";
-		  return 0;
-#endif
-	  }
-  }
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_softplus(ACTIVATION_TYPE activation_type, Numeric_Type & input)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_softplus\n");
-#else
-	  printf("CUDA_DISABLED activation_softplus\n");
-
-#endif
-	  switch(activation_type)
-	  {
-#if CUDA_ENABLED == 1
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return log(Numeric_Type(1.0) + exp(input));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + exp(-input));
-		default:
-		  printf("default case called in activation_softplus\n");
-		  return 0;
-#else
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return log(Numeric_Type(1.0) + std::exp(input));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return Numeric_Type(1.0) / (Numeric_Type(1.0) + std::exp(-input));
-		default:
-		  std::cerr<<"default case called in activation_softplus\n";
-		  return 0;
-#endif
-	}
-  }
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_tanh(ACTIVATION_TYPE activation_type, Numeric_Type & input)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_tanh\n");
-#else
-	  printf("CUDA_DISABLED activation_tanh\n");
-#endif
-	  switch(activation_type)
-	  {
-#if CUDA_ENABLED == 1
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return tanh(-input);
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return Numeric_Type(1.0) - (input * input);
-		default:
-		  printf("default case called in activation_tanh\n");
-		  return 0;
-#else
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return std::tanh(-input);
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return Numeric_Type(1.0) - (input * input);
-		default:
-		  std::cerr<<"default case called in activation_tanh\n";
-		  return 0;
-#endif
-	  }
-  }
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_relu(ACTIVATION_TYPE activation_type, Numeric_Type & input)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_relu\n");
-#else
-	  printf("CUDA_DISABLED activation_relu\n");
-#endif
-	  switch(activation_type)
-	  {
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return (input >= Numeric_Type(0.0) ) ? input : Numeric_Type(0.0);
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : Numeric_Type(0.0);
-#if CUDA_ENABLED == 1
-		default:
-		  printf("default case called in activation_relu\n");
-		  return 0;
-#else
-		default:
-		  std::cerr<<"default case called in activation_relu\n";
-		  return 0;
-#endif
-	  }
-	}
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_leaky_relu(ACTIVATION_TYPE activation_type, Numeric_Type & input, Numeric_Type & leakage_coefficient)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_leaky_relu\n");
-#else
-	  printf("CUDA_DISABLED activation_leaky_relu\n");
-#endif
-	  switch(activation_type)
-	  {
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * input;
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient;
-#if CUDA_ENABLED == 1
-		default:
-		  printf("default case called in activation_leaky_relu\n");
-		  return 0;
-#else
-		default:
-		  std::cerr<<"default case called in activation_leaky_relu\n";
-		  return 0;
-#endif
-	  }
-	}
-
-  template<class Numeric_Type>
-	CUDA_CALLABLE_MEMBER Numeric_Type activation_exponential_leaky_relu(ACTIVATION_TYPE activation_type, Numeric_Type & input, Numeric_Type & leakage_coefficient)
-	{
-#if CUDA_ENABLED == 1
-	  printf("CUDA_ENABLED activation_exponential_leaky_relu\n");
-#else
-	  printf("CUDA_DISABLED activation_exponential_leaky_relu\n");
-#endif
-
-#if CUDA_ENABLED == 1
-	  switch(activation_type)
-	  {
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * (exp(input) - Numeric_Type(1.0));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient * (exp(input) - Numeric_Type(1.0)) + leakage_coefficient;
-		default:
-		  printf("default case called in activation_leaky_relu\n");
-		  return 0;
-	  }
-#else
-	  printf("CUDA_DISABLED activation_leaky_relu\n");
-	  switch(activation_type)
-	  {
-		case ACTIVATION_TYPE::OBJECTIVE:
-		  return (input >= Numeric_Type(0.0) ) ? input : leakage_coefficient * (std::exp(input) - Numeric_Type(1.0));
-		case ACTIVATION_TYPE::DERIVATIVE:
-		  return (input >= Numeric_Type(0.0) ) ? Numeric_Type(1.0) : leakage_coefficient * (std::exp(input) - Numeric_Type(1.0)) + leakage_coefficient;
-		default:
-		  std::cerr<<"default case called in activation_leaky_relu\n";
-		  return 0;
-	  }
-#endif
-  } 
-
-
-#if CUDA_ENABLED == 1
-  //wrappers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
+  //wrppers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
   template <class Precision_Type>
 	HOST std::int32_t call_activation(const ACTIVATION_NAME activation_name, const ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, const std::uint32_t & current_layer_size, const std::uint32_t & device_id = 0);
   template <class Precision_Type>
