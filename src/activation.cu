@@ -13,41 +13,17 @@ namespace zinhart
    template <class Precision_Type, template <class> class activation_function, class ACT>
  	 __global__ void activation_kernel(ACTIVATION_NAME activation_name, ACTIVATION_TYPE activation_type, Precision_Type * device_Wx_plus_b, activation_function<ACT> f,const std::uint32_t layer_size) //everything that's not leaky relu, elu, or softmax
 	 {
-	 //  extern __shared__ std::uint8_t device_Wx_plus_b_shared[];
-	 //  Precision_Type * tile = reinterpret_cast<Precision_Type*>(tile);
+	   //  in case later I decide to use shared memory
+	   //  extern __shared__ std::uint8_t device_Wx_plus_b_shared[];
+	   //  Precision_Type * tile = reinterpret_cast<Precision_Type*>(tile);
+	     
+	 /*  check out a grid stride loop here in the future
+	  *  for (std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x; thread_id < layer_size; thread_id += blockDim.x * gridDim.x)
+  		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);*/
  	   const std::uint32_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-	   //printf("thread_id: %d\n", thread_id);
 	   if(thread_id >= layer_size)
 		 return;
 	   device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-
-/*	   if(activation_name == ACTIVATION_NAME::IDENTITY)
-	   {
-		 activation<identity> f;
-		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-	   }
-	   else if(activation_name == ACTIVATION_NAME::SIGMOID)
-	   {
-		 activation<sigmoid> f;
-		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-	   }
-	   else if(activation_name == ACTIVATION_NAME::SOFTPLUS)
-	   {
-		 activation<softplus> f;
-		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-	   }
-	   else if(activation_name == ACTIVATION_NAME::TANH)
-	   {
-		 activation<hyperbolic_tangent> f;
-		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-	   }
-	   else if(activation_name == ACTIVATION_NAME::RELU)
-	   {
-		 activation<relu> f;
-		 device_Wx_plus_b[thread_id] =  f(device_Wx_plus_b[thread_id], activation_type);
-	   }
-	   else
-		 return;*/
 	 }
    //everything that's not leaky relu, elu, or softmax
    template <class Precision_Type>

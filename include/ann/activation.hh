@@ -11,8 +11,8 @@
 #endif
 namespace zinhart
 {
-  enum class ACTIVATION_NAME : std::uint8_t {INPUT = std::uint8_t(0), IDENTITY, SIGMOID, SOFTMAX, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU};
-  enum class ACTIVATION_TYPE : std::uint8_t {OBJECTIVE = std::uint8_t(0), DERIVATIVE}; 
+  enum class ACTIVATION_NAME : std::uint32_t {INPUT = std::uint32_t(1), IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX};
+  enum class ACTIVATION_TYPE : std::uint32_t {OBJECTIVE = std::uint32_t(0), DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
 
@@ -29,6 +29,9 @@ namespace zinhart
 		template <class Precision_Type>
 		  CUDA_CALLABLE_MEMBER Precision_Type operator ()(Precision_Type x, ACTIVATION_TYPE at)
 		  { return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x); };
+		template <class Precision_Type>
+		  CUDA_CALLABLE_MEMBER Precision_Type operator ()(Precision_Type x, ACTIVATION_TYPE at, const Precision_Type coefficient)
+		  { return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x, coefficient) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x, coefficient); };
 	};
 
   class identity : public activation<identity>
@@ -56,12 +59,12 @@ namespace zinhart
 	   CUDA_CALLABLE_MEMBER sigmoid & operator = (const sigmoid&) = default;
 	   CUDA_CALLABLE_MEMBER sigmoid & operator = (sigmoid&&) = default;
 	   template <class Precision_Type>
-		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
+		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type  x)
 		 {
 #if CUDA_ENABLED == 1
-			return Precision_Type(1.0) / ( Precision_Type(1.0) + exp(-x) );
+			return Precision_Type{1.0} / ( Precision_Type{1.0} + exp(-x) );
 #else
-			return Precision_Type(1.0) / ( Precision_Type(1.0) + std::exp(-x) );
+			return Precision_Type{1.0} / ( Precision_Type{1.0} + std::exp(-x) );
 #endif
 		 };
 	   template <class Precision_Type>
@@ -157,12 +160,12 @@ namespace zinhart
 	   template <class Precision_Type>
 		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
 		 {
-		   return (x >= Precision_Type(0.0) ) ? x : Precision_Type(0.0);
+		   return (x >= Precision_Type{0.0} ) ? x : Precision_Type{0.0};
 		 };
 	   template <class Precision_Type>
 		 CUDA_CALLABLE_MEMBER Precision_Type derivative(const Precision_Type & x)
 		 {
-		   return (x >= Precision_Type(0.0) ) ? Precision_Type(1.0) : Precision_Type(0.0);
+		   return (x >= Precision_Type{0.0} ) ? Precision_Type{1.0} : Precision_Type{0.0};
 		 };
   };
 
