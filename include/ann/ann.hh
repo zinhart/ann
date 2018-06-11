@@ -333,165 +333,130 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
-		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, double *> & total_targets, 
-			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
-							   const std::pair<std::uint32_t, double *> & total_activations,
-							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights
-							  )
+		template <class Precision_Type>
+		  HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
+								 const cudaStream_t & stream, const cublasHandle_t & context, 
+								 const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+								 const std::uint32_t & total_targets, const  Precision_Type * host_total_targets, 
+								 const std::uint32_t & total_hidden_weights, const Precision_Type * host_total_hidden_weights,
+								 const std::uint32_t & total_activations, Precision_Type * host_total_activations,
+								 const Precision_Type * host_total_bias,
+								 const Precision_Type * device_total_observations, const Precision_Type * device_total_hidden_weights, Precision_Type * device_total_activations
+								)
 
-		{
-		  std::cout<<"Total layers size: "<<total_layers.size()<<"\n";
-		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() ; ++ith_layer)
-			std::cout<<"Neurons in layer "<<ith_layer + 1<<": "<<total_layers[ith_layer].second<<"\n";
-		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
-			std::cout<<"weight matrix between layer "<<ith_layer + 2<<" and "<<ith_layer + 1<<" dimensions: "<<total_layers[ith_layer + 1].second<<" by "<<total_layers[ith_layer].second<<"\n";
-
-		  cublasStatus_t error_id;
-		  std::int32_t  m, n, k, lda, ldb,ldc;// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
-		  std::uint32_t ith_layer;// from the first hidden layer to the output layer 
-		  std::uint32_t weight_offset = 0;// number of weights connection between layer i and layer i + 1
-		  std::uint32_t case_begin = total_layers[0].second * ith_observation_index;//where a case begins, when ith_obs_index is 0 this is the first case
-		
-		  const double alf = 1;
-		  const double bet_mult = 0, bet_add = 1;
-		  const double *alpha = &alf;
-		  const double *beta1 = &bet_mult;
-		  const double *beta2 = &bet_add;
-
-		  m = 1; // cols of x
-		  n = total_layers[1].second; // rows of weight matrix 
-		  k = total_layers[0].second; // rows of x
-
-		  lda = m;
-		  ldb = k;
-		  ldc = m;
-
-		  
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
-					  m, n, k, 
-			          alpha, 
-					  device_total_observations + case_begin, lda,
-					  device_total_hidden_weights, ldb, 
-					  beta1,
-					  device_total_activations, ldc
-					  );
-/*		  //do  first hidden layer and input layer
-		  m = total_layers[1].second; // the weight matrix's rows are the number of neurons in the first hidden layer, it's columns are the number of neurons in  the input layer
-		  n = 1; // the result is a row vector
-		  k = total_layers[0].second; // the number of columns of the weight matrix and rows of the input layer
-
-		  lda = m;
-		  ldb = k;
-		  ldc = m;
-	 
-		  //perform Wx  original
-		  error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
-					  m, n, k, 
-			          alpha, 
-					  device_total_hidden_weights, lda,
-					  device_total_observations + case_begin, ldb, 
-					  beta1,
-					  device_total_activations, ldc
-					  );*/
-		  
-		  //check for errors
-		  if(error_id != CUBLAS_STATUS_SUCCESS)
 		  {
-			std::cerr<<"cublas dgemm on first hidden layer and input layer failed with error: "<<cublas_get_error_string(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-/*
-		  //update dimensions of matrix multiplication
-		  lda = total_layers[1].second;
-		  ldb = lda;
-		  ldc = lda;
-		  //add in bias
-		  error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[1].second, 1,
-			                     alpha, device_total_activations, lda,
-								 beta2, device_total_bias, ldb,
-								 device_total_activations, ldc
-			                    );
-		  //check for error on dgemm
-		  if(error_id != CUBLAS_STATUS_SUCCESS)
-		  {
-			std::cerr<<"cublas dgeam on first hidden layer and input layer failed with error: "<< cublas_get_error_string(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-
-		  //Wx + b complete
-		  //call activation function kernel here
-		  call_activation(total_layers[1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[1].second);
-
-		  //f(Wx + b) complete for first hidden layer and input layer
-		  
-		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
-		  for(ith_layer = 1, weight_offset = total_layers[1].second * total_layers[0].second; ith_layer < total_layers.size() - 1; ++ith_layer )
-		  {
-			//std::cout<<"ith_layer: "<<ith_layer<<" weight offset: "<<weight_offset<<" "
-			//<<total_layers[2].second<<" "<<total_layers[1].second<<" "<<std::uint32_t(total_layers[ith_layer + 1].second * total_layers[ith_layer].second)<<"\n";
-
-			//perform Wx
-			lda = total_layers[ith_layer + 1].second;//Neurons in the current layer(Rows of A) m
-			ldb = total_layers[ith_layer].second;//Neurons in the prior layer(Rows of B and by definitions of the matrix product Columns of A)
-			ldc = lda;//output vector of the matrix product of the current layer times the output of the prior layer
-			error_id = cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1, total_layers[ith_layer].second,
-								   alpha, device_total_hidden_weights + weight_offset, lda, 		
-								   device_total_activations + total_layers[ith_layer].second, ldb, beta1,
-								   device_total_activations + total_layers[ith_layer + 1].second, ldc 
-								  );
-		    if(error_id != CUBLAS_STATUS_SUCCESS)
-		    {
-			  std::cerr<<"cublas dgemm failed with error: "<<cublas_get_error_string(error_id)<<"\n";
-		 	  return ERROR_CUDA_ERROR;
-		    }
-		    ldb = total_layers[ith_layer + 1].second;	
-			//add in bias
-			error_id = cublasDgeam(context, CUBLAS_OP_N, CUBLAS_OP_N, total_layers[ith_layer + 1].second, 1,
-			                     alpha, device_total_activations + total_layers[ith_layer + 1].second, lda,
-								 beta2, device_total_bias + total_layers[ith_layer + 1].second, ldb,
-								 device_total_activations + total_layers[ith_layer + 1].second, ldc
-			                    );
-			if(error_id != CUBLAS_STATUS_SUCCESS)
-			{
-			  std::cerr<<"cublas dgeam on failed with error: "<< cublas_get_error_string(error_id)<<"\n";
-			  return ERROR_CUDA_ERROR;
-			}
-			//Wx + b complete
-			//call activation function kernel here	
-			call_activation(total_layers[ith_layer + 1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[ith_layer + 1].second);	
-			//f(Wx + b) complete for all hidden layers after the first till the output layer
-			weight_offset += total_layers[ith_layer + 1].second * total_layers[ith_layer].second;//update weight pointer
-		  } 
-		  //copy activations back to host
-		  if(copy_device_to_host == true)
-		  {
-		    
-			//copy activations from device to host
-		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
-			if(error_id != cudaSuccess)
-			{
-			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-			  return ERROR_CUDA_ERROR;
-			}
+			// layer counters
+			std::uint32_t current_layer{1}, prior_layer{0}, ith_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
+			const std::uint32_t input_layer{0};
+			const std::uint32_t output_layer{total_layers.size() - 1};
 			
+			// declarations for dgemm and dgeam
+			std::int32_t  m{0}, n{0}, k{0}, lda{0}, ldb{0},ldc{0};// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
+			std::uint32_t current_activation_offset{0};
+			std::uint32_t prior_activation_offset{0};
+			std::uint32_t weight_offset = {0};// number of weights connection between layer i and layer i + 1
+			std::uint32_t case_begin = {total_layers[input_layer].second * ith_observation_index};// where a case begins, when ith_obs_index is 0 this is the first case
+
+			// coefficients for gemm and geam
+			const double alpha{1};
+			const double beta_mult{0};
+			const double beta_add{1};
+
+
+			// get col major coordinates without explicitly transposing 
+			// ( total_layers[1].second is rows of the weight matrix and the number of neurons in the first hidden layer )
+			// ( total_layers[0].second is the columns of the weight matrix and the number of neurons in the input layer )
+			zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[input_layer].second, total_layers[input_layer].second, 1);
+
+			// set cublasStream
+			if(zinhart::check_cublas_api(cublasSetStream(context, stream), __FILE__, __LINE__) != 0 )
+			  return 1;
+
+			// do Wx for first hidden layer and input layer
+			if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+						m, n, k, 
+						&alpha, 
+						device_total_observations + case_begin, lda,
+						device_total_hidden_weights, ldb, 
+						&beta_mult,
+						device_total_activations, ldc
+						),__FILE__, __LINE__) != 0)
+			{
+			  return 1;
+			}
+
+			// add in bias
+			if(call_axps_async(1.0, device_total_activations, host_total_bias[0], total_layers[current_layer].second, stream) != 0)
+			  return 1;		
+
+			// call activation
+			call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[current_layer].second);
+			// f(Wx + b) complete for first hidden layer and input layer
+			
+			// update layer counters
+			current_layer = 2;
+			prior_layer = 1;
+
+			//second hidden layer to output layer, see above for why weight offset = lda * ldb
+			for(ith_layer = 1; ith_layer < total_layers.size() - 1; ++ith_layer, ++current_layer, ++prior_layer)
+			{
+			  // set offsets
+			  current_activation_offset += total_layers[prior_layer].second;
+			  weight_offset += total_layers[prior_layer].second * total_layers[prior_layer - 1].second;
+
+			  // get col major coordinates without explicitly transposing 
+			  // ( total_layers[current_layer].second is rows of the weight matrix)
+			  // ( total_layers[prior_layers].second is the columns of the weight matrix)
+			  zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[prior_layer].second, total_layers[prior_layer].second, 1);
+
+			  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+						  m, n, k, 
+						  &alpha, 
+						  device_total_activations + prior_activation_offset, lda,
+						  device_total_hidden_weights + weight_offset, ldb, 
+						  &beta_mult,
+						  device_total_activations + current_activation_offset, ldc
+						  ),__FILE__, __LINE__) != 0)
+				return 1;
+
+
+			  // add in bias
+			  if(call_axps_async(1.0, device_total_activations + current_activation_offset, host_total_bias[current_layer], total_layers[current_layer].second, stream) != 0)
+				return 1;		
+
+			  // call activation
+			   call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations + current_activation_offset, total_layers[current_layer].second);
+			   prior_activation_offset += total_layers[prior_layer].second;
 		  }
-*/		
-		  return 0;
-		}
+			// f(Wx + b) complete for second hidden layer to output layer
 
-		HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
-							   const cudaStream_t & stream, const cublasHandle_t & context, 
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::uint32_t & total_targets, const double * host_total_targets, 
-			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights,
-							   const std::uint32_t & total_activations, double * host_total_activations,
-							   const double * host_total_bias,
-							   const double * device_total_observations, const double * device_total_hidden_weights, double * device_total_activations
-							  )
-
+  		  //copy activations back to host
+			if(copy_device_to_host == true)
+			{
+			  
+			  //copy activations from device to host
+			  error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
+			  if(error_id != cudaSuccess)
+			  {
+				std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
+				return ERROR_CUDA_ERROR;
+			  }
+			  
+			}
+  /**/		
+			return 0;
+		  }
+		HOST void backward_propagate(const bool & copy_device_to_host, 
+								 const cudaStream_t & stream, const cublasHandle_t & context, 
+								 const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+								 const std::uint32_t & total_targets, const  Precision_Type * host_total_targets, 
+								 const std::uint32_t & total_hidden_weights, const Precision_Type * host_total_hidden_weights,
+								 const std::uint32_t & total_activations, Precision_Type * host_total_activations,
+								 const Precision_Type * host_total_bias,
+								 const Precision_Type * device_total_observations, const Precision_Type * device_total_hidden_weights, Precision_Type * device_total_activations)
 		{
+		  //cublas gemm here
+		
 		  // layer counters
 		  std::uint32_t current_layer{1}, prior_layer{0}, ith_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
 		  const std::uint32_t input_layer{0};
@@ -504,7 +469,7 @@ namespace zinhart
 		  std::uint32_t weight_offset = {0};// number of weights connection between layer i and layer i + 1
 		  std::uint32_t case_begin = {total_layers[input_layer].second * ith_observation_index};// where a case begins, when ith_obs_index is 0 this is the first case
 
-	 	  // coefficients for gemm and geam
+		  // coefficients for gemm and geam
 		  const double alpha{1};
 		  const double beta_mult{0};
 		  const double beta_add{1};
@@ -522,7 +487,7 @@ namespace zinhart
 		  // do Wx for first hidden layer and input layer
 		  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
 					  m, n, k, 
-			          &alpha, 
+					  &alpha, 
 					  device_total_observations + case_begin, lda,
 					  device_total_hidden_weights, ldb, 
 					  &beta_mult,
@@ -568,21 +533,21 @@ namespace zinhart
 
 
 			// add in bias
-		//	if(call_axps_async(1.0, device_total_activations, host_total_bias[ith_layer], total_layers[current_layer].second, stream) != 0)
-		//	  return 1;		
+			if(call_axps_async(1.0, device_total_activations + current_activation_offset, host_total_bias[current_layer], total_layers[current_layer].second, stream) != 0)
+			  return 1;		
 
 			// call activation
-		//	call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[current_layer].second);
+			 call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations + current_activation_offset, total_layers[current_layer].second);
 			 prior_activation_offset += total_layers[prior_layer].second;
 		}
 		  // f(Wx + b) complete for second hidden layer to output layer
 
-/*		  //copy activations back to host
+		//copy activations back to host
 		  if(copy_device_to_host == true)
 		  {
-		    
+			
 			//copy activations from device to host
-		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
+			error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
 			if(error_id != cudaSuccess)
 			{
 			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
@@ -590,12 +555,8 @@ namespace zinhart
 			}
 			
 		  }
-*/		
+/**/		
 		  return 0;
-		}
-		HOST void backward_propagate(cublasHandle_t & context)
-		{
-		  //cublas gemm here
 		}
 
 #else

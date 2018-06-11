@@ -16,17 +16,17 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   //Random numbers will serve as random model configurations
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> neuron_dist(1,5);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
-  std::uniform_int_distribution<std::uint32_t> case_dist(1,1);
-  /*std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );*/
-  std::uniform_int_distribution<int> real_dist(std::numeric_limits<std::uint8_t>::min(), std::numeric_limits<std::uint8_t>::max() );
+  std::uniform_int_distribution<std::uint32_t> neuron_dist(1,1000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
+  std::uniform_int_distribution<std::uint32_t> case_dist(1,2);
+  std::uniform_real_distribution<float> real_dist(/*std::numeric_limits<float>::min()*/-0.5, 0.5/*std::numeric_limits<float>::max() */);
+  //std::uniform_int_distribution<int> real_dist(std::numeric_limits<std::uint8_t>::min(), std::numeric_limits<std::uint8_t>::max() );
 
-  std::uniform_int_distribution<std::uint32_t> layer_num_dist(3,5/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
+  std::uniform_int_distribution<std::uint32_t> layer_num_dist(3,6/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
   std::uniform_int_distribution<std::uint32_t> activation_dist(2,5);// currently there are 8 different activation functions not counting the input layer
   const std::uint32_t n_cuda_streams = 1;
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
   cudaStream_t * streams{nullptr}; 
-  std::list<zinhart::thread_pool::task_future<std::int32_t>> forward_propagate_tasks;
+  std::list<zinhart::thread_pool::task_future<double>> forward_propagate_tasks;
 
   // host vectors 
   double * host_total_observations{nullptr};
@@ -81,7 +81,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   for(current_layer = 1; current_layer < total_layers.size(); ++current_layer) // this for loop is for the hidden layers and output layers
   {
     std::uint32_t activations_ {activation_dist(mt)};
-	a_layer.first = ACTIVATION_NAME::RELU;//ACTIVATION_NAME(activations_);// random layer
+	a_layer.first = ACTIVATION_NAME(activations_);// random layer
 	std::cout<<activations_<<"\n";
 	a_layer.second = neuron_dist(mt);// random amount of neurons
 	total_layers[current_layer] = a_layer;
@@ -175,7 +175,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   }
   for(i = 0; i < total_bias_length; ++i)
   {
-	host_total_bias[i] = 1/*real_dist(mt)*/; // random bias (which is an oxymoron?!)
+	host_total_bias[i] = 1;//real_dist(mt); // random bias (which is an oxymoron?!)
 	host_total_bias_val[i] = host_total_bias[i];
   }
 
@@ -289,7 +289,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 		else
 		{
 		  std::cout<< "total_layers[1].first: "<<std::uint32_t(total_layers[1].first)<<"\n";
-		  ASSERT_EQ(0, 1);//
+		  ASSERT_EQ(0, 1);
 		}
 	  }	
 	  // f(Wx + b) is complete for first hidden layer and input layer
@@ -310,14 +310,54 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 		std::cout<<"weight_offset: "<<weight_offset<<"\n";
 		std::cout<<"prior_activation_offset: "<<prior_activation_offset<<"\n";
 	    zinhart::print_matrix_row_major(host_total_hidden_weights_val + weight_offset, total_layers[current_layer].second, total_layers[prior_layer].second, "total_hidden_weights");
-	    zinhart::print_matrix_row_major(host_total_activations_val + prior_activation_offset, total_layers[prior_layer].second, 1, "total_activations prior_layer");
+	    zinhart::print_matrix_row_major(host_total_activations_val + prior_activation_offset, total_layers[prior_layer].second, 1, "total_activations prior_layer");/**/
 		m = total_layers[current_layer].second;
 		n = total_layers[prior_layer].second;
 		k = 1;
 		// do Wx
 		zinhart::serial_matrix_product(host_total_hidden_weights_val + weight_offset, host_total_activations_val + prior_activation_offset, host_total_activations_val + current_activation_offset, m, n, k);
 	    zinhart::print_matrix_row_major(host_total_activations_val + current_activation_offset, 1, total_layers[current_layer].second, "output total_activations");
-		
+
+		// do Wx + b
+		for(i = current_activation_offset; i < current_activation_offset + total_layers[current_layer].second; ++i)
+	    {
+		  host_total_activations_val[i] += host_total_bias_val[current_layer];
+	    }
+		// call activation on first hidden layer
+		for(i = current_activation_offset; i < current_activation_offset + total_layers[current_layer].second; ++i)
+		{
+		  if(total_layers[current_layer].first == ACTIVATION_NAME::IDENTITY)
+		  {
+			activation<identity> f;
+			host_total_activations_val[i] = f(host_total_activations_val[i], ACTIVATION_TYPE::OBJECTIVE);
+		  }
+		  else if(total_layers[current_layer].first == ACTIVATION_NAME::SIGMOID)
+		  {
+			activation<sigmoid> f;
+			host_total_activations_val[i] = f(host_total_activations_val[i], ACTIVATION_TYPE::OBJECTIVE);
+		  }
+		  else if(total_layers[current_layer].first == ACTIVATION_NAME::SOFTPLUS)
+		  {
+			activation<softplus> f;
+			host_total_activations_val[i] = f(host_total_activations_val[i], ACTIVATION_TYPE::OBJECTIVE);
+		  }
+		  else if(total_layers[current_layer].first == ACTIVATION_NAME::TANH)
+		  {
+			activation<hyperbolic_tangent> f;
+			host_total_activations_val[i] = f(host_total_activations_val[i], ACTIVATION_TYPE::OBJECTIVE);
+		  }
+		  else if(total_layers[current_layer].first == ACTIVATION_NAME::RELU)
+		  {
+			activation<relu> f;
+			host_total_activations_val[i] = f(host_total_activations_val[i], ACTIVATION_TYPE::OBJECTIVE);
+		  }
+		  //haven't written tests for these yet leaky, exp leaky, and softmax
+		  else
+		  {
+			std::cout<< "total_layers[current_layer].first: "<<std::uint32_t(total_layers[current_layer].first)<<"\n";
+			ASSERT_EQ(0, 1);
+		  }
+		}
 		prior_activation_offset += total_layers[prior_layer].second;
 		std::cout<<"\n";
 	  }
@@ -330,11 +370,11 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 
 	  //SERIAL FORWARD PROPAGATE END
 
-	 /* zinhart::print_matrix_row_major(host_total_hidden_weights, total_layers[1].second, total_layers[0].second, "total_hidden_weights (cuda)");*/
+	 /* zinhart::print_matrix_row_major(host_total_hidden_weights, total_layers[1].second, total_layers[0].second, "total_hidden_weights (cuda)");
 	  zinhart::print_matrix_row_major(host_total_observations, 1, total_layers[0].second, "total_observations (cuda and x)"); 
 	  zinhart::print_matrix_row_major(host_total_hidden_weights, 1, total_hidden_weights_length, "total_hidden_weights (cuda)");
 	  zinhart::print_matrix_row_major(host_total_activations, 1, total_activations_length, "total_activations (cuda and Wx)");
-	  zinhart::print_matrix_row_major(host_total_activations_val, 1, total_activations_val_length, "host_total_activations_val (validation)");
+	  zinhart::print_matrix_row_major(host_total_activations_val, 1, total_activations_val_length, "host_total_activations_val (validation)");*/
 	  
 	  // validate cpu and gpu activation vectors
 	  for(i = 0; i < total_targets_length; ++i)
@@ -345,9 +385,10 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 	  {
 		ASSERT_EQ(host_total_bias[i], host_total_bias_val[i]);
 	  }
+	  double epsilon = 0.005;
 	  for(i = 0; i < total_activations_length; ++i)// for now just the first hidden layer
 	  {
-		ASSERT_EQ( host_total_activations[i], host_total_activations_val[i])<<"case: "<<ith_case<<" i: "<<i<<"\n";
+		ASSERT_NEAR( std::uint64_t(host_total_activations[i]), std::uint64_t(host_total_activations_val[i]), epsilon)<<"case: "<<ith_case<<" i: "<<i<<"\n";
 	  }
 	  for(i = 0; i < total_hidden_weights_length; ++i)
 	  {
@@ -414,7 +455,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   const std::uint32_t n_cuda_streams = MAX_CPU_THREADS;
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
   cudaStream_t * streams{nullptr}; 
-  std::list<zinhart::thread_pool::task_future<std::int32_t>> forward_propagate_tasks;
+  std::list<zinhart::thread_pool::task_future<double>> forward_propagate_tasks;
 
   // host vectors 
   double * host_total_observations{nullptr};
