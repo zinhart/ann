@@ -109,6 +109,8 @@ namespace zinhart
 		 CUDA_CALLABLE_MEMBER Precision_Type objective(const Precision_Type & x)
 		 {
 #if CUDA_ENABLED == 1
+		    if(Precision_Type(1.0) + exp(x) <=0)
+			  printf("Gotcha\n");
 			return log(Precision_Type(1.0) + exp(x));
 #else
 			return std::log(Precision_Type(1.0) + std::exp(x));

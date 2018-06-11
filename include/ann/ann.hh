@@ -493,13 +493,14 @@ namespace zinhart
 
 		{
 		  // layer counters
-		  std::uint32_t current_layer{1}, prior_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
+		  std::uint32_t current_layer{1}, prior_layer{0}, ith_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
 		  const std::uint32_t input_layer{0};
 		  const std::uint32_t output_layer{total_layers.size() - 1};
 		  
 		  // declarations for dgemm and dgeam
 		  std::int32_t  m{0}, n{0}, k{0}, lda{0}, ldb{0},ldc{0};// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
-
+		  std::uint32_t current_activation_offset{0};
+		  std::uint32_t prior_activation_offset{0};
 		  std::uint32_t weight_offset = {0};// number of weights connection between layer i and layer i + 1
 		  std::uint32_t case_begin = {total_layers[input_layer].second * ith_observation_index};// where a case begins, when ith_obs_index is 0 this is the first case
 
@@ -518,13 +519,6 @@ namespace zinhart
 		  if(zinhart::check_cublas_api(cublasSetStream(context, stream), __FILE__, __LINE__) != 0 )
 			return 1;
 
-
-		  /*std::cout<<"In forward_propagate_async Total layers size: "<<total_layers.size()<<"\n";
-		  for(current_layer = 0; current_layer < total_layers.size() ; ++current_layer)
-		  	std::cout<<"Neurons in layer "<<current_layer + 1<<": "<<total_layers[current_layer].second<<"\n";
-  		  for(current_layer = 1, prior_layer = 0; prior_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
-			std::cout<<"weight matrix between layer "<<current_layer + 1<<" and "<<prior_layer + 1<<" dimensions: "<<total_layers[current_layer].second<<" by "<<total_layers[prior_layer].second<<"\n";*/
-
 		  // do Wx for first hidden layer and input layer
 		  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
 					  m, n, k, 
@@ -537,16 +531,51 @@ namespace zinhart
 		  {
 			return 1;
 		  }
-		  // add in bias
-		  if(call_axps_async(1.0, device_total_activations, host_total_bias[0], total_layers[1].second, stream) != 0)
-			return 1;		
-		  // call activation
-		  call_activation(total_layers[1].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[1].second);
 
+		  // add in bias
+		  if(call_axps_async(1.0, device_total_activations, host_total_bias[0], total_layers[current_layer].second, stream) != 0)
+			return 1;		
+
+		  // call activation
+		  call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[current_layer].second);
 		  // f(Wx + b) complete for first hidden layer and input layer
 		  
+		  // update layer counters
+		  current_layer = 2;
+		  prior_layer = 1;
+
+		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
+		  for(ith_layer = 1; ith_layer < total_layers.size() - 1; ++ith_layer, ++current_layer, ++prior_layer)
+		  {
+			// set offsets
+			current_activation_offset += total_layers[prior_layer].second;
+			weight_offset += total_layers[prior_layer].second * total_layers[prior_layer - 1].second;
+
+			// get col major coordinates without explicitly transposing 
+			// ( total_layers[current_layer].second is rows of the weight matrix)
+			// ( total_layers[prior_layers].second is the columns of the weight matrix)
+			zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[prior_layer].second, total_layers[prior_layer].second, 1);
+
+			if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
+						m, n, k, 
+						&alpha, 
+						device_total_activations + prior_activation_offset, lda,
+						device_total_hidden_weights + weight_offset, ldb, 
+						&beta_mult,
+						device_total_activations + current_activation_offset, ldc
+						),__FILE__, __LINE__) != 0)
+			  return 1;
 
 
+			// add in bias
+		//	if(call_axps_async(1.0, device_total_activations, host_total_bias[ith_layer], total_layers[current_layer].second, stream) != 0)
+		//	  return 1;		
+
+			// call activation
+		//	call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[current_layer].second);
+			 prior_activation_offset += total_layers[prior_layer].second;
+		}
+		  // f(Wx + b) complete for second hidden layer to output layer
 
 /*		  //copy activations back to host
 		  if(copy_device_to_host == true)
