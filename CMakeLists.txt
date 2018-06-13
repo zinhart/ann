@@ -47,9 +47,8 @@ find_package(Threads REQUIRED)
 # find cuda package and set compute achitecture
 if(BuildCuda)
   find_package(CUDA REQUIRED)
-  set(CUDA_ARCH "-arch=sm_61")
 
-  # check to see if CUDA_ENABLED was defined by another library using this one
+# check to see if CUDA_ENABLED was defined by another library using this one
   string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}" )
   if(${result} MATCHES "CUDA_ENABLED")
     # do nothing
@@ -57,6 +56,20 @@ if(BuildCuda)
 	# set macro to conditionaly include headers define functions etc w.r.t gpu code
 	add_definitions(-DCUDA_ENABLED=true)
   endif()
+
+# set nvcc flags for debugging
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+	# check if nvcc flags have been set already
+	if(CUDA_NVCC_FLAGS STREQUAL "")
+	  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_61 -G -Wno-deprecated-gpu-targets;")
+	endif()
+# otherwise set release flags
+  else()
+	if(CUDA_NVCC_FLAGS STREQUAL "")
+	  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_61 -Xptxas -O3 -lineinfo")
+	endif()
+  endif()
+
 else()
   string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}")
   if(${result} MATCHES "CUDA_ENABLED")
@@ -79,18 +92,6 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 # set cxx debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions")
-
-#only if Building gpu support
-if(BuildCuda)
-  # set nvcc flags for debugging
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -lineinfo;-G;-Wno-deprecated-gpu-targets;")
-  # release flags # to do
-  else()
-	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -Xptxas -O3")
-  endif()
-endif()
-
 
 # sanitize flags
 if (Sanitize)

@@ -6,27 +6,28 @@
 #include <memory>
 #include <algorithm>
 #include <list>
+#include <iomanip>
 using namespace zinhart;
 #if CUDA_ENABLED == 1
 TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 {
+  std::cout.precision(24);
   // set device properties
   cudaDeviceProp properties;
   zinhart::check_cuda_api(cudaGetDeviceProperties(&properties,0),__FILE__, __LINE__);
   //Random numbers will serve as random model configurations
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> neuron_dist(1,5);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
-  std::uniform_int_distribution<std::uint32_t> case_dist(1,1);
-  /*std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max() );*/
-  std::uniform_int_distribution<int> real_dist(std::numeric_limits<std::uint8_t>::min(), std::numeric_limits<std::uint8_t>::max() );
+  std::uniform_int_distribution<std::uint32_t> neuron_dist(1,1000);// causes a bad alloc when appro > when a 3 layer model has > 5000 neurons in each //layer machine limitations :(
+  std::uniform_int_distribution<std::uint32_t> case_dist(1,10000);
+  //std::uniform_real_distribution<float> real_dist(/*std::numeric_limits<float>::min()*/-1.0, /*std::numeric_limits<float>::max()*/1.0 );
+  std::uniform_int_distribution<int> real_dist(-15, 15 );
 
-  std::uniform_int_distribution<std::uint32_t> layer_num_dist(3,5/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
+  std::uniform_int_distribution<std::uint32_t> layer_num_dist(3,3/*std::numeric_limits<std::uint8_t>::max()*/);// at least an input and output layer
   std::uniform_int_distribution<std::uint32_t> activation_dist(2,5);// currently there are 8 different activation functions not counting the input layer
   const std::uint32_t n_cuda_streams = 1;
   std::vector<LAYER_INFO> total_layers(layer_num_dist(mt));
   cudaStream_t * streams{nullptr}; 
-  std::list<zinhart::thread_pool::task_future<std::int32_t>> forward_propagate_tasks;
 
   // host vectors 
   double * host_total_observations{nullptr};
@@ -65,7 +66,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   std::uint32_t total_observations_length{0};
   std::uint32_t total_targets_length{0};
   std::uint32_t total_activations_length{0};
-  std::uint32_t total_activations_val_length{0};
+//  std::uint32_t total_activations_val_length{0};
   std::uint32_t total_hidden_weights_length{0};
   std::uint32_t total_bias_length{0};
 
@@ -81,8 +82,8 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   for(current_layer = 1; current_layer < total_layers.size(); ++current_layer) // this for loop is for the hidden layers and output layers
   {
     std::uint32_t activations_ {activation_dist(mt)};
-	a_layer.first = ACTIVATION_NAME::RELU;//ACTIVATION_NAME(activations_);// random layer
-	std::cout<<activations_<<"\n";
+	a_layer.first = ACTIVATION_NAME(activations_);// random layer
+	std::cout<<"activations: "<<activations_<<"\n";
 	a_layer.second = neuron_dist(mt);// random amount of neurons
 	total_layers[current_layer] = a_layer;
   }
@@ -95,12 +96,12 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 
   // calculate array sizes
   total_observations_length = total_cases * total_layers[0].second;// number of observations matrix 
+
   total_targets_length = total_layers[output_layer].second; // number of targets
  
   // calc number of activations
   for(current_layer = 1, total_activations_length = 0; current_layer < total_layers.size(); ++current_layer )
 	total_activations_length += total_layers[current_layer].second;// accumulate neurons in the hidden layers and output layer
-  
   // calc number of hidden weights
   for(current_layer = 1, prior_layer = 0, total_hidden_weights_length = 0; prior_layer < total_layers.size() - 1; ++current_layer, ++prior_layer)
   {
@@ -109,7 +110,6 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   // calc bias neurons
   total_bias_length = total_layers.size() - 1;
   
-  total_activations_val_length = total_activations_length;
 
   std::cout<<"In test\n";
   std::cout<<"Total cuda streams: "<<n_cuda_streams<<"\n";
@@ -136,7 +136,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   // allocate validation vectors
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_observations_val, sizeof(double) * total_observations_length, cudaHostAllocDefault),__FILE__,__LINE__));
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_targets_val, sizeof(double) * total_targets_length, cudaHostAllocDefault),__FILE__,__LINE__));
-  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_activations_val, sizeof(double) * total_activations_val_length, cudaHostAllocDefault),__FILE__,__LINE__));// for each host thread
+  ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_activations_val, sizeof(double) * total_activations_length, cudaHostAllocDefault),__FILE__,__LINE__));// for each host thread
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_hidden_weights_val, sizeof(double) * total_hidden_weights_length, cudaHostAllocDefault),__FILE__,__LINE__));
   ASSERT_EQ(0,zinhart::check_cuda_api(cudaHostAlloc((void**)&host_total_bias_val, sizeof(double) * total_bias_length * n_cuda_streams, cudaHostAllocDefault),__FILE__,__LINE__));
 
@@ -164,7 +164,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   {
 	host_total_activations[i] = 0.0f; // start at zero since these values have not been calculated yet
   }
-  for(i = 0; i < total_activations_val_length; ++i)
+  for(i = 0; i < total_activations_length; ++i)
   {
 	host_total_activations_val[i] = 0.0f; // start at zero since these values have not been calculated yet
   }
@@ -232,9 +232,11 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 	  m = total_layers[current_layer].second;
 	  n = total_layers[prior_layer].second;
 	  k = 1;
-
+//	  zinhart::print_matrix_row_major(host_total_hidden_weights_val, total_layers[current_layer].second, total_layers[prior_layer].second, "input layer and first hidden layer weights");
+//	  zinhart::print_matrix_row_major(host_total_observations_val + case_begin, total_layers[prior_layer].second, 1, "input vector");
 	  // do Wx for input and first hidden layer
 	  zinhart::serial_matrix_product(host_total_hidden_weights_val, host_total_observations_val + case_begin, host_total_activations_val, m, n, k);
+//	  zinhart::print_matrix_row_major(host_total_activations_val, total_layers[current_layer].second, 1, "total_activations first hidden layer");
 	  // add bias for input and first hidden layer
 	  for(i = 0; i < total_layers[1].second; ++i)
 	  {
@@ -298,6 +300,9 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 	  current_layer = 2;
 	  prior_layer = 1;
 
+	  current_activation_offset = 0;
+	  prior_activation_offset = 0;
+	  weight_offset = 0;
 
 	  // second hidden layer to output layer, see above for why weight offset = lda * ldb
 	  for(ith_layer = 1; ith_layer < total_layers.size() - 1; ++ith_layer, ++current_layer, ++prior_layer)
@@ -305,41 +310,46 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
   		// set offsets
 		current_activation_offset += total_layers[prior_layer].second;
 		weight_offset += total_layers[prior_layer].second * total_layers[prior_layer - 1].second;
-		std::cout<<"ith_layer: "<<ith_layer<<"\n";
+/*		std::cout<<"ith_layer: "<<ith_layer<<"\n";
 		std::cout<<"current_activation_offset: "<<current_activation_offset<<"\n";
 		std::cout<<"weight_offset: "<<weight_offset<<"\n";
 		std::cout<<"prior_activation_offset: "<<prior_activation_offset<<"\n";
 	    zinhart::print_matrix_row_major(host_total_hidden_weights_val + weight_offset, total_layers[current_layer].second, total_layers[prior_layer].second, "total_hidden_weights");
-	    zinhart::print_matrix_row_major(host_total_activations_val + prior_activation_offset, total_layers[prior_layer].second, 1, "total_activations prior_layer");
+	    zinhart::print_matrix_row_major(host_total_activations_val + prior_activation_offset, total_layers[prior_layer].second, 1, "total_activations prior_layer");*/
 		m = total_layers[current_layer].second;
 		n = total_layers[prior_layer].second;
 		k = 1;
+/*		std::cout<<"M: "<<m<<"\n";
+		std::cout<<"N: "<<n<<"\n";
+		std::cout<<"K: "<<k<<"\n";*/
 		// do Wx
 		zinhart::serial_matrix_product(host_total_hidden_weights_val + weight_offset, host_total_activations_val + prior_activation_offset, host_total_activations_val + current_activation_offset, m, n, k);
-	    zinhart::print_matrix_row_major(host_total_activations_val + current_activation_offset, 1, total_layers[current_layer].second, "output total_activations");
-		
+
+//	    zinhart::print_matrix_row_major(host_total_activations_val + current_activation_offset, 1, total_layers[current_layer].second, "output total_activations");
+/*
+		// do Wx + b
+		for (i = current_activation_offset; i < current_activation_offset + total_layers[current_layer].second; ++i)
+		{
+		  host_total_activations[i] += host_total_bias_val[i];
+		}	  
+	*/	
 		prior_activation_offset += total_layers[prior_layer].second;
-		std::cout<<"\n";
+//		std::cout<<"\n";
+		
 	  }
-
-	  current_activation_offset = 0;
-	  prior_activation_offset = 0;
-	  weight_offset = 0;
 	  
-
-
 	  //SERIAL FORWARD PROPAGATE END
 
-	 /* zinhart::print_matrix_row_major(host_total_hidden_weights, total_layers[1].second, total_layers[0].second, "total_hidden_weights (cuda)");*/
+	 /* zinhart::print_matrix_row_major(host_total_hidden_weights, total_layers[1].second, total_layers[0].second, "total_hidden_weights (cuda)");
 	  zinhart::print_matrix_row_major(host_total_observations, 1, total_layers[0].second, "total_observations (cuda and x)"); 
 	  zinhart::print_matrix_row_major(host_total_hidden_weights, 1, total_hidden_weights_length, "total_hidden_weights (cuda)");
 	  zinhart::print_matrix_row_major(host_total_activations, 1, total_activations_length, "total_activations (cuda and Wx)");
-	  zinhart::print_matrix_row_major(host_total_activations_val, 1, total_activations_val_length, "host_total_activations_val (validation)");
+	  zinhart::print_matrix_row_major(host_total_activations_val, 1, total_activations_length, "host_total_activations_val (validation)");*/
 	  
 	  // validate cpu and gpu activation vectors
-	  for(i = 0; i < total_targets_length; ++i)
+	  for(i = 0; i < total_observations_length; ++i)
 	  {
-		ASSERT_EQ(host_total_observations[i], host_total_observations_val[i]);
+		ASSERT_EQ(host_total_observations[i], host_total_observations_val[i])<<"i: "<<i;
 	  }		
 	  for(i = 0; i < total_bias_length; ++i)
 	  {
@@ -347,7 +357,17 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 	  }
 	  for(i = 0; i < total_activations_length; ++i)// for now just the first hidden layer
 	  {
-		ASSERT_EQ( host_total_activations[i], host_total_activations_val[i])<<"case: "<<ith_case<<" i: "<<i<<"\n";
+		double epsilon = 0.0005;
+		std::uint32_t layer_error{0};
+		for(j = 0; j < total_layers.size(); ++j)
+		  if(host_total_activations[i] != host_total_activations_val[i])
+		  {
+			layer_error = j;
+			break;
+		  }
+		// if assert NEAR follows then probably their was a coding error somewhere
+		ASSERT_NEAR( host_total_activations[i], host_total_activations_val[i], epsilon)<<"Layer_error: "<<layer_error<<" case: "<<ith_case<<" i: "<<i<<"\n";
+		EXPECT_DOUBLE_EQ( host_total_activations[i], host_total_activations_val[i])<<"Layer_error: "<<layer_error<<" case: "<<ith_case<<" i: "<<i<<"\n";
 	  }
 	  for(i = 0; i < total_hidden_weights_length; ++i)
 	  {
@@ -356,7 +376,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 	  // validate output vector
 	  // setup for the next iteration i.e the future has been consumed by this point 
 
-	  for(i = 0; i < total_activations_val_length; ++i)
+	  for(i = 0; i < total_activations_length; ++i)
 		host_total_activations_val[i] = 0.0f;
 	}
   }
