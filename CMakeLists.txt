@@ -47,7 +47,7 @@ find_package(Threads REQUIRED)
 # find cuda package and set compute achitecture
 if(BuildCuda)
   find_package(CUDA REQUIRED)
-  set(CUDA_ARCH -gencode arch = compute_61, code = sm_61)
+  set(CUDA_ARCH "-arch=sm_61")
 
   # check to see if CUDA_ENABLED was defined by another library using this one
   string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}" )
@@ -80,11 +80,14 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 # set cxx debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions")
 
-# set nvcc flags for debugging
-if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-  #only if Building gpu support
-  if(BuildCuda)
-	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -lineinfo -Xcompiler -rdynamic -Wno-deprecated-gpu-targets")
+#only if Building gpu support
+if(BuildCuda)
+  # set nvcc flags for debugging
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -lineinfo;-G;-Wno-deprecated-gpu-targets;")
+  # release flags # to do
+  else()
+	set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH} -Xptxas -O3")
   endif()
 endif()
 
@@ -113,10 +116,10 @@ message(STATUS "  Compiler ID           : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "  Build type            : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Library type          : ${LIB_TYPE}")
 message(STATUS "  Build tests           : ${BuildTest}")
-#message(STATUS "  Build benchmarks     : ${BuildBench}")
 message(STATUS "  Sanitize flags        : ${Sanitize}")
 if(BuildCuda)
   message(STATUS "  Found CUDA          : ${CUDA_FOUND}")
+  message(STATUS "  NVCC_FLAGS          : ${CUDA_NVCC_FLAGS}")
 else()
   message(STATUS "  FOUND THREADS       : ${THREADS_FOUND}")
   message(STATUS "  FOUND LAPACKE         : ${LAPACK_FOUND}")
