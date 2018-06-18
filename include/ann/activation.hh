@@ -11,8 +11,8 @@
 #endif
 namespace zinhart
 {
-  enum class ACTIVATION_NAME : std::uint32_t {INPUT = std::uint32_t(1), IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX};
-  enum class ACTIVATION_TYPE : std::uint32_t {OBJECTIVE = std::uint32_t(0), DERIVATIVE}; 
+  enum class ACTIVATION_NAME : std::uint32_t {INPUT = std::uint32_t{1}, IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX};
+  enum class ACTIVATION_TYPE : std::uint32_t {OBJECTIVE = std::uint32_t{0}, DERIVATIVE}; 
   using Neurons = std::uint32_t;
   using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
 

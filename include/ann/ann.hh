@@ -333,14 +333,15 @@ namespace zinhart
 		ffn & operator = (ffn &&) = default;
 		~ffn() = default;
 #if CUDA_ENABLED == 1
+		template <class LOSS_FUNCTION>
 		HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
-							   const cudaStream_t & stream, const cublasHandle_t & context, 
+							   const cudaStream_t & stream, const cublasHandle_t & context, LOSS_FUNCTION error_metric,
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::uint32_t & total_targets, const double * host_total_targets, 
-			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights,
-							   const std::uint32_t & total_activations, double * host_total_activations,
-							   const double * host_total_bias,
-							   const double * device_total_observations, const double * device_total_hidden_weights, double * device_total_activations
+							   const std::uint32_t & total_targets, const double * host_total_targets, const double * device_total_targets,
+			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights, const double * device_total_hidden_weights, 
+							   const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations,
+							   const double * device_total_observations, double * device_total_outputs,
+							   const double * host_total_bias, std::uint32_t device_id = 0
 							  )
 
 		{
@@ -440,14 +441,21 @@ namespace zinhart
 
 
 			// add in bias
-		//	if(call_axps_async(1.0, device_total_activations, host_total_bias[ith_layer], total_layers[current_layer].second, stream) != 0)
-		//	  return 1;		
+			if(call_axps_async(1.0, (d_act + current_activation_offset), host_total_bias[ith_layer], total_layers[current_layer].second, stream) != 0)
+			  return 1;		
 
 			// call activation
-		//	call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, device_total_activations, total_layers[current_layer].second);
+			if(call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, (d_act + current_activation_offset), total_layers[current_layer].second) != 0)
+			  return 1;
 
 		}
-		  // f(Wx + b) complete for second hidden layer to output layer
+		// f(Wx + b) complete for second hidden layer to output layer
+		
+		// calc error
+		
+		// call loss function kernel and write to outputs
+	    	
+
 
 /*		  //copy activations back to host
 		  if(copy_device_to_host == true)
@@ -468,6 +476,18 @@ namespace zinhart
 		HOST void backward_propagate(cublasHandle_t & context)
 		{
 		  //cublas gemm here
+		  
+		  // CALCULATION OF OUTPUT LAYER GRADIENTS
+		  
+		  // axpy for calculation of error
+		  
+		  // axpy for calculation of hadamard product
+		  
+		  // dgemm for calculation of hadamard product with error
+		  
+		  // axpy for deltas
+		  
+		  // dgemm for delta times previos layer activations 
 		}
 
 #else

@@ -239,7 +239,7 @@ TEST(activation_test_sync, call_activation_sigmoid_derivative)
 //  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
 //  if(error_id != cudaSuccess)
 //	std::cerr<<"device activation memcpy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-//  ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTMAX, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
+//  ASSERT_EQ(call_activation(ACTIVATION_NAME::SOFTMAX_OUTPUT, ACTIVATION_TYPE::OBJECTIVE, device_activation_vector, activation_vector_size), 0);
 //  
 //  error_id = cudaMemcpy(device_activation_vector, activation_vector_copy.get(), activation_vector_size * sizeof(double), cudaMemcpyHostToDevice);
 //  if(error_id != cudaSuccess)
