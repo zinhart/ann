@@ -82,9 +82,10 @@ namespace zinhart
   using ce_multi_class = loss_function<cross_entropy_multi_class>;
 
   template <class Precision_Type>
-	HOST std::int32_t call_loss_function(const LOSS_FUNCTION_NAME loss_function_name, const LOSS_FUNCTION_TYPE loss_function_type, const std::vector<LAYER_INFO> & total_layers, Precision_Type * device_total_outputs);
+	HOST std::int32_t call_loss_function(const LOSS_FUNCTION_NAME loss_function_name, const LOSS_FUNCTION_TYPE loss_function_type, const std::vector<LAYER_INFO> & total_layers, Precision_Type * device_total_outputs, std::uint32_t device_id = 0);
+
   template <class Precision_Type>
-	std::int32_t call_loss_function();
+	HOST std::int32_t call_loss_function(const LOSS_FUNCTION_NAME loss_function_name, const LOSS_FUNCTION_TYPE loss_function_type, const std::vector<LAYER_INFO> & total_layers, Precision_Type * device_total_outputs, const Precision_Type & epsilon = 1.e-30, std::uint32_t device_id = 0);
 }
 #endif  
 
