@@ -10,8 +10,10 @@
 #include <vector>
 #if CUDA_ENABLED == true
 #define ERROR_CUDA_ERROR 1
-#include <cublas_v2.h>
+#include <cublas_v2.h> // will use gpu gemm etc
 //#include <thrust>
+#elif CUDA_ENABLED == false
+#include <lapacke.h> // will use cpu  gemm etc
 #endif
 #include <cassert>
 namespace zinhart
