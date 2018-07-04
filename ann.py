@@ -50,29 +50,68 @@ ann_image_build_cmds = [
                         "nvidia-docker build -t ann ."
                        ]
 def build_cpu_image():
-    print("Building cpu image")
-    output = client.build(path = "./", tag = "ann")
-    for val in output:
-        json_fmt = json.loads(val)
-        pretty = json_fmt['stream']
-        pretty = re.sub('\n','', pretty)
-        pretty = re.sub('\r','', pretty)
-        print(pretty)
+    #recursive_menu_selection()
+    output_bytes = client.build(path = "./", tag = "ann")
+    for item in output_bytes:
+        pretty_output = json.loads(item)
+        pretty_output = pretty_output['stream']
+        print(pretty_output, end='')
     input("Press [Enter] to continue")
 
+def enter_cpu_image():
+    return;
+
+#have to set this to use nvidia-docker via the client runtime parameter (something like that)
 def build_gpu_image():
-    print("Building gpu image")
-    subprocess.call(ann_image_build_cmds[1])
-    input("Press [Enter] to continue")
+    output_bytes = client.build(path = "./", tag = "ann")
+    for item in output_bytes:
+        pretty_output = json.loads(item)
+        pretty_output = pretty_output['stream']
+        print(pretty_output, end='')
+    #input("Press [Enter] to continue")
 
-def main():
+def enter_gpu_image():
+    return;
+
+
+def back_to_base_menu():
+    print (ann_base_menu_choices)
+
+def display_sub_menu(menu_obj):
+    display_item = ''
+    for item in menu_obj:
+        display_item += colorize("[" + str(menu_obj.index(item)) + "] ", 'blue') + list(item.keys())[0] + " "
+    print ( display_item )
+
+def get_selection(menu_obj):
+    choice = input(">> ")
+    # check for errors
+    try:
+        if int(choice) < 0 : raise ValueError
+        # Call the matching function
+        list(menu_obj[int(choice)].values())[0](menu_obj)
+    except (ValueError, IndexError):
+        pass
+
+
+def recursive_menu_selection(menu_obj):
+    display_menu(menu_obj)
+    get_selection(menu_obj)
+
+def main_menu():
+    os.system('clear')
+    print(colorize(header, 'blue'))
+    display_sub_menu(ann_base_menu_choices)
+    get_selection(ann_base_menu_choices)
+    #recursive_menu_selection(ann_base_menu_choices)
+
+    '''
     while True:
         os.system('clear')
-        # Print some badass ascii art header here !
-       # print ( colorize(header, 'pink') ) 
-       # print ( colorize('version 0.1\n', 'green') )
+        display_item = ''
         for item in ann_image_menu_choices:
-            print ( colorize("[" + str(ann_image_menu_choices.index(item)) + "] ", 'blue') + list(item.keys())[0] )
+            display_item += colorize("[" + str(ann_image_menu_choices.index(item)) + "] ", 'blue') + list(item.keys())[0] + " "
+        print ( display_item )
         choice = input(">> ")
         try:
             if int(choice) < 0 : raise ValueError
@@ -80,14 +119,26 @@ def main():
             list(ann_image_menu_choices[int(choice)].values())[0]()
         except (ValueError, IndexError):
             pass
-            
+       '''     
 ann_image_menu_choices = [
-                                {"Build Ann image for cpu-threaded": build_cpu_image},
-                                {"Build Ann image for gpu-threaded": build_gpu_image},
+                                {"Build Ann Image For Cpu": build_cpu_image},
+                                {"Build Ann Image For Gpu": build_gpu_image},
+                                {"Back To Main Menu": back_to_base_menu},
                                 {"Exit": exit}
                          ]
+ann_container_menu_choices = [
+                                {"Enter Ann Container For Cpu Image": enter_cpu_image},
+                                {"Enter Ann Container For Gpu Image": enter_gpu_image},
+                                {"Back To Main Menu": back_to_base_menu},
+                                {"Exit": exit}
+                             ]
+# need two functions 
+ann_base_menu_choices = [
+                            {"Display Image Options": display_sub_menu},
+                            {"Display Container Options": display_sub_menu},
+                            {"Exit": exit}
+                        ]
 
 if __name__ == "__main__":
-    print(colorize(header, 'blue'))
-    main()
+    main_menu()
 
