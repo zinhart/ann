@@ -1,72 +1,58 @@
-FROM ubuntu:16.04
-LABEL authors="Arom Zinhart DeGraca"
+#container with only cpu-threaded routines using MKL
+FROM ubuntu:18.04
+MAINTAINER zinhart
 
-# for apt-utils
-RUN  apt-get update \
-	&& apt-get install -y apt-utils 
+# RUN executes a shell command
 
-# for git
-RUN apt-get update \
-	&& apt-get install -y git
+RUN apt-get update && apt-get install -y --assume-yes apt-utils cpio curl wget git make cmake gcc g++ python3-pip
 
-# for wget
-RUN  apt-get update \
-  && apt-get install -y wget \
-  && rm -rf /var/lib/apt/lists/*
+RUN cd /tmp && \
+wget -q http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mkl_2018.1.163.tgz && \
+tar -xzf l_mkl_2018.1.163.tgz && \
+cd l_mkl_2018.1.163 && \
+sed -i 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg && \
+sed -i 's/ACTIVATION_TYPE=exist_lic/ACTIVATION_TYPE=trial_lic/g' silent.cfg && \
+./install.sh -s silent.cfg && \
+# Clean up
+  cd .. && rm -rf *
 
-#for make
-RUN apt-get update \
-  && apt-get install -y make
+# Configure dynamic link
+RUN echo "${MKL_PATH}/mkl/lib/intel64" >> /etc/ld.so.conf.d/intel.conf && ldconfig && \
+  echo ". /opt/intel/bin/compilervars.sh intel64" >> /etc/bash.bashrc
+RUN mkdir app
+RUN cd app && git clone https://github.com/zinhart/ann.git
 
-#for gcc & g++
-RUN apt-get update \
-  && apt-get install -y gcc \
-  && apt-get install -y g++
- 
-# for cmake
-RUN cd /root && wget http://www.cmake.org/files/v3.5/cmake-3.5.1.tar.gz && \
-  tar -xf cmake-3.5.1.tar.gz && cd cmake-3.5.1 && \
-  ./configure && \
-  make -j "$(nproc)" && \
-  make install
+WORKDIR /app/ann
+RUN git submodule update  --remote --recursive
 
-#Courtesy of NVIDIA CORPORATION <cudatools@nvidia.com>
-RUN NVIDIA_GPGKEY_SUM=d1be581509378368edeec8c1eb2958702feedf3bc3d17011adbf24efacce4ab5 && \
-    NVIDIA_GPGKEY_FPR=ae09fe4bbd223a84b2ccfce3f60f4b3d7fa2af80 && \
-    apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub && \
-    apt-key adv --export --no-emit-version -a $NVIDIA_GPGKEY_FPR | tail -n +5 > cudasign.pub && \
-    echo "$NVIDIA_GPGKEY_SUM  cudasign.pub" | sha256sum -c --strict - && rm cudasign.pub && \
-    echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
-    echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+#CMD [python3, ann.py]
 
-ENV CUDA_VERSION 9.0.176
+#FROM nvidia/cuda:9.1-base
 
-ENV CUDA_PKG_VERSION 9-0=$CUDA_VERSION-1
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        cuda-cudart-$CUDA_PKG_VERSION && \
-    ln -s cuda-9.0 /usr/local/cuda && \
-    rm -rf /var/lib/apt/lists/*
+# set the working directory 
 
-# nvidia-docker 1.0
-LABEL com.nvidia.volumes.needed="nvidia_driver"
-LABEL com.nvidia.cuda.version="${CUDA_VERSION}"
+# CMD defines the default command to be run in the container 
+# CMD is overridden by supplying a command + arguments to 
+# `docker run`, e.g. `nvcc --version` or `bash`
+  
+# cuda specific container with nvidia-docker 
+#RUN else 
+  # container with only cpu-threaded routines using MKL
+ # cd /tmp && \
+#  wget -q http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mkl_2018.1.163.tgz && \
+#  tar -xzf l_mkl_2018.1.163.tgz && \
+#  cd l_mkl_2018.1.163 && \
+#  sed -i 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg && \
+#  sed -i 's/ACTIVATION_TYPE=exist_lic/ACTIVATION_TYPE=trial_lic/g' silent.cfg && \
+#  ./install.sh -s silent.cfg && \
+# Clean up
+#  cd .. && rm -rf *
 
-RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
-    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+# Configure dynamic link
+#RUN echo "${MKL_PATH}/mkl/lib/intel64" >> /etc/ld.so.conf.d/intel.conf && ldconfig && \
+#  echo ". /opt/intel/bin/compilervars.sh intel64" >> /etc/bash.bashrc
+#  echo Argument is $arg ;
+# clone repo from git
+#fi
 
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-
-# nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
-ENV NVIDIA_REQUIRE_CUDA "cuda>=9.0"
-# END Nvidia
-
-#grab project 
-RUN  cd /root && git clone https://github.com/zinhart/ann.git \
-	&& echo "Got repo"
-
-WORKDIR "/root"
-CMD ["/bin/bash"]
 
