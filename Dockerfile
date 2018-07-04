@@ -23,9 +23,9 @@ RUN mkdir app
 RUN cd app && git clone https://github.com/zinhart/ann.git
 
 WORKDIR /app/ann
-RUN git submodule update  --remote --recursive
+RUN git submodule update --remote --recursive
 
-#CMD [python3, ann.py]
+CMD [python3, ann.py]
 
 #FROM nvidia/cuda:9.1-base
 
