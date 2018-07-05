@@ -1,4 +1,4 @@
-import os, sys, subprocess, docker, dockerpty, re, json
+import os, sys, subprocess, docker, dockerpty, requests, re, json
 client = docker.from_env()
 header = "\
  .----------------. .----------------. .-----------------..----------------. .----------------. .----------------. .----------------.\n\
@@ -54,17 +54,32 @@ def clear_screen(menu_obj = None):
 
 
 def build_cpu_image(menu_obj):
-    output_bytes = client.build(path = "./", tag = "ann")
+    image_name = input("Type name of the image to create then press [Enter]\t")
+    output_bytes = client.build(path = "./", tag = image_name)
     for item in output_bytes:
         pretty_output = json.loads(item)
         pretty_output = pretty_output['stream']
         print(pretty_output, end='')
     display_menu_options(menu_obj)
     get_sub_menu_selection(menu_obj)
-    #input("Press [Enter] to continue")
-
+    
+def build_cpu_container(menu_obj, standard_input_open=True, terminal=True, cmd='/bin/sh'):
+    print("In build cpu container")
+    image_name = input("Type name of the image to create the container from then press [Enter]\t")
+    try:
+        client.create_container(image=image_name, stdin_open=standard_input_open, tty=terminal, command=cmd)
+    except (requests.exceptions.HTTPError, docker.errors.NotFound):
+        print("The image [" + image_name + "] does not exist")
+        pass
+    display_menu_options(menu_obj)
+    get_sub_menu_selection(menu_obj)
+    
 def enter_cpu_container(menu_obj):
     print("In enter cpu container")
+    container_name = input("Type name of the container to enter then press [Enter]\t")
+
+    display_menu_options(menu_obj)
+    get_sub_menu_selection(menu_obj)
     #dockerpty
     return;
 
@@ -79,10 +94,12 @@ def build_gpu_image(menu_obj):
     get_sub_menu_selection(menu_obj)
     #input("Press [Enter] to continue")
 
-def enter_gpu_container():
-    #dockerpty
-    return;
+def build_gpu_container(menu_obj):
+    return
 
+def enter_gpu_container():
+    return
+    #dockerpty
 
 def get_main_menu_selection(menu_obj):
     choice = input(">> ")
@@ -154,7 +171,11 @@ def list_images(menu_obj):
     get_sub_menu_selection(menu_obj)
 
 def list_containers(menu_obj):
-    print (client.containers(latest=True))
+    containers = client.containers(all=True)
+    print("Image\t\t\tContainer Id\t\t\tCommand")
+    for container in containers:
+        line = str(container['Image']) + " "  + str(container['Command'])
+        print(line)
     display_menu_options(menu_obj)
     get_sub_menu_selection(menu_obj)
 
@@ -171,6 +192,8 @@ ann_image_menu_choices = [
 ann_container_menu_choices = [
                                 {"List Containers": list_containers},
                                 {"Clear": clear_screen},
+                                {"Build Ann Cpu Container": build_cpu_container},
+                                {"Build Ann Gpu Container": build_gpu_container},
                                 {"Enter Ann Cpu Container": enter_cpu_container},
                                 {"Enter Ann Gpu Container": enter_gpu_container},
                                 {"Back To Main Menu": back_to_base_menu},
