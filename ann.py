@@ -118,7 +118,7 @@ def next_menu_selection(menu_obj):
     display_menu_options(menu_obj)
     choice = get_main_menu_selection(menu_obj)
     
-    if choice == str(len(menu_obj)-1):# always check for exit condition first
+    if choice == str( len(menu_obj) - 1 ):# always check for exit condition first, i.e the base case of the recursion
         exit_menu_loop()
     elif choice == "0" :
         print("In image menu selection")
@@ -143,12 +143,18 @@ def exit_menu_loop(message = None):
     exit()
 
 def list_images(menu_obj):
-    print (client.images(all=True))
+    output = client.images(all=True)
+    space = "\t\t"
+    print("Repository\t\t\t\tImage Id\t\t\t\t\t\t\t\t\tCreated\t\t\tSize")
+    for item in output:
+        line = str(item['RepoTags']) + space + str(item['Id']) + space + str(item['Created']) + space + str(item['Size'])
+        print(line)
+    print()
     display_menu_options(menu_obj)
     get_sub_menu_selection(menu_obj)
 
 def list_containers(menu_obj):
-    print (client.containers(all=True))
+    print (client.containers(latest=True))
     display_menu_options(menu_obj)
     get_sub_menu_selection(menu_obj)
 
