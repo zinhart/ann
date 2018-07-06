@@ -250,7 +250,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 //	  zinhart::print_matrix_row_major(host_total_hidden_weights_val, total_layers[current_layer].second, total_layers[prior_layer].second, "input layer and first hidden layer weights");
 //	  zinhart::print_matrix_row_major(host_total_observations_val + case_begin, total_layers[prior_layer].second, 1, "input vector");
 	  // do Wx for input and first hidden layer
-	  zinhart::serial_matrix_product(host_total_hidden_weights_val, host_total_observations_val + case_begin, host_total_activations_val, m, n, k);
+	  zinhart::serial::serial_matrix_product(host_total_hidden_weights_val, host_total_observations_val + case_begin, host_total_activations_val, m, n, k);
 //	  zinhart::print_matrix_row_major(host_total_activations_val, total_layers[current_layer].second, 1, "total_activations first hidden layer");
 	  // add bias for input and first hidden layer
 	  for(i = 0; i < total_layers[1].second; ++i)
@@ -338,7 +338,7 @@ TEST(ffn_test, async_forward_propagate_one_host_thread_one_cuda_stream)
 		std::cout<<"N: "<<n<<"\n";
 		std::cout<<"K: "<<k<<"\n";*/
 		// do Wx
-		zinhart::serial_matrix_product(host_total_hidden_weights_val + weight_offset, host_total_activations_val + prior_activation_offset, host_total_activations_val + current_activation_offset, m, n, k);
+		zinhart::serial::serial_matrix_product(host_total_hidden_weights_val + weight_offset, host_total_activations_val + prior_activation_offset, host_total_activations_val + current_activation_offset, m, n, k);
 
 //	    zinhart::print_matrix_row_major(host_total_activations_val + current_activation_offset, 1, total_layers[current_layer].second, "output total_activations");
 	

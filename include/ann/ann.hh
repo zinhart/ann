@@ -367,7 +367,7 @@ namespace zinhart
 		  // get col major coordinates without explicitly transposing 
 		  // ( total_layers[1].second is rows of the weight matrix and the number of neurons in the first hidden layer )
 		  // ( total_layers[0].second is the columns of the weight matrix and the number of neurons in the input layer )
-		  zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[input_layer].second, total_layers[input_layer].second, 1);
+		  zinhart::serial::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[input_layer].second, total_layers[input_layer].second, 1);
 
 		  // set cublasStream
 		  if(zinhart::check_cublas_api(cublasSetStream(context, stream), __FILE__, __LINE__) != 0 )
@@ -418,7 +418,7 @@ namespace zinhart
 			// get col major coordinates without explicitly transposing 
 			// ( total_layers[current_layer].second is rows of the weight matrix)
 			// ( total_layers[prior_layers].second is the columns of the weight matrix)
-			zinhart::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[prior_layer].second, total_layers[prior_layer].second, 1);
+			zinhart::serial::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[prior_layer].second, total_layers[prior_layer].second, 1);
 /*			std::cout<<"F ith_layer: "<<ith_layer<<"\n";
 			std::cout<<"F current_activation_offset: "<<current_activation_offset<<"\n";
 			std::cout<<"F weight_offset: "<<weight_offset<<"\n";
