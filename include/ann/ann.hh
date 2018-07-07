@@ -15,550 +15,152 @@
 #else
 #include "mkl.h"
 #endif
-#include <cassert>
 namespace zinhart
 {
-
-  template <class model_type>
-	class ann
-	{
+  namespace models
+  {
+	template <class model_type, class precision_type>
+	  class ann
+	  {
 #if CUDA_ENABLED == true
-		 double * global_device_total_observations;
-		 double * global_device_total_targets;
-		 double * global_device_total_hidden_weights;
-		 double * global_device_total_activations;
-		 double * global_device_total_bias;
-		 double * global_device_total_error;
-		 double * global_device_total_gradient;
-		 double * global_device_total_deltas;
-
-		 
+		private:
+  		  precision_type * global_device_total_observations;
+		  precision_type * global_device_total_targets;
+		  precision_type * global_device_total_hidden_weights;
+		  precision_type * global_device_total_activations;
+		  precision_type * global_device_total_bias;
+		  precision_type * global_device_total_error;
+		  precision_type * global_device_total_gradient;
+		  precision_type * global_device_total_deltas;
 #endif
+		protected:
+		  std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
+		  //std::uint32_t total_observations_length{0};// the total number of neurons in the input layer * the total number of training cases
+		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
+		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
 
-	  protected:
-		 // array lengths
-		 std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
-		 std::uint32_t total_observations_length{0};// the total number of neurons in the input layer * the total number of training cases
-		 std::uint32_t total_targets_length{0};// the total number of neurons in the output layer * the total number of targets
-		 std::uint32_t total_outputs_length{0};// the total number of neurons in the output layer * the total number of threads in use
-		 std::uint32_t total_error_length{0};// the total number of neurons in the output layer
-		 std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
-		 std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
-		 std::uint32_t total_hidden_weights_length{0};// the number of hidden weights for a layer and the weights themselves
-		 std::uint32_t total_gradient_length{0};// same as the total number of hidden weights
-		 std::uint32_t total_bias_length{0};// equal to total_layers - 1
-		         //number of training cases, training case size, the training cases themselves
-		std::pair<std::uint32_t, double *> total_observations;
-		std::pair<std::uint32_t, double *> total_targets; // output layer size and the complete set of targets for each input
-		std::pair<std::uint32_t, double *> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
-		std::pair<std::uint32_t, double *> total_activations;//this is the sum of all the hidden layers and the output layer neurons
-		std::pair<std::uint32_t, double *> total_error;
-		std::pair<std::uint32_t, double *> total_gradient;
-		std::pair<std::uint32_t, double *> total_deltas;
-	  public:
-		ann() = default;
-		ann(const ann<model_type> &) = delete;
-		ann(ann<model_type> &&) = delete;
-		ann<model_type> & operator = (const ann<model_type>&) = delete;
-		ann<model_type> & operator = (ann<model_type> &&) = delete;
-		~ann() = default;
+		  std::uint32_t total_hidden_weights_length{0};// the number of hidden weights for a layer and the weights themselves
+		  std::uint32_t total_gradient_length{0};// same as the total number of hidden weights
 
-		//debugging functions
-		const std::vector<LAYER_INFO> & get_total_layers()const
-		{return total_layers; }
-		const std::pair<std::uint32_t, double *> & get_total_observations()const
-		{return total_observations;}
-		const std::pair<std::uint32_t, double *> & get_total_hidden_weights()const
-		{return total_hidden_weights;}
-		const std::pair<std::uint32_t, double *> & get_total_activations()const
-		{return total_activations;}
-		const std::pair<std::uint32_t, double *> & get_total_error()const
-		{return total_error;}
-	    const std::pair<std::uint32_t, double *> & get_total_gradient()const
-		{return total_gradient;}
-	    const std::pair<std::uint32_t, double *> & get_total_deltas()const
-		{return total_deltas;}
-		//end debugging functions
 
-		//model manipulating functions
-		//I assume the first layer will be an input layer
-		HOST void add_layer(const LAYER_INFO & ith_layer)
-		{ total_layers.push_back(ith_layer); }
+		  std::uint32_t total_targets_length{0};// the total number of neurons in the output layer * the total number of targets
+		  std::uint32_t total_outputs_length{0};// the total number of neurons in the output layer * the total number of threads in use
+		  std::uint32_t total_error_length{0};// the total number of neurons in the output layer
+		  std::uint32_t total_bias_length{0};// equal to total_layers - 1
 
+		  precision_type * total_observations{nullptr};// the total number of neurons in the input layer * the total number of training cases
+		  precision_type * total_targets{nullptr};// the total number of neurons in the output layer * the total number of targets
+		  precision_type * total_outputs{nullptr};// the total number of neurons in the output layer * the total number of threads in use
+		  precision_type * total_error{nullptr};// the total number of neurons in the output layer
+		  precision_type * total_activations{nullptr};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
+		  precision_type * total_deltas{nullptr};// same as the number of total_activations_length
+		  precision_type * total_hidden_weights{nullptr};// the number of hidden weights for a layer and the weights themselves
+		  precision_type * total_gradient{nullptr};// same as the total number of hidden weights
+		  precision_type * total_bias{nullptr};// equal to total_layers - 1
+  /*
+				   //number of training cases, training case size, the training cases themselves
+		  std::pair<std::uint32_t, double *> total_observations;
+		  std::pair<std::uint32_t, double *> total_targets; // output layer size and the complete set of targets for each input
+		  std::pair<std::uint32_t, double *> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
+		  std::pair<std::uint32_t, double *> total_activations;//this is the sum of all the hidden layers and the output layer neurons
+		  std::pair<std::uint32_t, double *> total_error;
+		  std::pair<std::uint32_t, double *> total_gradient;
+		  std::pair<std::uint32_t, double *> total_deltas;
+  */
+		public:
+		  ann() = default;
+		  ann(const ann<model_type, precision_type> &) = delete;
+		  ann(ann<model_type, precision_type> &&) = delete;
+		  ann<model_type, precision_type> & operator = (const ann<model_type, precision_type>&) = delete;
+		  ann<model_type, precision_type> & operator = (ann<model_type, precision_type> &&) = delete;
+		  ~ann() = default;
+  /*
+		  //debugging functions
+		  const std::vector<LAYER_INFO> & get_total_layers()const
+		  {return total_layers; }
+		  const std::pair<std::uint32_t, double *> & get_total_observations()const
+		  {return total_observations;}
+		  const std::pair<std::uint32_t, double *> & get_total_hidden_weights()const
+		  {return total_hidden_weights;}
+		  const std::pair<std::uint32_t, double *> & get_total_activations()const
+		  {return total_activations;}
+		  const std::pair<std::uint32_t, double *> & get_total_error()const
+		  {return total_error;}
+		  const std::pair<std::uint32_t, double *> & get_total_gradient()const
+		  {return total_gradient;}
+		  const std::pair<std::uint32_t, double *> & get_total_deltas()const
+		  {return total_deltas;}
+		  //end debugging functions
+  */
+		  //model manipulating functions
+		  //I assume the first layer will be an input layer
+		  HOST void add_layer(const LAYER_INFO & ith_layer);
+		  HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty);
 #if CUDA_ENABLED == 1
-		HOST std::int32_t init(
-		         std::pair<std::uint32_t, double *> & total_observations,
-				 std::pair<std::uint32_t, double *> & total_targets,
-				 std::uint32_t device_id = 0
-				)
-		{
-		
-		  if ( check_cuda_api( cudaSetDevice(device_id),__FILE__, __LINE__) == 1) // set device
-		      return 1;
-		  std::uint32_t ith_layer;
-		  this->total_observations.first = total_observations.first;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_observations.second, sizeof(double) * this->total_observations.first, cudaHostAllocDefault),__FILE__,__LINE__);
-		  this->total_targets.first = total_targets.first;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_targets.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
-
-		  //of course the last layer should have the same number of neurons as their are targets,
-		  //additionally the user may make the mistake on to doing this and the correction is not the
-		  //responsibility of ann
-
-		  //calc number of activations, number of deltas is the same
-		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
-			this->total_activations.first += total_layers[ith_layer].second;// accumulate neurons in the hidden layers and output layers
-	  	  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_activations.second, sizeof(double) * this->total_activations.first, cudaHostAllocDefault),__FILE__,__LINE__);// allocate activations
-
-          this->total_deltas.first = this->total_activations.first;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_deltas.second, sizeof(double) * this->total_deltas.first,cudaHostAllocDefault),__FILE__,__LINE__);// allocate deltas
-
-
-		  //calc number of hidden weights, number of gradients is the same
-		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
-			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_hidden_weights.second, sizeof(double) * this->total_hidden_weights.first,cudaHostAllocDefault),__FILE__,__LINE__);
-
-		  this->total_gradient.first = this->total_hidden_weights.first;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_gradient.second, sizeof(double) * this->total_gradient.first,cudaHostAllocDefault),__FILE__,__LINE__);// allocate gradients
-
-		  //the error
-		  this->total_error.first = this->total_targets.first;
-		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_error.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
-		  return cuda_init();
-#else
-		HOST std::int32_t init(
-		    //     std::pair<std::uint32_t, double *> & total_observations,
-			//	 std::pair<std::uint32_t, double *> & total_targets
-				)
-		{
-		  std::uint32_t ith_layer;
-		  std::swap(this->total_observations,total_observations);
-		  std::swap(this->total_targets, total_targets);
-
-		  //of course the last layer should have the same number of neurons as their are targets,
-		  //additionally the user may make the mistake on to doing this and the correction is not the
-		  //responsibility of ann
-
-		  //calc number of activations, number of deltas is the same
-		  for(ith_layer = 1, this->total_activations.first = 0; ith_layer < total_layers.size(); ++ith_layer )
-			this->total_activations.first += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layers
-	  	  this->total_activations.second  = new double[this->total_activations.first];//allocate activations
-          this->total_deltas.first = this->total_activations.first;
-		  this->total_deltas.second = new double[this->total_deltas.first];//allocate deltas
-
-		  //calc number of hidden weights, number of gradients is the same
-		  for(ith_layer = 0, this->total_hidden_weights.first = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
-			this->total_hidden_weights.first += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
-
- 		  this->total_hidden_weights.second = new double[this->total_hidden_weights.first];//allocate weights
-		  this->total_gradient.first = this->total_hidden_weights.first;
-		  this->total_gradient.second = new double[this->total_gradient.first];//allocate gradients
-
-		  //the error
-		  this->total_error.first = this->total_targets.first;
-		  this->total_error.second = new double[this->total_targets.first];//allocate gradients
-		  return 0;
-#endif
-		}
-
-#if CUDA_ENABLED == 1
-		HOST std::int32_t cuda_init()
-		{
-		  // allocate space for observations		
-  		  if( check_cuda_api(cudaMalloc( (void **) &global_device_total_observations, total_observations.first * total_layers[0].second * sizeof(double)),__FILE__, __LINE__) == 1)
-  			return 1;	
-		  // copy allocations from host to device
-		  else if(check_cuda_api(cudaMemcpy(global_device_total_observations, total_observations.second, total_observations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
-			return 1;			
-		  // allocate space for targets	
-		  else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_targets, total_targets.first * sizeof(double)),__FILE__, __LINE__) == 1) 
-			return 1;	  
-		  //copy targets from host to device
-		  else if ( check_cuda_api(cudaMemcpy(global_device_total_targets, total_targets.second, total_targets.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1 )
-			return 1;
-		  //allocate space for hidden weights
-		  else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_hidden_weights, total_hidden_weights.first * sizeof(double)),__FILE__, __LINE__) == 1)
-			return 1;
-		 //copy hidden_weights from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_hidden_weights, total_hidden_weights.second, total_hidden_weights.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
-		   return 1;
-		 //allocate space for activations
-		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_activations, total_activations.first * sizeof(double)),__FILE__, __LINE__) == 1 )
-		   return 1;
-		 //copy activations from host to device
-		 else if( check_cuda_api(cudaMemcpy(global_device_total_activations, total_activations.second, total_activations.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
-		   return 1;
-		 //allocate space for error
-		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_error, total_error.first * sizeof(double)),__FILE__, __LINE__) == 1)
-		   return 1;
-   		 //copy error from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_error, total_error.second, total_error.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
-		   return 1;
-	  	 //allocate space for gradients
-		 else if ( check_cuda_api(cudaMalloc((void **) &global_device_total_gradient, total_gradient.first * sizeof(double)),__FILE__, __LINE__) == 1)
-		   return 1;
-		 //copy gradients from host to device
-		 else if ( check_cuda_api(cudaMemcpy(global_device_total_gradient, total_gradient.second, total_gradient.first * sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1) 
-			 return 1;
-	     //allocate space for deltas
-		 else if (check_cuda_api(cudaMalloc((void **) &global_device_total_deltas, total_deltas.first * sizeof(double)),__FILE__, __LINE__) == 1)
-  		   return 1;
-  		 //copy deltas from host to device
-		 else if (check_cuda_api(cudaMemcpy(global_device_total_deltas, total_deltas.second, sizeof(double), cudaMemcpyHostToDevice),__FILE__, __LINE__) == 1)
-		   return 1;
-		 //allocate space for bias
-		 else if(check_cuda_api(cudaMalloc((void**)&global_device_total_bias, total_activations.first * sizeof(double)),__FILE__, __LINE__) == 1)
-		   return 1;
-		 //set bias from host to device
-		 else if(check_cuda_api(cudaMemset(global_device_total_bias, 1, total_activations.first * sizeof(double)),__FILE__, __LINE__) == 1)
-		   return 1;
-		 return 0; 
-		}
-		HOST std::int32_t cuda_cleanup()
-		{
-
-		  if(check_cuda_api(cudaFreeHost(total_observations.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if(check_cuda_api(cudaFreeHost(total_targets.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if(check_cuda_api(cudaFreeHost(total_hidden_weights.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if(check_cuda_api(cudaFreeHost(total_activations.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if(check_cuda_api(cudaFreeHost(total_error.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if (check_cuda_api(cudaFreeHost(total_gradient.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if (check_cuda_api(cudaFreeHost(total_deltas.second),__FILE__,__LINE__) == 1)
-			return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_observations),__FILE__, __LINE__) == 1)
-		   return 1;	
-		  else if (check_cuda_api(cudaFree(global_device_total_targets),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_hidden_weights),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_activations),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_error),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_gradient),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_deltas),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaFree(global_device_total_bias),__FILE__, __LINE__) == 1)
-		   return 1;
-		  else if(check_cuda_api(cudaDeviceReset(),__FILE__,__LINE__) == 1)
-		   return 1;
-		  return 0;
-		}
-		
-
-#endif
-#if CUDA_ENABLED == 1
-		HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, double *> & total_targets, 
-			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
-							   const std::pair<std::uint32_t, double *> & total_activations,
-							   double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight)
-		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
-			,device_total_observation, device_total_activation, device_total_bia, device_total_hidden_weight); }
-#endif
-		HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
-		{
-		  int error = 0;
-		  std::uint32_t ith_epoch, ith_observation;
-		  std::uint32_t batch_count;
-#if CUDA_ENABLED == 1
-		  printf("CUDA ENABLED TRAIN\n");
-		  cublasStatus_t error_id;
-		  cublasHandle_t handle;
-		  error_id = cublasCreate(&handle);
-		  if(error_id != CUBLAS_STATUS_SUCCESS)
-		  {
-			std::cerr<<"CublasHandle creation failed with error: "<<cublas_get_error_string(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-#else
-		  //cpu multi-threaded code will go here
-		  printf("CUDA DISABLED TRAIN\n");
-#endif
-		  //debugging lines
-		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<" Training case size: "<<total_layers[0].second
-				   <<" total_hidden_weights: "<<total_hidden_weights.first<<"\n";
-		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() ; ++ith_layer)
-			std::cout<<"Neurons in layer "<<ith_layer + 1<<": "<<total_layers[ith_layer].second<<"\n";
-		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
-			std::cout<<"weight matrix between layer "<<ith_layer + 2<<" and "<<ith_layer + 1<<" dimensions: "<<total_layers[ith_layer + 1].second<<" by "<<total_layers[ith_layer].second<<"\n";
-		  //end debug lines
-		  
-		  for(ith_epoch = 0; ith_epoch < max_epochs / max_epochs; ++ith_epoch)
-		  {
-			std::cout<<"Epoch: "<<ith_epoch + 1<<"\n";
-			for(ith_observation = 0, batch_count = 0; ith_observation < total_observations.first; ++ith_observation, ++batch_count)
-			{
-			  std::cout<<"Case: "<<ith_observation + 1<<"\n";
-#if CUDA_ENABLED == 1 
-			  if(batch_count == batch_size)
-			  {
-
-  				error = forward_propagate(true, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations, global_device_total_observations, global_device_total_activations, global_device_total_bias, global_device_total_hidden_weights);
-				batch_count = 0;//reset the count
-			  }	  
-			  else
-				error = forward_propagate(false, handle, ith_observation, total_layers, total_targets, total_hidden_weights, total_activations, global_device_total_observations, global_device_total_activations, global_device_total_bias, global_device_total_hidden_weights);
-			  //do something with the error code
-			  if(error == 1)
-			  {
-				std::cerr<<"An error occured in forward_propagate\n";
-				std::abort();
-			  }
-			  //call back_propagate
-#else
-			  std::cout<<"Apples\n";
-			  static_cast<model_type*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
-#endif
-			}
-		  }
-
-#if CUDA_ENABLED == 1
-		  error_id = cublasDestroy(handle);
-		  if(error_id != CUBLAS_STATUS_SUCCESS)
-		  {
-			std::cerr<<"cublas handle destruction failed with error: "<<cublas_get_error_string(error_id)<<"\n";
-			return ERROR_CUDA_ERROR;
-		  }
-#else
-		  //cpu multi-threaded code will go here
-		  
-#endif
-		  return error;
-		}
-	};
-  	class ffn : public ann< ffn >
-	{
-	  public:
-		ffn() = default;
-		ffn(const ffn &) = default;
-		ffn(ffn &&) = default;
-		ffn & operator = (const ffn &) = default;
-		ffn & operator = (ffn &&) = default;
-		~ffn() = default;
-#if CUDA_ENABLED == 1
-		template <class LOSS_FUNCTION>
-		HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
-							   const cudaStream_t & stream, const cublasHandle_t & context, LOSS_FUNCTION error_metric,
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::uint32_t & total_targets, const double * host_total_targets, const double * device_total_targets,
-			                   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights, const double * device_total_hidden_weights, 
-							   const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations,
-							   const double * device_total_observations, double * device_total_outputs,
-							   const double * host_total_bias, std::uint32_t device_id = 0
-							  )
-
-		{
-		  // layer counters
-		  std::uint32_t current_layer{1}, prior_layer{0}, ith_layer{0};// layer counters start at 1 and 0 respectively because we start with the hidden layer and input layer
-		  const std::uint32_t input_layer{0};
-		  const double * d_weight{device_total_hidden_weights};
-		  const double * d_obs{device_total_observations};
-		  double * d_act{device_total_activations};
-		  // declarations for gemm
-		  std::int32_t  m{0}, n{0}, k{0}, lda{0}, ldb{0},ldc{0};// note that for a weight matrix with dimensions m, n: m = neurons in layer i & n = neurons in layer i - 1
-		  std::uint32_t current_activation_offset{0};
-		  std::uint32_t prior_activation_offset{0};
-		  std::uint32_t weight_offset = {0};// number of weights connection between layer i and layer i + 1
-		  std::uint32_t case_begin = {total_layers[input_layer].second * ith_observation_index};// where a case begins, when ith_obs_index is 0 this is the first case
-
-	 	  // coefficients for gemm
-		  const double alpha{1};
-		  const double beta_mult{0};
-		  const double beta_add{1};
-
-
-		  // get col major coordinates without explicitly transposing 
-		  // ( total_layers[1].second is rows of the weight matrix and the number of neurons in the first hidden layer )
-		  // ( total_layers[0].second is the columns of the weight matrix and the number of neurons in the input layer )
-		  zinhart::serial::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[input_layer].second, total_layers[input_layer].second, 1);
-
-		  // set cublasStream
-		  if(zinhart::check_cublas_api(cublasSetStream(context, stream), __FILE__, __LINE__) != 0 )
-			return 1;
-
-		  // do Wx for first hidden layer and input layer
-		  if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
-					  m, n, k, 
-			          &alpha, 
-					  (d_obs + case_begin), lda,
-					  d_weight, ldb, 
-					  &beta_mult,
-					  d_act, ldc
-					  ),__FILE__, __LINE__) != 0)
-		  {
-			return 1;
-		  }
-
-		  // add in bias
-		  if(call_axps_async(1.0, d_act, host_total_bias[0], total_layers[current_layer].second, stream) != 0)
-			return 1;		
-
-		  // call activation
-		  call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, d_act, total_layers[current_layer].second);
-		  // f(Wx + b) complete for first hidden layer and input layer
-		  
-		  // update layer counters
-		  current_layer = 2;
-		  prior_layer = 1;
-
-		  //second hidden layer to output layer, see above for why weight offset = lda * ldb
-		  for(ith_layer = 1, prior_activation_offset = 0; ith_layer < total_layers.size() - 1; ++ith_layer, ++current_layer, ++prior_layer, prior_activation_offset += total_layers[prior_layer].second)
-		  {
-			// set offsets
-			current_activation_offset += total_layers[prior_layer].second;
-			weight_offset += total_layers[prior_layer].second * total_layers[prior_layer - 1].second;
-/*
-		    double *test_weights = new double[total_layers[current_layer].second * total_layers[prior_layer].second];
-			double *test_activations_prior= new double[total_layers[prior_layer].second];
-			double *test_activations= new double[total_layers[current_layer].second];*/
-//		    zinhart::check_cuda_api( cudaMemcpyAsync(test_weights, (d_weight + weight_offset), total_layers[current_layer].second * total_layers[prior_layer].second * sizeof(double), cudaMemcpyDeviceToHost, stream), __FILE__, __LINE__); 
-//		    zinhart::check_cuda_api( cudaMemcpyAsync(test_activations_prior, d_act/*+ prior_activation_offset*/, total_layers[prior_layer].second *  sizeof(double), cudaMemcpyDeviceToHost, stream), __FILE__, __LINE__); 
-/*		    zinhart::check_cuda_api( cudaMemcpyAsync(test_activations, (d_act + current_activation_offset), total_layers[current_layer].second *  sizeof(double), cudaMemcpyDeviceToHost, stream), __FILE__, __LINE__); 
-			cudaStreamSynchronize(stream);*/
-
-
-
-			// get col major coordinates without explicitly transposing 
-			// ( total_layers[current_layer].second is rows of the weight matrix)
-			// ( total_layers[prior_layers].second is the columns of the weight matrix)
-			zinhart::serial::gemm_wrapper(m, n, k, lda, ldb, ldc, total_layers[current_layer].second, total_layers[prior_layer].second, total_layers[prior_layer].second, 1);
-/*			std::cout<<"F ith_layer: "<<ith_layer<<"\n";
-			std::cout<<"F current_activation_offset: "<<current_activation_offset<<"\n";
-			std::cout<<"F weight_offset: "<<weight_offset<<"\n";
-			std::cout<<"F prior_activation_offset: "<<prior_activation_offset<<"\n";
-			zinhart::print_matrix_row_major(test_weights, total_layers[current_layer].second, total_layers[prior_layer].second, "F weight matrix");
-			zinhart::print_matrix_row_major(test_activations, total_layers[prior_layer].second, 1, "F prior activation matrix");
-			zinhart::print_matrix_row_major(test_activations, total_layers[current_layer].second, 1, "F activation matrix");*/
-			if(zinhart::check_cublas_api(cublasDgemm(context, CUBLAS_OP_N, CUBLAS_OP_N, 
-						m, n, k, 
-						&alpha, 
-						(d_act + prior_activation_offset), lda,
-						(d_weight + weight_offset), ldb, 
-						&beta_mult,
-						(d_act + current_activation_offset), ldc
-						),__FILE__, __LINE__) != 0)
-			{
-			  return 1;
-			}
-
-
-
-			// add in bias
-			if(call_axps_async(1.0, (d_act + current_activation_offset), host_total_bias[ith_layer], total_layers[current_layer].second, stream) != 0)
-			  return 1;		
-
-			// call activation
-			if(call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, (d_act + current_activation_offset), total_layers[current_layer].second) != 0)
-			  return 1;
-
-		}
-		// f(Wx + b) complete for second hidden layer to output layer
-		
-		// calc error
-		
-		// call loss function kernel and write to outputs
-	    	
-
-
-/*		  //copy activations back to host
-		  if(copy_device_to_host == true)
-		  {
-		    
-			//copy activations from device to host
-		    error_id = cudaMemcpy(device_total_targets, total_targets.second.get(), total_targets.first * sizeof(double), cudaMemcpyDeviceToHost);
-			if(error_id != cudaSuccess)
-			{
-			  std::cerr<<"device target copy failed with error: "<<cudaGetErrorString(error_id)<<"\n";
-			  return ERROR_CUDA_ERROR;
-			}
-			
-		  }
-*/		
-		  return 0;
-		}
-		HOST void backward_propagate(cublasHandle_t & context)
-		{
-		  //cublas gemm here
-		  
-		  // CALCULATION OF OUTPUT LAYER GRADIENTS
-		  
-		  // axpy for calculation of error
-		  
-		  // axpy for calculation of hadamard product
-		  
-		  // dgemm for calculation of hadamard product with error
-		  
-		  // axpy for deltas
-		  
-		  // dgemm for delta times previos layer activations 
-		}
+		  HOST std::int32_t init(
+				   std::pair<std::uint32_t, double *> & total_observations,
+				   std::pair<std::uint32_t, double *> & total_targets,
+				   std::uint32_t device_id = 0
+				  );
+		  HOST std::int32_t cuda_init();
+		  HOST std::int32_t cuda_cleanup();
+		  HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
+								 const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+								 const std::pair<std::uint32_t, double *> & total_targets, 
+								 const std::pair<std::uint32_t, double *> & total_hidden_weights,
+								 const std::pair<std::uint32_t, double *> & total_activations,
+								 double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight);
 
 #else
-		//cpu multi-threaded code will go here
-		void forward_propagate(const std::uint16_t & case_size, const std::uint32_t & ith_observation_index,
-			                   const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_observations, 
-							   const std::pair<std::uint32_t, std::shared_ptr<float>> & total_targets, 
-			                   const std::pair<std::uint32_t, double *> & total_hidden_weights
-					          )
-		{
-		  std::cout<<"IN CPU\n";
-		  //lapacke gemm etc
-		}
-		void backward_propagate(LAYER_INFO & info)
-		{
-		  //lapacke gemm etc
-		}
+		  HOST void init(const std::uint32_t & total_number_training_cases, const std::uint32_t & n_threads = 1);
+		  HOST std::int32_t forward_propagate(const std::vector<LAYER_INFO> & total_layers,
+			                                  const precision_type * total_training_cases, const std::uint32_t & case_index,
+											  precision_type * total_activations, const std::uint32_t & total_activations_length,
+											  const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
+											  const std::uint32_t & thread_id = 0
+			                                 );
 
+		  HOST void cleanup();
 #endif
-	};
-
+	  };
 	//Begin External Interface
 	//debugging functions
-	template <class T>
-	  HOST std::vector<LAYER_INFO> get_total_layers(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_observations(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_hidden_weights(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_activations(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_error(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_gradient(const ann<T> & model);
-	template <class T>
-	  HOST std::pair<std::uint32_t, double *> get_total_deltas(const ann<T> & model);
+	template <class model_type, class precision_type>
+	  HOST std::vector<LAYER_INFO> get_total_layers(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_observations(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_hidden_weights(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_activations(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_error(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_gradient(const ann<model_type, precision_type> & model);
+	template <class model_type, class precision_type>
+	  HOST std::pair<std::uint32_t, double *> get_total_deltas(const ann<model_type, precision_type> & model);
 	//End debugging functions
-	template<class T>
-  	  HOST void add_layer(ann<T> & model, const LAYER_INFO & ith_layer);
+	template<class model_type, class precision_type>
+  	  HOST void add_layer(ann<model_type, precision_type> & model, const LAYER_INFO & ith_layer);
 
 #if CUDA_ENABLED == 1
-	template<class T>
-	  HOST std::int32_t initialize_model(ann<T> & model,  
+	template <class model_type, class precision_type>
+	  HOST std::int32_t initialize_model(ann<model_type, precision_type> & model,  
 							 std::pair<std::uint32_t, double *> & total_observations,
 							 std::pair<std::uint32_t, double *> & total_targets, std::uint32_t device_id = 0 );
-	template<class T>
-	  HOST std::int32_t forward_propagate(ann<T> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
+	template <class model_type, class precision_type>
+	  HOST std::int32_t forward_propagate(ann<model_type, precision_type> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, double *> & total_targets, 
 			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
 							   const std::pair<std::uint32_t, double *> & total_activations,
 							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights);
 #endif
-	template<class T>
-	  HOST int train(ann<T> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
-	template<class T>
-	  HOST int cleanup(ann<T> & model);
-}
+	template <class model_type, class precision_type>
+	  HOST int train(ann<model_type, precision_type> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
+	template <class model_type, class precision_type>
+	  HOST int cleanup(ann<model_type, precision_type> & model);
+  }// END NAMESPACE MODELS
+}// END NAMESPACE ZINHART
+#include "ext/ann.tcc"
 #endif
