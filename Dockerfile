@@ -19,11 +19,15 @@ sed -i 's/ACTIVATION_TYPE=exist_lic/ACTIVATION_TYPE=trial_lic/g' silent.cfg && \
 # Configure dynamic link
 RUN echo "${MKL_PATH}/mkl/lib/intel64" >> /etc/ld.so.conf.d/intel.conf && ldconfig && \
   echo ". /opt/intel/bin/compilervars.sh intel64" >> /etc/bash.bashrc
-RUN mkdir app
-RUN cd app && git clone https://github.com/zinhart/ann.git
 
-WORKDIR /app/ann
-RUN git submodule update --remote --recursive
-RUN ./debug-script
+RUN git clone https://github.com/zinhart/ann.git && \
+	ls ann && \
+#WORKDIR /app/ann
+    cd /ann/concurrent_routines && \
+	git submodule update --remote --recursive && \
+	cd ../ && \
+    ./debug-script
 #CMD [python3, ann.py, ann_tests]
-CMD [/debug/test/ann_tests]
+CMD ["./bin/bash"]
+#ENTRYPOINT ["/ann/debug/test/ann_tests"]
+
