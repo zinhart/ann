@@ -1,0 +1,9 @@
+printf "Building ann in debug mode\n"
+truncate -s 0 debug-build-cpu-output.txt
+mkdir -p debug-cpu && cd $_
+printf "Proceding with cmake\n"
+cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=FALSE .. >> ../debug-build-cpu-output.txt 2>&1
+printf "Finished with cmake\n"
+printf "Proceding with make\n"
+make -j 12 >> ../debug-build-cpu-output.txt 2>&1
+printf "Finished make\n"
