@@ -12,6 +12,8 @@
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
 //#include <thrust>
+#else
+#include "mkl.h"
 #endif
 #include <cassert>
 namespace zinhart
@@ -29,12 +31,23 @@ namespace zinhart
 		 double * global_device_total_error;
 		 double * global_device_total_gradient;
 		 double * global_device_total_deltas;
+
+		 
 #endif
 
 	  protected:
-
-		std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
-        //number of training cases, trainint case size, the training cases themselves
+		 // array lengths
+		 std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
+		 std::uint32_t total_observations_length{0};// the total number of neurons in the input layer * the total number of training cases
+		 std::uint32_t total_targets_length{0};// the total number of neurons in the output layer * the total number of targets
+		 std::uint32_t total_outputs_length{0};// the total number of neurons in the output layer * the total number of threads in use
+		 std::uint32_t total_error_length{0};// the total number of neurons in the output layer
+		 std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
+		 std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
+		 std::uint32_t total_hidden_weights_length{0};// the number of hidden weights for a layer and the weights themselves
+		 std::uint32_t total_gradient_length{0};// same as the total number of hidden weights
+		 std::uint32_t total_bias_length{0};// equal to total_layers - 1
+		         //number of training cases, training case size, the training cases themselves
 		std::pair<std::uint32_t, double *> total_observations;
 		std::pair<std::uint32_t, double *> total_targets; // output layer size and the complete set of targets for each input
 		std::pair<std::uint32_t, double *> total_hidden_weights;// the number of hidden weights for a layer and the weights themselves
@@ -115,8 +128,8 @@ namespace zinhart
 		  return cuda_init();
 #else
 		HOST std::int32_t init(
-		         std::pair<std::uint32_t, double *> & total_observations,
-				 std::pair<std::uint32_t, double *> & total_targets
+		    //     std::pair<std::uint32_t, double *> & total_observations,
+			//	 std::pair<std::uint32_t, double *> & total_targets
 				)
 		{
 		  std::uint32_t ith_layer;

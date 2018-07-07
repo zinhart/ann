@@ -11,20 +11,20 @@
   #include <builtin_types.h>
   #include <cuda_runtime_api.h>
   #include <cublas_v2.h>
+  #include <thrust/host_vector.h>
+  #include <thrust/device_vector.h>
 #else
   #define CUDA_CALLABLE_MEMBER
   #define HOST
   #define DEVICE
   #define CONSTANT
   #define SHARED
-  #include <lapacke.h>
+  #include "mkl.h"
 #endif
 
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
 namespace zinhart
 {
-
+#if CUDA_ENABLED == true
   using uint = unsigned int;
   using precision_type = double;
   using pt = precision_type;
@@ -75,5 +75,6 @@ namespace zinhart
 	  k_matrix.k_height = height;
 	  return k_matrix;
 	}
+#endif
 }
 #endif
