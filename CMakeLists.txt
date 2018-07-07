@@ -42,7 +42,8 @@ endif()
 
 # threading library
 find_package(Threads REQUIRED)
-
+# mkl for gemm etc
+find_package(MKL REQUIRED)
 
 # find cuda package and set compute achitecture
 if(BuildCuda)
@@ -69,6 +70,9 @@ if(BuildCuda)
 	  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_61 -Xptxas -O3 -lineinfo")
 	endif()
   endif()
+  
+  # set include paths
+  include_directories(. include ${MKL_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS} concurrent_routines/include)
 
 else()
   string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}")
@@ -76,11 +80,10 @@ else()
   else()
 	add_definitions(-DCUDA_ENABLED=false)
   endif()
-  find_package(LAPACK)
+  # set include paths
+  include_directories(. include ${MKL_INCLUDE_DIR} concurrent_routines/include)
 endif()
 
-# set include paths
-include_directories(. include ${Boost_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} concurrent_routines/include)
 
 # set cxx standard
 set(CMAKE_CXX_STANDARD 11)
@@ -119,11 +122,11 @@ message(STATUS "  Library type          : ${LIB_TYPE}")
 message(STATUS "  Build tests           : ${BuildTest}")
 message(STATUS "  Sanitize flags        : ${Sanitize}")
 if(BuildCuda)
-  message(STATUS "  Found CUDA          : ${CUDA_FOUND}")
-  message(STATUS "  NVCC_FLAGS          : ${CUDA_NVCC_FLAGS}")
+  message(STATUS " Found CUDA			  : ${CUDA_FOUND}")
+  message(STATUS " CUDA_NVCC_FLAGS               : ${CUDA_NVCC_FLAGS}")
 else()
   message(STATUS "  FOUND THREADS       : ${THREADS_FOUND}")
-  message(STATUS "  FOUND LAPACKE         : ${LAPACK_FOUND}")
+  message(STATUS " Found MKL			  : ${MKL_FOUND}")
 endif()
 message(STATUS "  CXX_FLAGS             : ${CMAKE_CXX_FLAGS}")
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
