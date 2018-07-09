@@ -1,4 +1,4 @@
-#include "ann/ann.hh"
+#include "ann/models/multi_layer_perceptron.hh"
 #include "concurrent_routines/concurrent_routines.hh"
 #include "gtest/gtest.h"
 #include <limits>
@@ -8,6 +8,6 @@
 #include <list>
 #include <iomanip>
 using namespace zinhart;
-TEST(ann_cpu_test, sls)
+TEST(multi_layer_perceptron, forward_propagate)
 {
 }

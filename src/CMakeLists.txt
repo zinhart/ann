@@ -26,6 +26,7 @@ if(BuildCuda)
 else()
   set(ann_lib 
 	  cpu/optimizer.cc
+	  cpu/activation.cc
 	 )
 
    add_library(ann ${ann_lib})

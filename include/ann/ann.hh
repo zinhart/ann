@@ -34,7 +34,7 @@ namespace zinhart
 		  precision_type * global_device_total_deltas;
 #endif
 		protected:
-		  std::vector<LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
+		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
 		  //std::uint32_t total_observations_length{0};// the total number of neurons in the input layer * the total number of training cases
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
@@ -94,7 +94,7 @@ namespace zinhart
   */
 		  //model manipulating functions
 		  //I assume the first layer will be an input layer
-		  HOST void add_layer(const LAYER_INFO & ith_layer);
+		  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
 		  HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty);
 #if CUDA_ENABLED == 1
 		  HOST std::int32_t init(
@@ -105,7 +105,7 @@ namespace zinhart
 		  HOST std::int32_t cuda_init();
 		  HOST std::int32_t cuda_cleanup();
 		  HOST std::int32_t forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
-								 const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+								 const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 								 const std::pair<std::uint32_t, double *> & total_targets, 
 								 const std::pair<std::uint32_t, double *> & total_hidden_weights,
 								 const std::pair<std::uint32_t, double *> & total_activations,
@@ -113,11 +113,12 @@ namespace zinhart
 
 #else
 		  HOST void init(const std::uint32_t & total_number_training_cases, const std::uint32_t & n_threads = 1);
-		  HOST std::int32_t forward_propagate(const std::vector<LAYER_INFO> & total_layers,
-			                                  const precision_type * total_training_cases, const std::uint32_t & case_index,
+		  HOST std::int32_t forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
+											  const precision_type * total_training_cases, const std::uint32_t & case_index,
 											  precision_type * total_activations, const std::uint32_t & total_activations_length,
 											  const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
-											  const std::uint32_t & thread_id = 0
+											  const precision_type * total_bias,
+											  const std::uint32_t & thread_id
 			                                 );
 
 		  HOST void cleanup();
@@ -126,7 +127,7 @@ namespace zinhart
 	//Begin External Interface
 	//debugging functions
 	template <class model_type, class precision_type>
-	  HOST std::vector<LAYER_INFO> get_total_layers(const ann<model_type, precision_type> & model);
+	  HOST std::vector<zinhart::activation::LAYER_INFO> get_total_layers(const ann<model_type, precision_type> & model);
 	template <class model_type, class precision_type>
 	  HOST std::pair<std::uint32_t, double *> get_total_observations(const ann<model_type, precision_type> & model);
 	template <class model_type, class precision_type>
@@ -141,7 +142,7 @@ namespace zinhart
 	  HOST std::pair<std::uint32_t, double *> get_total_deltas(const ann<model_type, precision_type> & model);
 	//End debugging functions
 	template<class model_type, class precision_type>
-  	  HOST void add_layer(ann<model_type, precision_type> & model, const LAYER_INFO & ith_layer);
+  	  HOST void add_layer(ann<model_type, precision_type> & model, const zinhart::activation::LAYER_INFO & ith_layer);
 
 #if CUDA_ENABLED == 1
 	template <class model_type, class precision_type>

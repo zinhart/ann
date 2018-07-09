@@ -4,7 +4,7 @@ namespace zinhart
   namespace models
   {
   	template <class model_type, class precision_type>
-  	  HOST void ann<model_type, precision_type>::add_layer(const LAYER_INFO & ith_layer)
+  	  HOST void ann<model_type, precision_type>::add_layer(const zinhart::activation::LAYER_INFO & ith_layer)
   	  { total_layers.push_back(ith_layer); }
 	
 	// partial cpu and gpu functions here
@@ -216,7 +216,7 @@ namespace zinhart
 		}
 	template <class model_type, class precision_type>
   	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+			                   const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, double *> & total_targets, 
 			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
 							   const std::pair<std::uint32_t, double *> & total_activations,
@@ -263,16 +263,19 @@ namespace zinhart
 		  this->total_bias = (precision_type*) mkl_malloc( this->total_bias_length * sizeof( precision_type ), alignment );
 		}
 	template <class model_type, class precision_type>
-	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const std::vector<LAYER_INFO> & total_layers,
-			                              const precision_type * total_training_cases, const std::uint32_t & case_index,
-										  precision_type * total_activations, const std::uint32_t & total_activations_length,
-										  const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
-										  const std::uint32_t & thread_id
-			                             )
+	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
+																		   const precision_type * total_training_cases, const std::uint32_t & case_index,
+																		   precision_type * total_activations, const std::uint32_t & total_activations_length,
+																		   const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
+																	  	   const precision_type * total_bias,
+																		   const std::uint32_t & thread_id 
+		                                                                  )
 	  {
-		static_cast<model_type*>(this)->forward_propagate(this->total_layers, total_training_cases, case_index, 
+		static_cast<model_type*>(this)->forward_propagate(this->total_layers, 
+			                                              total_training_cases, case_index, 
 			                                              total_activations, total_activations_length, 
-														  total_hidden_weights, total_hidden_weights_length, 
+														  total_hidden_weights, total_hidden_weights_length,
+														  total_bias,
 														  thread_id
 														 );
 	  }

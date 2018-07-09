@@ -6,6 +6,6 @@
 #include <memory>
 #include <vector>
 using namespace zinhart;
-TEST(ann_cpu_test, blank)
+TEST(activation_cpu_test, blank)
 {
 }

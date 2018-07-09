@@ -4,11 +4,11 @@ namespace zinhart
   namespace models
   {
 #if CUDA_ENABLED == 1
-	template <class Precision_Type>
+	template <class precision_type>
 	  template <class LOSS_FUNCTION>
-	  HOST std::int32_t multi_layer_perceptron<Precision_Type>::forward_propagate_async(const bool & copy_device_to_host, 
+	  HOST std::int32_t multi_layer_perceptron<precision_type>::forward_propagate_async(const bool & copy_device_to_host, 
 								 const cudaStream_t & stream, const cublasHandle_t & context, LOSS_FUNCTION error_metric,
-								 const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
+								 const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 								 const std::uint32_t & total_targets, const double * host_total_targets, const double * device_total_targets,
 								 const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights, const double * device_total_hidden_weights, 
 								 const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations,
@@ -145,9 +145,9 @@ namespace zinhart
   */		
 			return 0;
 		  }
-	template <class Precision_Type>
+	template <class precision_type>
 	  //template <class LOSS_FUNCTION>
-		  HOST void multi_layer_perceptron<Precision_Type>::backward_propagate(cublasHandle_t & context)
+		  HOST void multi_layer_perceptron<precision_type>::backward_propagate(cublasHandle_t & context)
 		  {
 			//cublas gemm here
 			
@@ -166,12 +166,12 @@ namespace zinhart
 
 	//cpu multi-threaded code will go here
 #else
-	template <class Precision_Type>
-	  template <class LOSS_FUNCTION>
-	  void multi_layer_perceptron<Precision_Type>::forward_propagate(const std::vector<LAYER_INFO> & total_layers,
+	template <class precision_type>
+	  void multi_layer_perceptron<precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 																	 const precision_type * total_training_cases, const std::uint32_t & case_index,
 																	 precision_type * total_activations, const std::uint32_t & total_activations_length,
 																	 const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
+																	 const precision_type * total_bias,
 																	 const std::uint32_t & thread_id
 								                                    )
 		  {
@@ -182,17 +182,27 @@ namespace zinhart
 			precision_type * current_inputs{total_training_cases + case_index};
 			precision_type alpha{1.0}, beta{0.0};
 			std::uint32_t m{ total_layers[input_layer + 1].second }, n{1}, k{ total_layers[input_layer].second };
-		    // do input layer and the first input layer
-			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans
+
+		    // do input layer and the first input layer, aka Wx
+			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				        m, n, k,
 						alpha, total_hidden_weights, k,
 						current_inputs, n, beta, 
 						total_activations, n
 				       );
+
+			// add in bias with neumair sum
+			
+			// apply activation functions
+			
+			// f(Wx + b complete) 
+			
+			// repeat till output layer 
+			
 		  }
-	template <class Precision_Type>
+	template <class precision_type>
 	  template <class LOSS_FUNCTION>
-	  void multi_layer_perceptron<Precision_Type>::backward_propagate(const std::vector<LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 
+	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 
 																	  const std::uint32_t & ith_observation_index)
 	  {
 		//mkl gemm etc

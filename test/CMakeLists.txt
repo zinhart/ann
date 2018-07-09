@@ -34,7 +34,7 @@ else()
 	  cpu_unit_tests/loss_function_test.cc
 	  cpu_unit_tests/optimizer_test.cc
 	  cpu_unit_tests/activation_test.cc
-	  cpu_unit_tests/ffn_test.cc
+	  cpu_unit_tests/multi_layer_perceptron_test.cc
 	  cpu_unit_tests/ann_test.cc
 	 )
   add_executable(ann_tests ${test_lib})

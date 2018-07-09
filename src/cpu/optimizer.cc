@@ -1,6 +1,32 @@
 #include "ann/optimizer.hh"
 namespace zinhart
 {  
+  namespace optimizers
+  {
+	CUDA_CALLABLE_MEMBER std::uint32_t stochastic_gradient_descent::get_order()
+	{ return 0; }
+	CUDA_CALLABLE_MEMBER std::uint32_t momentum::get_order()
+  	{ return 1;}
+	CUDA_CALLABLE_MEMBER std::uint32_t nesterov_momentum::get_order()
+	{ return 1; }
+  	CUDA_CALLABLE_MEMBER std::uint32_t conjugate_gradient_descent::get_order()
+	{ return 1; }
+	CUDA_CALLABLE_MEMBER std::uint32_t adagrad::get_order()
+	{return 1;}
+	CUDA_CALLABLE_MEMBER std::uint32_t adadelta::get_order()
+	{return 2;}
+	CUDA_CALLABLE_MEMBER std::uint32_t rms_prop::get_order()
+	{return 1;}
+	CUDA_CALLABLE_MEMBER std::uint32_t adamax::get_order()
+	{return 2;}
+	CUDA_CALLABLE_MEMBER std::uint32_t adam::get_order()
+	{return 2;}
+	CUDA_CALLABLE_MEMBER std::uint32_t amsgrad::get_order()
+	{return 3;}
+	CUDA_CALLABLE_MEMBER std::uint32_t nadam::get_order()
+	{return 2;}
+  }
+  /*
   HOST void call_sgd(optimizer & op, double & theta, const double & gradient, double eta)
   { op.sgd(theta, gradient, eta); }
   HOST void call_momentum(optimizer & op, double & theta, double & prior_velocity,
@@ -39,4 +65,5 @@ namespace zinhart
   { op.nadam(theta, prior_mean, prior_variance, current_gradient, eta, mu, beta_1, beta_2, beta_1_t, beta_2_t, epsilon); }
   HOST void call_nadam_moment_update(optimizer & op, double & beta_1_t, double & beta_2_t, double beta_1, double beta_2)
   { op.nadam_moment_update(beta_1_t, beta_2_t, beta_1, beta_2);}
+  */
 }

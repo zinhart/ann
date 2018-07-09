@@ -8,17 +8,12 @@ using namespace zinhart;
 
 #if CUDA_ENABLED == 1
 /*
-TEST(ann_test,ann_test_constructor)
-{
-  ann< ffn > model;
-}
-
 TEST(ann_test, add_layer)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max() );
-  ann< ffn > model;
+  std::uniform_int_distribution<std::uint32_t> dist(1, std::numeric_limits<std::uint16_t>::max() );// random number of layers
+  ann<  > model;
   LAYER_INFO a_layer;
   a_layer.first = ACTIVATION_NAME::IDENTITY;
   a_layer.second = dist(mt);  

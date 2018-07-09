@@ -2,8 +2,9 @@
 #include "ann/loss_function.hh"
 #include <random>
 #include <limits>
-using namespace zinhart;
+using namespace zinhart::error_metrics;
 const unsigned int STOP = 100;
+
 TEST(loss_function_test, cross_entropy_multi_class_objective)
 {
   std::random_device rd;
@@ -44,3 +45,4 @@ TEST(loss_function_test, mean_square_error_derivative)
   kth_target = dist(mt), kth_output = dist(mt);
   ASSERT_EQ( double (2.0) * (kth_output - kth_target) , error(kth_output, kth_target, LOSS_FUNCTION_TYPE::DERIVATIVE) );
 }
+
