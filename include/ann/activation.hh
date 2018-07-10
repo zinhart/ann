@@ -13,7 +13,7 @@ namespace zinhart
 {
   namespace activation
   {
-	enum class ACTIVATION_NAME : std::uint32_t {INPUT = std::uint32_t{1}, IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX};
+	enum class ACTIVATION_NAME : std::uint32_t {INPUT = std::uint32_t{0}, IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX};
 	enum class ACTIVATION_TYPE : std::uint32_t {OBJECTIVE = std::uint32_t{0}, DERIVATIVE}; 
 	std::uint32_t total_activation_types();
 	using Neurons = std::uint32_t;

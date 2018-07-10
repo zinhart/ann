@@ -35,23 +35,13 @@ namespace zinhart
 #endif
 		protected:
 		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
-		  //std::uint32_t total_observations_length{0};// the total number of neurons in the input layer * the total number of training cases
+
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
-
 		  std::uint32_t total_hidden_weights_length{0};// the number of hidden weights for a layer and the weights themselves
 		  std::uint32_t total_gradient_length{0};// same as the total number of hidden weights
-
-
-		  std::uint32_t total_targets_length{0};// the total number of neurons in the output layer * the total number of targets
-		  std::uint32_t total_outputs_length{0};// the total number of neurons in the output layer * the total number of threads in use
-		  std::uint32_t total_error_length{0};// the total number of neurons in the output layer
 		  std::uint32_t total_bias_length{0};// equal to total_layers - 1
 
-		  precision_type * total_observations{nullptr};// the total number of neurons in the input layer * the total number of training cases
-		  precision_type * total_targets{nullptr};// the total number of neurons in the output layer * the total number of targets
-		  precision_type * total_outputs{nullptr};// the total number of neurons in the output layer * the total number of threads in use
-		  precision_type * total_error{nullptr};// the total number of neurons in the output layer
 		  precision_type * total_activations{nullptr};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  precision_type * total_deltas{nullptr};// same as the number of total_activations_length
 		  precision_type * total_hidden_weights{nullptr};// the number of hidden weights for a layer and the weights themselves
@@ -74,27 +64,20 @@ namespace zinhart
 		  ann<model_type, precision_type> & operator = (const ann<model_type, precision_type>&) = delete;
 		  ann<model_type, precision_type> & operator = (ann<model_type, precision_type> &&) = delete;
 		  ~ann() = default;
-  /*
+  
 		  //debugging functions
-		  const std::vector<LAYER_INFO> & get_total_layers()const
-		  {return total_layers; }
-		  const std::pair<std::uint32_t, double *> & get_total_observations()const
-		  {return total_observations;}
-		  const std::pair<std::uint32_t, double *> & get_total_hidden_weights()const
-		  {return total_hidden_weights;}
-		  const std::pair<std::uint32_t, double *> & get_total_activations()const
-		  {return total_activations;}
-		  const std::pair<std::uint32_t, double *> & get_total_error()const
-		  {return total_error;}
-		  const std::pair<std::uint32_t, double *> & get_total_gradient()const
-		  {return total_gradient;}
-		  const std::pair<std::uint32_t, double *> & get_total_deltas()const
-		  {return total_deltas;}
+		  HOST const std::uint32_t get_total_activations()const;
+		  HOST const std::uint32_t get_total_deltas()const;
+		  HOST const std::uint32_t get_total_hidden_weights()const;
+		  HOST const std::uint32_t get_total_gradients()const;
+		  HOST const std::uint32_t get_total_bias()const;
 		  //end debugging functions
-  */
+  
 		  //model manipulating functions
 		  //I assume the first layer will be an input layer
 		  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
+		  HOST const std::vector<zinhart::activation::LAYER_INFO> get_total_layers()const;
+		  HOST void clear_layers();
 		  HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty);
 #if CUDA_ENABLED == 1
 		  HOST std::int32_t init(
@@ -112,7 +95,7 @@ namespace zinhart
 								 double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight);
 
 #else
-		  HOST void init(const std::uint32_t & total_number_training_cases, const std::uint32_t & n_threads = 1);
+		  HOST void init(const std::uint32_t & n_threads = 1);
 		  HOST std::int32_t forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 											  const precision_type * total_training_cases, const std::uint32_t & case_index,
 											  precision_type * total_activations, const std::uint32_t & total_activations_length,

@@ -6,7 +6,28 @@ namespace zinhart
   	template <class model_type, class precision_type>
   	  HOST void ann<model_type, precision_type>::add_layer(const zinhart::activation::LAYER_INFO & ith_layer)
   	  { total_layers.push_back(ith_layer); }
-	
+	template <class model_type, class precision_type>
+	  HOST const std::vector<zinhart::activation::LAYER_INFO> ann<model_type, precision_type>::get_total_layers()const
+	  {return total_layers; }
+	template <class model_type, class precision_type>
+	  HOST void ann<model_type, precision_type>::clear_layers()
+	  {total_layers.clear(); }
+	template <class model_type, class precision_type>
+	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_activations()const
+	  {return total_activations_length;}
+	template <class model_type, class precision_type>
+	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_deltas()const
+	  {return total_deltas_length;}
+	template <class model_type, class precision_type>
+	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_hidden_weights()const
+	  {return total_hidden_weights_length;}
+	template <class model_type, class precision_type>
+	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_gradients()const
+	  {return total_gradient_length;}
+	template <class model_type, class precision_type>
+	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_bias()const
+	  {return total_bias_length;}
+	/* 
 	// partial cpu and gpu functions here
   	template <class model_type, class precision_type>
 	  HOST std::int32_t ann<model_type, precision_type>::train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
@@ -30,7 +51,7 @@ namespace zinhart
 #endif
 		  //debugging lines
 		  std::cout<<"max_epochs: "<<max_epochs<<" total training cases: "<<total_observations.first<<" Training case size: "<<total_layers[0].second
-				   <<" total_hidden_weights: "<<total_hidden_weights.first<<"\n";
+		  		   <<" total_hidden_weights: "<<total_hidden_weights.first<<"\n";
 		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() ; ++ith_layer)
 			std::cout<<"Neurons in layer "<<ith_layer + 1<<": "<<total_layers[ith_layer].second<<"\n";
 		  for(unsigned int ith_layer = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
@@ -79,7 +100,7 @@ namespace zinhart
 #endif
 		  return error;
 		}
-
+*/
 // gpu only functions here
 #if CUDA_ENABLED == 1
   	template <class model_type, class precision_type>
@@ -226,16 +247,15 @@ namespace zinhart
 	//cpu only functions here
 #else
 	template <class model_type, class precision_type>
-		HOST void ann<model_type, precision_type>::init(const std::uint32_t & total_number_training_cases, const std::uint32_t & n_threads)
+		HOST void ann<model_type, precision_type>::init(const std::uint32_t & n_threads)
 		{
 		  assert(this->total_layers.size() != 0);
+		  assert(n_threads > 0);
 		  const std::uint32_t input_layer{0};
 		  const std::uint32_t output_layer{total_layers.size() - 1};
 		  std::uint32_t ith_layer;
 
 		  // calculate vector lengths
-		  //total_observations_length = total_number_training_cases * total_layers[input_layer].second; no longer necessary since this will be managed outside of ann
-
 		  for(ith_layer = 1; ith_layer < this->total_layers.size(); ++ith_layer)
 			this->total_activations_length += this->total_layers[ith_layer].second;// accumulate neurons from the first hidden layer to the output layer
 		  this->total_activations_length *= n_threads;// lengthen this vector by the number of threads so that each thread can have its own workspace
@@ -245,21 +265,16 @@ namespace zinhart
 			this->total_hidden_weights_length += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
 		  this->total_gradient_length = this->total_hidden_weights_length;
 
-		  this->total_targets_length = this->total_outputs_length = this->total_error_length = this->total_layers[output_layer].second;
 		  this->total_bias_length = this->total_layers.size() - 1;
 
 		  // memory alignment
 		  std::uint32_t alignment = ( sizeof(precision_type) == 8) ? 64 : 32;
 		  
 		  // allocate vectors 
-		  //this->total_observations = (precision_type*) mkl_malloc( this->total_observations_length * sizeof( precision_type ), alignment );
 		  this->total_activations = (precision_type*) mkl_malloc( this->total_activations_length * sizeof( precision_type ), alignment );
 		  this->total_deltas = (precision_type*) mkl_malloc( this->total_deltas_length * sizeof( precision_type ), alignment );
 		  this->total_hidden_weights = (precision_type*) mkl_malloc( this->total_hidden_weights_length * sizeof( precision_type ), alignment );
 		  this->total_gradient = (precision_type*) mkl_malloc( this->total_gradient_length * sizeof( precision_type ), alignment );
-		  this->total_targets = (precision_type*) mkl_malloc( this->total_targets_length * sizeof( precision_type ), alignment );
-//		  this->total_outputs = (precision_type*) mkl_malloc( this->total_outputs_length * sizeof( precision_type ), alignment );
-		  this->total_error = (precision_type*) mkl_malloc( this->total_error_length * sizeof( precision_type ), alignment );
 		  this->total_bias = (precision_type*) mkl_malloc( this->total_bias_length * sizeof( precision_type ), alignment );
 		}
 	template <class model_type, class precision_type>
@@ -286,10 +301,13 @@ namespace zinhart
 		mkl_free(this->total_deltas);
 		mkl_free(this->total_hidden_weights);
 		mkl_free(this->total_gradient);
-		mkl_free(this->total_targets);
-//		mkl_free(this->total_outputs);
-		mkl_free(this->total_error);
 		mkl_free(this->total_bias);
+
+		total_activations_length = 0;
+		total_deltas_length = 0;	
+		total_hidden_weights_length = 0;
+		total_gradient_length = 0;
+		total_bias_length = 0;
 	  }
 #endif
 
