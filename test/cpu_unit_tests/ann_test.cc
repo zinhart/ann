@@ -14,7 +14,7 @@ TEST(ann_test, get_layer_add_layer_clear_layers)
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, std::numeric_limits<std::uint16_t>::max() );// random number of neurons
-  std::uniform_int_distribution<std::uint32_t> layer_dist(0, total_activation_types());// random activation function, -1 is to not include softmax as it's not finished
+  std::uniform_int_distribution<std::uint32_t> layer_dist(0, total_activation_types());// random activation function
   std::uint32_t i, n_layers{layer_dist(mt)};
   ann<multi_layer_perceptron<double>, double> model;
   std::vector<LAYER_INFO> total_layers, total_layers_copy;

@@ -152,6 +152,8 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
+	template<class ACTIVATION_FUNCTION>
+	  HOST activation_function<ACTIVATION_FUNCTION> get_activation_function(ACTIVATION_NAME name);
 #if CUDA_ENABLED == 1
 	//wrppers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
 	template <class precision_type>

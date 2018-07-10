@@ -1,4 +1,5 @@
 #include "mkl.h"
+#include "concurrent_routines/concurrent_routines.hh"
 namespace zinhart
 {
   namespace models
@@ -180,22 +181,33 @@ namespace zinhart
 			//mkl gemm etc
 			const std::uint32_t input_layer{0};
 			const std::uint32_t output_layer{total_layers.size() - 1};
-			precision_type * current_inputs{total_training_cases + case_index};
+			std::uint32_t i, activation_offset, ith_layer;
+			precision_type * current_inputs{total_training_cases + case_index}, activation_ptr;
 			precision_type alpha{1.0}, beta{0.0};
 			std::uint32_t m{ total_layers[input_layer + 1].second }, n{1}, k{ total_layers[input_layer].second };
+
+			// set activation_offset in the case that their are multiple threads, for the first hidden layer this is the thread_id * neurons in the first hidden_layer
+			activation_offset = thread_id * total_layers[input_layer + 1].second;
+			activation_ptr = total_activations + activation_offset;
 
 		    // do input layer and the first input layer, aka Wx
 			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				        m, n, k,
 						alpha, total_hidden_weights, k,
 						current_inputs, n, beta, 
-						total_activations, n
+						activation_ptr, n
 				       );
 
-			// add in bias with neumair sum
+			// add in bias
+			for(i = activation_offset; i < total_layers[1].second; ++i)
+			  activation_ptr[i] += total_bias[0];
 			
+			auto first_hidden_layer_activation = get_activation_functions(total_layers[input_layer + 1].first);
+
 			// apply activation functions
-			
+			for(i = activation_offset; i < total_layers[1].second; ++i)
+			  first_hidden_layer_activation(activation_ptr[i]);
+
 			// f(Wx + b complete) 
 			
 			// repeat till output layer 

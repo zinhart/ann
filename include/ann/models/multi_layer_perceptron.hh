@@ -39,7 +39,7 @@ namespace zinhart
 								   const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
 								   const precision_type * total_bias,
 								   precision_type * outputs,
-								   const std::uint32_t & thread_id
+								   const std::uint32_t & thread_id = 0
 								  );
 
 		template <class LOSS_FUNCTION>
