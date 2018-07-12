@@ -173,7 +173,6 @@ namespace zinhart
 																	 precision_type * total_activations, const std::uint32_t & total_activations_length,
 																	 const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
 																	 const precision_type * total_bias,
-								                                     precision_type * outputs,
 																	 const std::uint32_t & thread_id
 								                                    )
 		  {
@@ -182,13 +181,14 @@ namespace zinhart
 			const std::uint32_t input_layer{0};
 			const std::uint32_t output_layer{total_layers.size() - 1};
 			std::uint32_t i, activation_offset, ith_layer;
-			precision_type * current_inputs{total_training_cases + case_index}, activation_ptr;
+			const precision_type * current_inputs{total_training_cases + case_index};
+		    precision_type * activation_ptr{nullptr};
 			precision_type alpha{1.0}, beta{0.0};
 			std::uint32_t m{ total_layers[input_layer + 1].second }, n{1}, k{ total_layers[input_layer].second };
 			zinhart::activation::activation_function af;
 
 			// set activation_offset in the case that their are multiple threads, for the first hidden layer this is the thread_id * neurons in the first hidden_layer
-			activation_offset = thread_id * total_layers[input_layer + 1].second;
+			activation_offset = thread_id * total_layers[input_layer].second;
 			activation_ptr = total_activations + activation_offset;
 
 		    // do input layer and the first input layer, aka Wx
@@ -214,6 +214,12 @@ namespace zinhart
 			// repeat till output layer 
 			
 		  }
+
+	template <class precision_type>
+  	  void multi_layer_perceptron<precision_type>::get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, precision_type * model_outputs, const std::uint32_t & thread_id)
+  	  {
+  		// to do
+	  }
 	template <class precision_type>
 	  template <class LOSS_FUNCTION>
 	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 

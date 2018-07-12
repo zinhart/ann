@@ -53,9 +53,9 @@ namespace zinhart
 		  CUDA_CALLABLE_MEMBER activation_interface & operator = (const activation_interface&) = default;
 		  CUDA_CALLABLE_MEMBER activation_interface & operator = (activation_interface&&) = default;
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator ()(precision_type x, ACTIVATION_TYPE at);
+			CUDA_CALLABLE_MEMBER precision_type operator ()( ACTIVATION_TYPE at, precision_type x);
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator ()(precision_type x, ACTIVATION_TYPE at, const precision_type coefficient);
+			CUDA_CALLABLE_MEMBER precision_type operator ()( ACTIVATION_TYPE at, precision_type x, const precision_type coefficient);
 	  };
 
 	class identity : public activation_interface<identity>

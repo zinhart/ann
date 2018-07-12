@@ -61,8 +61,8 @@ TEST(ann_test, initialize_model_cleanup_model)
   //calc number of activations
   for(ith_layer = 1, total_activations = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
-  total_activations *= n_threads;
   total_deltas = total_activations;
+  total_activations *= n_threads;
   
   //calc number of hidden weights
   for(ith_layer = 0, total_hidden_weights = 0; ith_layer < total_layers.size() - 1; ++ith_layer)

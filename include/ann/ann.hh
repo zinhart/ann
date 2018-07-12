@@ -37,13 +37,13 @@ namespace zinhart
 		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
 
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
-		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length
+		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length in the case of one thread, for multiple it is total_activations_lengths/n_threads
 		  std::uint32_t total_hidden_weights_length{0};// the number of hidden weights for a layer and the weights themselves
 		  std::uint32_t total_gradient_length{0};// same as the total number of hidden weights
 		  std::uint32_t total_bias_length{0};// equal to total_layers - 1
 
 		  precision_type * total_activations{nullptr};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
-		  precision_type * total_deltas{nullptr};// same as the number of total_activations_length
+		  precision_type * total_deltas{nullptr};// same as the number of total_activations_length, for multiple it is total_activations_lengths/n_threads
 		  precision_type * total_hidden_weights{nullptr};// the number of hidden weights for a layer and the weights themselves
 		  precision_type * total_gradient{nullptr};// same as the total number of hidden weights
 		  precision_type * total_bias{nullptr};// equal to total_layers - 1
@@ -96,14 +96,8 @@ namespace zinhart
 
 #else
 		  HOST void init(const std::uint32_t & n_threads = 1);
-		  HOST std::int32_t forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
-											  const precision_type * total_training_cases, const std::uint32_t & case_index,
-											  precision_type * total_activations, const std::uint32_t & total_activations_length,
-											  const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
-											  const precision_type * total_bias,
-											  const std::uint32_t & thread_id
-			                                 );
-
+		  HOST std::int32_t forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id = 0);
+		  HOST void get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id = 0);
 		  HOST void cleanup();
 #endif
 	  };

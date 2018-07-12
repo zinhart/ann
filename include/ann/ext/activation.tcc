@@ -44,12 +44,12 @@ namespace zinhart
 	// activation_interface
 	template <class ACTIVATION_FUNCTION>
 	  template <class precision_type>
-	  CUDA_CALLABLE_MEMBER precision_type activation_interface<ACTIVATION_FUNCTION>::operator ()(precision_type x, ACTIVATION_TYPE at)
+	  CUDA_CALLABLE_MEMBER precision_type activation_interface<ACTIVATION_FUNCTION>::operator ()(ACTIVATION_TYPE at, precision_type x)
 	  { return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x); }
 
 	template <class ACTIVATION_FUNCTION>
 	  template <class precision_type>
-	  CUDA_CALLABLE_MEMBER precision_type activation_interface<ACTIVATION_FUNCTION>::operator ()(precision_type x, ACTIVATION_TYPE at, const precision_type coefficient)
+	  CUDA_CALLABLE_MEMBER precision_type activation_interface<ACTIVATION_FUNCTION>::operator ()(ACTIVATION_TYPE at, precision_type x, const precision_type coefficient)
 	  { return (at == ACTIVATION_TYPE::OBJECTIVE) ? static_cast<ACTIVATION_FUNCTION*>(this)->objective(x, coefficient) : static_cast<ACTIVATION_FUNCTION*>(this)->derivative(x, coefficient); }
 
     // identity

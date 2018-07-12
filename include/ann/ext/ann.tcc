@@ -258,8 +258,9 @@ namespace zinhart
 		  // calculate vector lengths
 		  for(ith_layer = 1; ith_layer < this->total_layers.size(); ++ith_layer)
 			this->total_activations_length += this->total_layers[ith_layer].second;// accumulate neurons from the first hidden layer to the output layer
-		  this->total_activations_length *= n_threads;// lengthen this vector by the number of threads so that each thread can have its own workspace
 		  this->total_deltas_length = total_activations_length;
+		  // lengthen this vector by the number of threads so that each thread can have its own workspace, when their is only 1 threads, total_activations_length is multiplied by 1
+		  this->total_activations_length *= n_threads;
 		  
 		  for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < this->total_layers.size() - 1; ++ith_layer)
 			this->total_hidden_weights_length += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;
@@ -278,22 +279,19 @@ namespace zinhart
 		  this->total_bias = (precision_type*) mkl_malloc( this->total_bias_length * sizeof( precision_type ), alignment );
 		}
 	template <class model_type, class precision_type>
-	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
-																		   const precision_type * total_training_cases, const std::uint32_t & case_index,
-																		   precision_type * total_activations, const std::uint32_t & total_activations_length,
-																		   const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
-																	  	   const precision_type * total_bias,
-																		   const std::uint32_t & thread_id 
-		                                                                  )
+	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id )
 	  {
 		static_cast<model_type*>(this)->forward_propagate(this->total_layers, 
 			                                              total_training_cases, case_index, 
-			                                              total_activations, total_activations_length, 
-														  total_hidden_weights, total_hidden_weights_length,
-														  total_bias,
+			                                              this->total_activations, this->total_activations_length, 
+														  this->total_hidden_weights, this->total_hidden_weights_length,
+														  this->total_bias,
 														  thread_id
 														 );
 	  }
+	template <class model_type, class precision_type>
+	  HOST void ann<model_type, precision_type>::get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id)
+	  {	static_cast<model_type*>(this)->get_outputs(this->total_layers, model_outputs, thread_id); }
 	template <class model_type, class precision_type>
 	  HOST void ann<model_type, precision_type>::cleanup()
 	  {
