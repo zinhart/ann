@@ -185,6 +185,7 @@ namespace zinhart
 			precision_type * current_inputs{total_training_cases + case_index}, activation_ptr;
 			precision_type alpha{1.0}, beta{0.0};
 			std::uint32_t m{ total_layers[input_layer + 1].second }, n{1}, k{ total_layers[input_layer].second };
+			zinhart::activation::activation_function af;
 
 			// set activation_offset in the case that their are multiple threads, for the first hidden layer this is the thread_id * neurons in the first hidden_layer
 			activation_offset = thread_id * total_layers[input_layer + 1].second;
@@ -198,15 +199,15 @@ namespace zinhart
 						activation_ptr, n
 				       );
 
-			// add in bias
+			// add in bias, consider using neaumaer sum
 			for(i = activation_offset; i < total_layers[1].second; ++i)
 			  activation_ptr[i] += total_bias[0];
 			
-			auto first_hidden_layer_activation = get_activation_functions(total_layers[input_layer + 1].first);
-
+			
 			// apply activation functions
 			for(i = activation_offset; i < total_layers[1].second; ++i)
-			  first_hidden_layer_activation(activation_ptr[i]);
+			  //first_hidden_layer_activation(activation_ptr[i]);
+			  af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 
 			// f(Wx + b complete) 
 			

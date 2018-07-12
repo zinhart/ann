@@ -4,6 +4,8 @@
 #include "concurrent_routines/concurrent_routines_error.hh"
 #include <cstdint>
 #include <utility>
+#include <stdexcept>
+#include <iostream>
 #if CUDA_ENABLED == true
 #include <math.h>
 #else
@@ -18,23 +20,45 @@ namespace zinhart
 	std::uint32_t total_activation_types();
 	using Neurons = std::uint32_t;
 	using LAYER_INFO = std::pair<ACTIVATION_NAME, Neurons>;
-	// activation_function will be the common interface!
 	template <class ACTIVATION_FUNCTION>
-	  class activation_function
+	  class activation_interface;
+	class identity;
+	class sigmoid;
+	class softplus;
+	class hyperbolic_tangent;
+	class relu;
+	class leaky_relu;
+	class exp_leaky_relu;
+	class softmax;
+	class activation_function
+	{
+	  public:
+		CUDA_CALLABLE_MEMBER activation_function() = default;
+		CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
+		CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
+		CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
+		CUDA_CALLABLE_MEMBER activation_function & operator = (activation_function&&) = default;
+		template <class precision_type>
+		  HOST precision_type operator ()(ACTIVATION_NAME name, ACTIVATION_TYPE at, precision_type x);
+	};
+
+	// activation_interface will be the common interface!
+	template <class ACTIVATION_FUNCTION>
+	  class activation_interface : public activation_function
 	  {
 		public:
-		  CUDA_CALLABLE_MEMBER activation_function() = default;
-		  CUDA_CALLABLE_MEMBER activation_function(const activation_function&) = default;
-		  CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
-		  CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
-		  CUDA_CALLABLE_MEMBER activation_function & operator = (activation_function&&) = default;
+		  CUDA_CALLABLE_MEMBER activation_interface() = default;
+		  CUDA_CALLABLE_MEMBER activation_interface(const activation_interface&) = default;
+		  CUDA_CALLABLE_MEMBER activation_interface(activation_interface&&) = default;
+		  CUDA_CALLABLE_MEMBER activation_interface & operator = (const activation_interface&) = default;
+		  CUDA_CALLABLE_MEMBER activation_interface & operator = (activation_interface&&) = default;
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator ()(precision_type x, ACTIVATION_TYPE at);
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator ()(precision_type x, ACTIVATION_TYPE at, const precision_type coefficient);
 	  };
 
-	class identity : public activation_function<identity>
+	class identity : public activation_interface<identity>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER identity() = default;
@@ -48,7 +72,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class sigmoid : public activation_function<sigmoid>
+	class sigmoid : public activation_interface<sigmoid>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER sigmoid() = default;
@@ -57,12 +81,12 @@ namespace zinhart
 		 CUDA_CALLABLE_MEMBER sigmoid & operator = (const sigmoid&) = default;
 		 CUDA_CALLABLE_MEMBER sigmoid & operator = (sigmoid&&) = default;
 		 template <class precision_type>
-		   CUDA_CALLABLE_MEMBER precision_type objective(const precision_type  x);
+		   CUDA_CALLABLE_MEMBER precision_type objective(const precision_type & x);
 		 template <class precision_type>
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class softplus : public activation_function<softplus>
+	class softplus : public activation_interface<softplus>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER softplus() = default;
@@ -77,7 +101,7 @@ namespace zinhart
 
 	};
 
-	class hyperbolic_tangent : public activation_function<hyperbolic_tangent>
+	class hyperbolic_tangent : public activation_interface<hyperbolic_tangent>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER hyperbolic_tangent() = default;
@@ -91,7 +115,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class relu : public activation_function<relu>
+	class relu : public activation_interface<relu>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER relu() = default;
@@ -107,7 +131,7 @@ namespace zinhart
 
 
 
-	class leaky_relu : public activation_function<leaky_relu>
+	class leaky_relu : public activation_interface<leaky_relu>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER leaky_relu() = default;
@@ -123,7 +147,7 @@ namespace zinhart
 
 
 
-	class exp_leaky_relu : public activation_function<exp_leaky_relu>
+	class exp_leaky_relu : public activation_interface<exp_leaky_relu>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER exp_leaky_relu() = default;
@@ -137,7 +161,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x, precision_type leakage_coefficient = 0.1);
 	};
 
-	class softmax : public activation_function<softmax>
+	class softmax : public activation_interface<softmax>
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER softmax() = default;
@@ -153,7 +177,7 @@ namespace zinhart
 	};
 
 	template<class ACTIVATION_FUNCTION>
-	  HOST activation_function<ACTIVATION_FUNCTION> get_activation_function(ACTIVATION_NAME name);
+	  HOST activation_interface<ACTIVATION_FUNCTION> get_activation_interface(ACTIVATION_NAME name);
 #if CUDA_ENABLED == 1
 	//wrppers for host functions to use to call kernels here, the wrappers will calculate the block_parameters and the threads per block
 	template <class precision_type>

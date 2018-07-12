@@ -61,6 +61,7 @@ TEST(ann_test, initialize_model_cleanup_model)
   //calc number of activations
   for(ith_layer = 1, total_activations = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
+  total_activations *= n_threads;
   total_deltas = total_activations;
   
   //calc number of hidden weights
@@ -69,7 +70,7 @@ TEST(ann_test, initialize_model_cleanup_model)
   total_gradients = total_hidden_weights;
   total_bias = total_layers.size() - 1;
   
-  model.init();
+  model.init(n_threads);
 
   ASSERT_EQ(total_activations, model.get_total_activations());
   ASSERT_EQ(total_deltas, model.get_total_deltas());
