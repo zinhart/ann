@@ -258,9 +258,9 @@ namespace zinhart
 		  // calculate vector lengths
 		  for(ith_layer = 1; ith_layer < this->total_layers.size(); ++ith_layer)
 			this->total_activations_length += this->total_layers[ith_layer].second;// accumulate neurons from the first hidden layer to the output layer
-		  this->total_deltas_length = total_activations_length;
 		  // lengthen this vector by the number of threads so that each thread can have its own workspace, when their is only 1 threads, total_activations_length is multiplied by 1
 		  this->total_activations_length *= n_threads;
+		  this->total_deltas_length = total_activations_length;
 		  
 		  for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < this->total_layers.size() - 1; ++ith_layer)
 			this->total_hidden_weights_length += this->total_layers[ith_layer + 1].second * this->total_layers[ith_layer].second;

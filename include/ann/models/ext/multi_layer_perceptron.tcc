@@ -169,18 +169,18 @@ namespace zinhart
 #else
 	template <class precision_type>
 	  void multi_layer_perceptron<precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
-																	 const precision_type * total_training_cases, const std::uint32_t & case_index,
-																	 precision_type * total_activations, const std::uint32_t & total_activations_length,
-																	 const precision_type * total_hidden_weights, const std::uint32_t & total_hidden_weights_length,
+																	 const precision_type * total_training_cases, const std::uint32_t case_index,
+																	 precision_type * total_activations, const std::uint32_t total_activations_length,
+																	 const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 																	 const precision_type * total_bias,
-																	 const std::uint32_t & thread_id
+																	 const std::uint32_t n_threads,
+																	 const std::uint32_t thread_id
 								                                    )
 		  {
-			std::cout<<"IN CPU\n";
 			//mkl gemm etc
 			const std::uint32_t input_layer{0};
 			const std::uint32_t output_layer{total_layers.size() - 1};
-			std::uint32_t i, activation_offset, ith_layer;
+			std::uint32_t i{0}, activation_offset{0}, ith_layer{0}, stride{0};
 			const precision_type * current_inputs{total_training_cases + case_index};
 		    precision_type * activation_ptr{nullptr};
 			precision_type alpha{1.0}, beta{0.0};
@@ -188,7 +188,8 @@ namespace zinhart
 			zinhart::activation::activation_function af;
 
 			// set activation_offset in the case that their are multiple threads, for the first hidden layer this is the thread_id * neurons in the first hidden_layer
-			activation_offset = thread_id * total_layers[input_layer].second;
+			stride = total_activations_length / n_threads;
+			activation_offset = thread_id * stride;
 			activation_ptr = total_activations + activation_offset;
 
 		    // do input layer and the first input layer, aka Wx
@@ -198,16 +199,15 @@ namespace zinhart
 						current_inputs, n, beta, 
 						activation_ptr, n
 				       );
-
+			// bias and activation function is correct but need to validate matrix multiply right now
 			// add in bias, consider using neaumaer sum
-			for(i = activation_offset; i < total_layers[1].second; ++i)
-			  activation_ptr[i] += total_bias[0];
+		//	for(i = activation_offset; i < total_layers[1].second; ++i)
+		//	  activation_ptr[i] += total_bias[0];
 			
 			
 			// apply activation functions
-			for(i = activation_offset; i < total_layers[1].second; ++i)
-			  //first_hidden_layer_activation(activation_ptr[i]);
-			  af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
+			//for(i = activation_offset; i < total_layers[1].second; ++i)
+			  //af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 
 			// f(Wx + b complete) 
 			
