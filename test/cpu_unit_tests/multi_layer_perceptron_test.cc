@@ -33,7 +33,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   double * activation_ptr{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, ith_layer{0}, ith_case{0}, thread_id{0}, activation_offset{0}, thread_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, j{0},ith_layer{0}, ith_case{0}, thread_id{0}, activation_offset{0}, thread_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation
   const std::uint32_t input_layer{0};
@@ -197,9 +197,9 @@ TEST(multi_layer_perceptron, forward_propagate)
 						activation_ptr + layer_stride, n
 					   );
 			zinhart::serial::print_matrix_row_major(activation_ptr + layer_stride, 1, total_layers[next_layer].second, "parallel activation vector");
-			for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+			for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			  activation_ptr[i] += total_bias_ptr[ith_layer];
-			for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+			for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			  af(total_layers[next_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 			zinhart::serial::print_matrix_row_major(activation_ptr + layer_stride, 1, total_layers[next_layer].second, "parallel(add in bias + activation) activation vector");
 
@@ -214,9 +214,9 @@ TEST(multi_layer_perceptron, forward_propagate)
 						activation_ptr + layer_stride, n
 					   );
 			zinhart::serial::print_matrix_row_major(activation_ptr + layer_stride, 1, total_layers[next_layer].second, "parallel activation vector");
-			for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+			for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			  activation_ptr[i] += total_bias_ptr[ith_layer];
-			for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+			for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			  af(total_layers[next_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 			zinhart::serial::print_matrix_row_major(activation_ptr + layer_stride, 1, total_layers[next_layer].second, "parallel(add in bias + activation) activation vector");
 		  }

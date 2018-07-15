@@ -178,7 +178,7 @@ namespace zinhart
 																	 const std::uint32_t thread_id
 								                                    )
 		  {
-			std::uint32_t i{0};
+			std::uint32_t i{0}, j{0};
 
 			const std::uint32_t input_layer{0};
 			const std::uint32_t output_layer{total_layers.size() - 1};
@@ -221,11 +221,11 @@ namespace zinhart
 				       );
 
 			//add in bias, consider using neaumaer sum
-			for(i = current_threads_activation_index; i < total_layers[current_layer].second; ++i)
+			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			  current_threads_activation_ptr[i] += total_bias[input_layer];
 			
 			// apply activation functions
-			for(i = current_threads_activation_index; i < total_layers[current_layer].second; ++i)
+			for(i = current_threads_activation_index, j = 0; i < total_layers[current_layer].second; ++i, ++j)
 			  af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
 		    
 			// update weight matrix index	
