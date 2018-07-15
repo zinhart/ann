@@ -167,9 +167,9 @@ TEST(multi_layer_perceptron, forward_propagate)
 					  activation_ptr, n
 				 );
 		  zinhart::serial::print_matrix_row_major(activation_ptr, 1, total_layers[next_layer].second, "parallel activation vector");
-		  for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+		  for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			activation_ptr[i] += total_bias_ptr[input_layer];
-		  for(i = layer_stride; i < total_layers[next_layer].second; ++i)
+		  for(i = layer_stride, j = 0; j < total_layers[next_layer].second; ++i, ++j)
 			af(total_layers[next_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 		  zinhart::serial::print_matrix_row_major(activation_ptr, 1, total_layers[next_layer].second, "parallel(add in bias + activation) activation vector");
 		  prior_layer_stride = layer_stride;
