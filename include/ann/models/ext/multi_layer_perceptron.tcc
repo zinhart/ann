@@ -184,7 +184,7 @@ namespace zinhart
 			const std::uint32_t output_layer{total_layers.size() - 1};
 
 			// All layer counters
-			std::uint32_t current_layer{1}, current_layer_index{0}, previous_layer{0};
+			std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
 			
 		    // The index of the beginning of the weight matrix between two layers 
 			std::uint32_t weight_index{0};
@@ -200,7 +200,7 @@ namespace zinhart
 
 			// variables for gemm
 			precision_type alpha{1.0}, beta{0.0};
-			std::uint32_t m{ total_layers[current_layer].second }, n{1}, k{ total_layers[input_layer].second };
+			std::uint32_t m{ total_layers[current_layer].second }, n{1}, k{ total_layers[previous_layer].second };
 
 			// the activation function of each layer
 			zinhart::activation::activation_function af;
@@ -220,24 +220,64 @@ namespace zinhart
 						current_threads_activation_ptr, n
 				       );
 
-			//add in bias, consider using neaumaer sum
+			// add in bias, consider using neaumaer sum
 			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  current_threads_activation_ptr[i] += total_bias[input_layer];
+			  current_threads_activation_ptr[i] += total_bias[previous_layer];
 			
 			// apply activation functions
 			for(i = current_threads_activation_index, j = 0; i < total_layers[current_layer].second; ++i, ++j)
-			  af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
+			  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
 		    
-			// update weight matrix index	
-			weight_index += total_layers[current_layer].second * total_layers[input_layer].second;
-
 			// f(Wx + b complete) for first hidden layer and output layer
-			for(current_layer = 1, previous_layer = 0; current_layer < total_layers.size(); ++current_layer, ++previous_layer)
+			
+
+			// update weight matrix index	
+			weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
+
+			// update layer indices
+			previous_layer_index = current_layer_index;
+			current_layer_index = total_layers[current_layer].second;
+
+			//increment layer counters
+			++current_layer;
+			++previous_layer;
+
+			while( current_layer < /*total_layers.size()*/3 )
 			{
 			  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
-			}	  
-			// repeat till output layer 
-			
+			  precision_type * current_layer_ptr = current_threads_activation_ptr + current_layer_index;
+			  const precision_type * prior_layer_ptr = current_threads_activation_ptr + previous_layer_index; 
+			  m = total_layers[current_layer].second;
+			  n = 1;
+			  k = total_layers[previous_layer].second;
+			  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+						  m, n, k,
+						  alpha, current_weight_matrix, k,
+						  prior_layer_ptr, n, beta, 
+						  current_layer_ptr, n
+						 );
+
+			  // add in bias, consider using neaumaer sum
+			  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+				current_layer_ptr[i] += total_bias[previous_layer];
+			  
+			  // apply activation functions
+			  for(i = current_threads_activation_index, j = 0; i < total_layers[current_layer].second; ++i, ++j)
+				af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_layer_ptr[i]);
+				
+			  // update weight matrix index	
+			  weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
+
+			  // update layer indices
+			  previous_layer_index = current_layer_index;
+			  current_layer_index = total_layers[current_layer].second;
+			  
+			  // increment layer counters 
+			  ++current_layer; 
+			  ++previous_layer;
+
+			 }	  
+			  
 		  }
 
 	template <class precision_type>

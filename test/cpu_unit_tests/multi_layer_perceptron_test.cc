@@ -145,7 +145,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  std::uint32_t prior_layer_stride{0};
 	  std::uint32_t next_layer{0};
 	  std::uint32_t weight_stride{0};
-	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < /*total_layers.size() - 1*/1; ++ith_layer, ++next_layer)
+	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < /*total_layers.size() - 1*/2; ++ith_layer, ++next_layer)
 	  {
 		std::cout<<"CURRENT LAYER "<< next_layer <<" NEURONS: "<<total_layers[next_layer].second<<"\n";
 		double * weight_ptr = total_hidden_weights_ptr;
@@ -228,31 +228,18 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  }
 	  results[thread_id].get();
 	  for(i = 0; i < thread_stride; ++i)
-		ASSERT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
+		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
 	}
   }
-  // SERIAL FORWARD PROPAGATE END
+  // FORWARD PROPAGATE END
+  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
+  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
+
   // hope fully by the time the serial forward prop has finished all the threads will be done as well
   for(thread_id = 0; thread_id < results.size(); ++thread_id)
   {
   }
   // PARALLEL FORWARD PROPAGATE END
-  
-  //  parallel forward propagation
-/*  ith_case = 0;
-
-  for (ith_layer = 0; ith_layer < 1; ++ith_layer)
-  {
-	for(thread_id = 0, activation_offset = total_layers[input_layer].second * thread_id; thread_id < n_threads; ++thread_id, activation_ptr+= thread_id * total_layers[ith_layer].second)
-	{
-	  std::cout<<"thread_id " + std::to_string(thread_id) + " layer: " + std::to_string(ith_layer) +"\n";
-	  zinhart::serial::print_matrix_row_major(total_activations_ptr + activation_offset, 1, total_layers[1].second, "parallel activation vector");
-	}
-  }
-  //zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
-  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[input_layer + 1].second, total_layers[input_layer].second, "Weight matrix layers 0 -> 1");
-  zinhart::serial::print_matrix_row_major(total_cases_ptr, total_layers[input_layer].second, 1, "Inputs");*/
-
 
   // release memory
   mkl_free(total_activations_ptr);
