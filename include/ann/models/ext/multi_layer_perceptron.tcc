@@ -242,7 +242,7 @@ namespace zinhart
 			++current_layer;
 			++previous_layer;
 
-			while( current_layer < /*total_layers.size()*/3 )
+			while( current_layer < total_layers.size() )
 			{
 			  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
 			  precision_type * current_layer_ptr = current_threads_activation_ptr + current_layer_index;
@@ -270,7 +270,7 @@ namespace zinhart
 
 			  // update layer indices
 			  previous_layer_index = current_layer_index;
-			  current_layer_index = total_layers[current_layer].second;
+			  current_layer_index += total_layers[current_layer].second;
 			  
 			  // increment layer counters 
 			  ++current_layer; 

@@ -145,7 +145,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  std::uint32_t prior_layer_stride{0};
 	  std::uint32_t next_layer{0};
 	  std::uint32_t weight_stride{0};
-	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < /*total_layers.size() - 1*/2; ++ith_layer, ++next_layer)
+	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < total_layers.size() - 1; ++ith_layer, ++next_layer)
 	  {
 		std::cout<<"CURRENT LAYER "<< next_layer <<" NEURONS: "<<total_layers[next_layer].second<<"\n";
 		double * weight_ptr = total_hidden_weights_ptr;
