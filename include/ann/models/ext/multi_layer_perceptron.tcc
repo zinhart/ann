@@ -1,5 +1,6 @@
 #include "mkl.h"
 #include "concurrent_routines/concurrent_routines.hh"
+#include "cassert"
 namespace zinhart
 {
   namespace models
@@ -177,40 +178,64 @@ namespace zinhart
 																	 const std::uint32_t thread_id
 								                                    )
 		  {
-			//mkl gemm etc
+			std::uint32_t i{0};
+
 			const std::uint32_t input_layer{0};
 			const std::uint32_t output_layer{total_layers.size() - 1};
-			std::uint32_t i{0}, activation_offset{0}, ith_layer{0}, stride{0};
-			const precision_type * current_inputs{total_training_cases + case_index};
-		    precision_type * activation_ptr{nullptr};
+
+			// All layer counters
+			std::uint32_t current_layer{1}, current_layer_index{0}, previous_layer{0};
+			
+		    // The index of the beginning of the weight matrix between two layers 
+			std::uint32_t weight_index{0};
+
+			// a ptr to the current training case, 
+			// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
+			// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
+			const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
+			
+			// variables for the thread calling this method, to determine it's workspace
+		    std::uint32_t current_threads_activation_index{0}, thread_stride{0};
+		    precision_type * current_threads_activation_ptr{nullptr};
+
+			// variables for gemm
 			precision_type alpha{1.0}, beta{0.0};
-			std::uint32_t m{ total_layers[input_layer + 1].second }, n{1}, k{ total_layers[input_layer].second };
+			std::uint32_t m{ total_layers[current_layer].second }, n{1}, k{ total_layers[input_layer].second };
+
+			// the activation function of each layer
 			zinhart::activation::activation_function af;
 
-			// set activation_offset in the case that their are multiple threads, for the first hidden layer this is the thread_id * neurons in the first hidden_layer
-			stride = total_activations_length / n_threads;
-			activation_offset = thread_id * stride;
-			activation_ptr = total_activations + activation_offset;
+			// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
+			thread_stride = total_activations_length / n_threads;
 
-		    // do input layer and the first input layer, aka Wx
+			// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the activation vector
+			current_threads_activation_index = thread_id * thread_stride;
+			current_threads_activation_ptr = total_activations + current_threads_activation_index;
+
+		    // do input layer and the first hidden layer -> Wx
 			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				        m, n, k,
 						alpha, total_hidden_weights, k,
-						current_inputs, n, beta, 
-						activation_ptr, n
+						current_training_case, n, beta, 
+						current_threads_activation_ptr, n
 				       );
-			// bias and activation function is correct but need to validate matrix multiply right now
-			// add in bias, consider using neaumaer sum
-		//	for(i = activation_offset; i < total_layers[1].second; ++i)
-		//	  activation_ptr[i] += total_bias[0];
-			
+
+			//add in bias, consider using neaumaer sum
+			for(i = current_threads_activation_index; i < total_layers[current_layer].second; ++i)
+			  current_threads_activation_ptr[i] += total_bias[input_layer];
 			
 			// apply activation functions
-			//for(i = activation_offset; i < total_layers[1].second; ++i)
-			  //af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
+			for(i = current_threads_activation_index; i < total_layers[current_layer].second; ++i)
+			  af(total_layers[1].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
+		    
+			// update weight matrix index	
+			weight_index += total_layers[current_layer].second * total_layers[input_layer].second;
 
-			// f(Wx + b complete) 
-			
+			// f(Wx + b complete) for first hidden layer and output layer
+			for(current_layer = 1, previous_layer = 0; current_layer < total_layers.size(); ++current_layer, ++previous_layer)
+			{
+			  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
+			}	  
 			// repeat till output layer 
 			
 		  }

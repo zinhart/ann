@@ -15,7 +15,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   // declarations for random numbers
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> neuron_dist(1,10/*5000*/);
+  std::uniform_int_distribution<std::uint32_t> neuron_dist(1, 10);
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types());// does not include input layer
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
@@ -33,7 +33,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   double * activation_ptr{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, ith_layer{0}, ith_case{0}, thread_id{0}, activation_offset{0}, thread_stride{0}, n_layers{4/*layer_dist(mt)*/};
+  std::uint32_t i{0}, ith_layer{0}, ith_case{0}, thread_id{0}, activation_offset{0}, thread_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation
   const std::uint32_t input_layer{0};
@@ -65,7 +65,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	total_layers.push_back(a_layer);
   }
   // To ensure their are atleast as many cases as threads 
-  std::uniform_int_distribution<std::uint32_t> case_dist(n_threads, n_threads/*5000*/);
+  std::uniform_int_distribution<std::uint32_t> case_dist(n_threads, 50);
   // set total case length 
   total_case_length = total_layers[input_layer].second * case_dist(mt);
   total_cases = total_case_length / total_layers[input_layer].second;
@@ -106,27 +106,21 @@ TEST(multi_layer_perceptron, forward_propagate)
 
   // lambda to call member function multi_layer_perceptron.forward propagate
   auto forward_propagate_lambda = [&model, &total_layers, &total_cases_ptr, &total_activations_ptr, &total_hidden_weights_ptr, &total_bias_ptr]
-								  (const std::uint32_t & ith_training_case, const std::uint32_t & activations, const std::uint32_t & weights, const std::uint32_t & thread_index)
+								  (const std::uint32_t & ith_training_case, const std::uint32_t & activations, const std::uint32_t & weights, const std::uint32_t total_threads, const std::uint32_t & thread_index)
 								  {
 									model.forward_propagate(total_layers,
 															total_cases_ptr, ith_training_case,
 															total_activations_ptr, activations,
 															total_hidden_weights_ptr, weights,
 															total_bias_ptr,
+															total_threads,
 															thread_index
 										                   );
 								  }; 
 
 
-  // PARALLEL FORWARD PROPAGATE BEGIN
-  for(thread_id = 0, activation_offset = total_layers[input_layer].second; thread_id < n_threads; ++thread_id)
-  {
-//	pool.add_task(forward_propagate_lambda, ith_case, total_activations_length, total_hidden_weights_length, thread_id);
-
-  }
   
-  
-  // SERIAL FORWARD PROPAGATE BEGIN
+  // FORWARD PROPAGATE BEGIN
   ith_case = 0; 
   thread_id = 0;
   activation_offset = total_layers[input_layer].second * thread_id;
@@ -138,11 +132,12 @@ TEST(multi_layer_perceptron, forward_propagate)
   }
   std::cout<<"Thread stride: "<<thread_stride << "\n";
   // first hidden layer and input layer for all threads
-  for(ith_case = 0; ith_case < 1/*total_cases*/; ++ith_case)
+  for(ith_case = 0; ith_case < /*total_cases*/1; ++ith_case)
   {
 	current_inputs_ptr = total_cases_ptr + ( ith_case * total_layers[input_layer].second );
 	for(thread_id = 0; thread_id < /*n_threads*/1; ++thread_id)
 	{
+	  results.push_back(pool.add_task(forward_propagate_lambda, ith_case, total_activations_length, total_hidden_weights_length, n_threads, thread_id));
 	  std::cout<<"Thread_id: "<<thread_id<<" activation_offset: "<<activation_offset<<"\n";
 	  activation_offset = thread_id * thread_stride;
 	  activation_ptr = total_activations_ptr_test + activation_offset;
@@ -150,7 +145,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  std::uint32_t prior_layer_stride{0};
 	  std::uint32_t next_layer{0};
 	  std::uint32_t weight_stride{0};
-	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < total_layers.size() - 1; ++ith_layer, ++next_layer)
+	  for(ith_layer = 0, next_layer = ith_layer + 1; ith_layer < /*total_layers.size() - 1*/1; ++ith_layer, ++next_layer)
 	  {
 		std::cout<<"CURRENT LAYER "<< next_layer <<" NEURONS: "<<total_layers[next_layer].second<<"\n";
 		double * weight_ptr = total_hidden_weights_ptr;
@@ -225,24 +220,21 @@ TEST(multi_layer_perceptron, forward_propagate)
 			  af(total_layers[next_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
 			zinhart::serial::print_matrix_row_major(activation_ptr + layer_stride, 1, total_layers[next_layer].second, "parallel(add in bias + activation) activation vector");
 		  }
-		  		  /*for(i = activation_offset; i < total_layers[ith_layer].second; ++i)
-			activation_ptr[i] += total_bias_ptr[ith_layer];
-		  for(i = activation_offset; i < total_layers[ith_layer].second; ++i)
-			af(total_layers[ith_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, activation_ptr[i]);
-		  zinhart::serial::print_matrix_row_major(activation_ptr + total_layers[ith_layer].second, 1, total_layers[ith_layer].second, "parallel(add in bias + activation) activation vector");*/
 		  prior_layer_stride = layer_stride;
 		  layer_stride += total_layers[next_layer].second;
 		  weight_stride += total_layers[next_layer].second * total_layers[ith_layer].second;
 		}
 		std::cout<<"\n";
 	  }
+	  results[thread_id].get();
+	  for(i = 0; i < thread_stride; ++i)
+		ASSERT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
 	}
   }
   // SERIAL FORWARD PROPAGATE END
   // hope fully by the time the serial forward prop has finished all the threads will be done as well
   for(thread_id = 0; thread_id < results.size(); ++thread_id)
   {
-//	results[thread_id].get();
   }
   // PARALLEL FORWARD PROPAGATE END
   
