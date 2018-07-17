@@ -181,7 +181,6 @@ namespace zinhart
 			std::uint32_t i{0}, j{0};
 
 			const std::uint32_t input_layer{0};
-			const std::uint32_t output_layer{total_layers.size() - 1};
 
 			// All layer counters
 			std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
@@ -219,16 +218,17 @@ namespace zinhart
 						current_training_case, n, beta, 
 						current_threads_activation_ptr, n
 				       );
+			
 
 			// add in bias, consider using neaumaer sum
 			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  current_threads_activation_ptr[i] += total_bias[previous_layer];
+			  total_activations[i] += total_bias[previous_layer];
 			
 			// apply activation functions
 			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
+			  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
 		    
-			// f(Wx + b complete) for first hidden layer and output layer
+			// f(Wx + b complete) for first hidden layer and input layer
 			
 
 			// update weight matrix index	
@@ -259,12 +259,12 @@ namespace zinhart
 
 			  // add in bias, consider using neaumaer sum
 			  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-				current_layer_ptr[i] += total_bias[previous_layer];
+				total_activations[i] += total_bias[previous_layer];
 			  
 			  // apply activation functions
 			  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-				af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_layer_ptr[i]);
-				
+				af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
+
 			  // update weight matrix index	
 			  weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
 
@@ -277,7 +277,6 @@ namespace zinhart
 			  ++previous_layer;
 
 			 }	  
-			  
 		  }
 
 	template <class precision_type>
