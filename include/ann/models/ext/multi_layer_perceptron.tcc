@@ -225,7 +225,7 @@ namespace zinhart
 			  current_threads_activation_ptr[i] += total_bias[previous_layer];
 			
 			// apply activation functions
-			for(i = current_threads_activation_index, j = 0; i < total_layers[current_layer].second; ++i, ++j)
+			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_threads_activation_ptr[i]);
 		    
 			// f(Wx + b complete) for first hidden layer and output layer
@@ -262,7 +262,7 @@ namespace zinhart
 				current_layer_ptr[i] += total_bias[previous_layer];
 			  
 			  // apply activation functions
-			  for(i = current_threads_activation_index, j = 0; i < total_layers[current_layer].second; ++i, ++j)
+			  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 				af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, current_layer_ptr[i]);
 				
 			  // update weight matrix index	
