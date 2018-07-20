@@ -101,9 +101,9 @@ namespace zinhart
 	  CUDA_CALLABLE_MEMBER precision_type hyperbolic_tangent::objective(const precision_type & x)
 	  {
 #if CUDA_ENABLED == 1
-		return tanh(-x);
+		return tanh(x);
 #else
-		return std::tanh(-x);
+		return std::tanh(x);
 #endif
 	  }
 	template <class precision_type>

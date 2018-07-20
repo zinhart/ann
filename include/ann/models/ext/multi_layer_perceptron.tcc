@@ -226,7 +226,7 @@ namespace zinhart
 			
 			// apply activation functions
 			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
+			  total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
 		    
 			// f(Wx + b complete) for first hidden layer and input layer
 			
@@ -263,7 +263,7 @@ namespace zinhart
 			  
 			  // apply activation functions
 			  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-				af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
+				 total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
 
 			  // update weight matrix index	
 			  weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
@@ -275,6 +275,7 @@ namespace zinhart
 			  // increment layer counters 
 			  ++current_layer; 
 			  ++previous_layer;
+			  std::cout<<"\n";
 
 			 }	  
 		  }

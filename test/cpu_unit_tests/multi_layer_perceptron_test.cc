@@ -15,7 +15,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, 10);
-  std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types());// does not include input layer
+  std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types() - 1);// does not include input layer
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
@@ -25,11 +25,14 @@ TEST(multi_layer_perceptron, forward_propagate)
   // declarations for pointers
   double * total_activations_ptr{nullptr};
   double * total_activations_ptr_test{nullptr};
+  double * total_hidden_input_ptr{nullptr};
+  double * total_hidden_input_ptr_test{nullptr};
   double * total_hidden_weights_ptr{nullptr};
   double * total_bias_ptr{nullptr};
   double * current_inputs_ptr{nullptr};
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
+  double * current_threads_hidden_input_ptr{nullptr};
 
   // loop counters misc vars
   std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, n_layers{layer_dist(mt)};
@@ -91,6 +94,8 @@ TEST(multi_layer_perceptron, forward_propagate)
   // allocate vectors
   total_activations_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_activations_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_hidden_input_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_hidden_input_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
   total_bias_ptr = (double*) mkl_malloc( total_bias_length * sizeof( double ), alignment );
   total_cases_ptr = (double*) mkl_malloc( total_case_length * sizeof( double ), alignment );
@@ -102,6 +107,8 @@ TEST(multi_layer_perceptron, forward_propagate)
   {
 	total_activations_ptr[i] = 0.0;
 	total_activations_ptr_test[i] = 0.0;
+	total_hidden_input_ptr[i] = 0.0;
+	total_hidden_input_ptr_test[i] = 0.0;
   }
   for(i = 0; i < total_hidden_weights_length; ++i)
 	total_hidden_weights_ptr[i] = real_dist(mt);
@@ -129,17 +136,17 @@ TEST(multi_layer_perceptron, forward_propagate)
 										      );
 					  }; 
   // BEGIN FORWARD PROP
-  for(ith_case = 0; ith_case < total_cases; ++ith_case)
+  for(ith_case = 0; ith_case < total_cases/*1*/; ++ith_case)
   {
 	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer].second)};
-	for(thread_id = 0; thread_id < n_threads; ++thread_id)
+	for(thread_id = 0; thread_id < n_threads/*1*/; ++thread_id)
 	{
-	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  //results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
-//	  std::string s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
-// 	  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-//	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
+	  std::string s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+ 	  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
+	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
 	  current_layer_index = 0;
 	  previous_layer_index = 0;
 	  weight_index = 0;
@@ -148,22 +155,27 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  k = total_layers[previous_layer].second;
 	  current_threads_activation_index = thread_id * thread_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
+	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
 	  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
 				  alpha, total_hidden_weights_ptr, k,
 				  current_training_case, n, beta, 
-				  current_threads_activation_ptr, n
+				  current_threads_hidden_input_ptr, n
 				 );
-//	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "parallel activation vector");
-	  // add in bias, consider using neaumaer sum
+	  zinhart::serial::print_matrix_row_major(current_threads_hidden_input_ptr, 1, total_layers[current_layer].second, "pre bias and activation vector");
+
+	  // add in bias
 	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
-	  
+		total_activations_ptr_test[i] = total_hidden_input_ptr_test[i] + total_bias_ptr[previous_layer];
+
+	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "pre activation vector");
+	  std::cout<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
+
 	  // apply activation functions
 	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-//	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "parallel activation vector");
+		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
+	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "activation vector");
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
 
@@ -177,15 +189,16 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  //increment layer counters
 	  ++current_layer;
 	  ++previous_layer;
-//	  std::cout<<"\n";
+	  std::cout<<"\n";
 	  while( current_layer < total_layers.size() )
 	  {
 		const double * current_weight_matrix{total_hidden_weights_ptr + weight_index};
-		double * current_layer_ptr = current_threads_activation_ptr + current_layer_index;
-		const double * prior_layer_ptr = current_threads_activation_ptr + previous_layer_index; 
-//		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
-//	  	zinhart::serial::print_matrix_row_major(current_weight_matrix, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-//	    zinhart::serial::print_matrix_row_major(prior_layer_ptr, total_layers[previous_layer].second, 1, "Inputs");
+		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
+		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
+		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
+		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+	  	zinhart::serial::print_matrix_row_major(current_weight_matrix, total_layers[current_layer].second, total_layers[previous_layer].second, s);
+	    zinhart::serial::print_matrix_row_major(prior_layer_ptr, total_layers[previous_layer].second, 1, "Inputs");
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[previous_layer].second;
@@ -193,19 +206,25 @@ TEST(multi_layer_perceptron, forward_propagate)
 					m, n, k,
 					alpha, current_weight_matrix, k,
 					prior_layer_ptr, n, beta, 
-					current_layer_ptr, n
+					current_layer_Wx, n
 				   );
   
-//		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "parallel activation vector");
+		zinhart::serial::print_matrix_row_major(current_layer_Wx, 1, total_layers[current_layer].second, "pre bias and activation vector");
+
 		// add in bias, consider using neaumaer sum
-		for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
+		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+		  total_activations_ptr_test[i] = total_hidden_input_ptr_test[i] + total_bias_ptr[previous_layer];
+  
+		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "pre activation vector");
+  		std::cout<<"ACTIVATION: "<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
 		
 		// apply activation functions
-		for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		  af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-//		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "parallel activation vector");
+		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
 		
+		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "activation vector");
+		/**/
+	
 		// update weight matrix index	
 		weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
 
@@ -220,13 +239,15 @@ TEST(multi_layer_perceptron, forward_propagate)
 	   }
 
 	  // synchronize w.r.t the current thread 
-	  results[thread_id].get();
+	  //results[thread_id].get();
 
 	  // validate
-	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
-	  //zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
-	  //zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
+//	  for(i = 0; i < total_activations_length; ++i)
+//		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
+
+	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr_test, 1, total_activations_length, "serial hidden inputs vector");
+	  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
+	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
 	}
 	results.clear();
   }
@@ -234,6 +255,8 @@ TEST(multi_layer_perceptron, forward_propagate)
   // release memory
   mkl_free(total_activations_ptr);
   mkl_free(total_activations_ptr_test);
+  mkl_free(total_hidden_input_ptr);
+  mkl_free(total_hidden_input_ptr_test);
   mkl_free(total_hidden_weights_ptr);
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
