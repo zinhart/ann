@@ -119,7 +119,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   // lambda to call member function multi_layer_perceptron.forward propagate
   auto fprop_model = [](std::vector<LAYER_INFO> & layers,
 						double * total_cases_ptr_init, const std::uint32_t ith_training_case,
-						double * total_activations_ptr_init, const std::uint32_t activations_length,
+						double * total_hidden_inputs_init, double * total_activations_ptr_init, const std::uint32_t activations_length,
 						double * total_hidden_weights_ptr_init, const std::uint32_t weights_length,
 						double * total_bias_ptr_init,
 						const std::uint32_t total_threads, const std::uint32_t thread_index
@@ -128,7 +128,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 					     multi_layer_perceptron<double> mlp;
 					     mlp.forward_propagate(layers,
 											   total_cases_ptr_init, ith_training_case,
-											   total_activations_ptr_init, activations_length,
+											   total_hidden_inputs_init, total_activations_ptr_init, activations_length,
 											   total_hidden_weights_ptr_init, weights_length,
 											   total_bias_ptr_init,
 											   total_threads,
@@ -141,7 +141,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer].second)};
 	for(thread_id = 0; thread_id < n_threads/*1*/; ++thread_id)
 	{
-	  //results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  std::string s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
@@ -239,15 +239,18 @@ TEST(multi_layer_perceptron, forward_propagate)
 	   }
 
 	  // synchronize w.r.t the current thread 
-	  //results[thread_id].get();
+	  results[thread_id].get();
 
 	  // validate
-//	  for(i = 0; i < total_activations_length; ++i)
-//		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
-
+	  for(i = 0; i < total_activations_length; ++i)
+		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
+	  for(i = 0; i < total_activations_length; ++i)
+		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
+/*
 	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr_test, 1, total_activations_length, "serial hidden inputs vector");
+	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr, 1, total_activations_length, "parallel hidden inputs vector");
 	  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
-	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
+	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");*/
 	}
 	results.clear();
   }

@@ -35,7 +35,7 @@ namespace zinhart
 #else 
 			void forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 								   const precision_type * total_training_cases, const std::uint32_t  case_index,
-								   precision_type * total_activations, const std::uint32_t total_activations_length,
+								   precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
 								   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 								   const precision_type * total_bias,
 							       const std::uint32_t n_threads,
