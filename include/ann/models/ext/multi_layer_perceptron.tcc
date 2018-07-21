@@ -222,14 +222,13 @@ namespace zinhart
 				       );
 			
 
-			// add in bias, consider using neaumaer sum
+			// add in bias, calc output of this layer
 			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  total_activations[i] = total_hidden_inputs[i] + total_bias[previous_layer];
-			
-			// apply activation functions
-			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-			  total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
-		    
+			{
+			  total_hidden_inputs[i] += total_bias[previous_layer];
+  			  // apply activation functions
+			  total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+			}
 			// f(Wx + b complete) for first hidden layer and input layer
 			
 
@@ -260,13 +259,13 @@ namespace zinhart
 						  current_layer_inputs_ptr, n
 						 );
 
-			  // add in bias, consider using neaumaer sum
+			  // add in bias, calc output of this layer
 			  for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-				total_activations[i] = total_hidden_inputs[i] + total_bias[previous_layer];
-			  
-			  // apply activation functions
-			  for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-				 total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations[i]);
+			  {
+				total_hidden_inputs[i] += total_bias[previous_layer];
+				// apply activation functions
+				total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+			  }
 
 			  // update weight matrix index	
 			  weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;

@@ -167,14 +167,14 @@ TEST(multi_layer_perceptron, forward_propagate)
 
 	  // add in bias
 	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		total_activations_ptr_test[i] = total_hidden_input_ptr_test[i] + total_bias_ptr[previous_layer];
-
-	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "pre activation vector");
+	  {
+		total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+		// apply activation functions
+		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_input_ptr_test[i]);
+	  }
+		
 	  std::cout<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
 
-	  // apply activation functions
-	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
 	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "activation vector");
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
@@ -211,17 +211,16 @@ TEST(multi_layer_perceptron, forward_propagate)
   
 		zinhart::serial::print_matrix_row_major(current_layer_Wx, 1, total_layers[current_layer].second, "pre bias and activation vector");
 
-		// add in bias, consider using neaumaer sum
+		// add in bias
 		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		  total_activations_ptr_test[i] = total_hidden_input_ptr_test[i] + total_bias_ptr[previous_layer];
-  
-		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "pre activation vector");
+		{
+		  total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+		  // apply activation functions
+		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_input_ptr_test[i]);
+		}
+		//zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "pre activation vector");
   		std::cout<<"ACTIVATION: "<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
-		
-		// apply activation functions
-		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-		
+
 		zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "activation vector");
 		/**/
 	
