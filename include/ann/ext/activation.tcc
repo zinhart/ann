@@ -159,43 +159,5 @@ namespace zinhart
 	  //to do
 	  CUDA_CALLABLE_MEMBER precision_type softmax::derivative(const precision_type & x)
 	  {return x;}
-/*
-	template<class ACTIVATION_FUNCTION>
-	  HOST activation_interface<ACTIVATION_FUNCTION> get_activation_interface(ACTIVATION_NAME name)
-	  {
-		try 
-		{
-		  switch(name)
-		  { 
-			case ACTIVATION_NAME::IDENTITY:
-			  return activation_interface<identity>();
-			case ACTIVATION_NAME::SIGMOID:
-			  return activation_interface<sigmoid>();
-			case ACTIVATION_NAME::SOFTPLUS:
-			  return activation_interface<softplus>();
-			case ACTIVATION_NAME::TANH:
-			  return activation_interface<hyperbolic_tangent>();
-			case ACTIVATION_NAME::RELU:
-			  return activation_interface<relu>();
-			case ACTIVATION_NAME::LEAKY_RELU:
-			  return activation_interface<leaky_relu>();
-			case ACTIVATION_NAME::EXP_LEAKY_RELU:
-			  return activation_interface<exp_leaky_relu>();
-			case ACTIVATION_NAME::SOFTMAX:
-			  return activation_interface<softmax>();
-			case ACTIVATION_NAME::INPUT:
-			  throw std::runtime_error("Their is no activation for the input layer");
-		  }
-		}
-		catch(std::runtime_error & e)
-		{
-		  std::cerr<<e.what()<<"\n";
-		  throw e;
-		}
-		catch(...)
-		{
-		}
-	  }
-	  */
   }// END NAMESPACE ACTIVATION
 }// END NAMESPACE ZINHART

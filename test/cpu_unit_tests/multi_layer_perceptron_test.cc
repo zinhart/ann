@@ -552,3 +552,6 @@ TEST(multi_layer_perceptron, get_results)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
+TEST(multi_layer_perceptron, backward_propagate)
+{
+}

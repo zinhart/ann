@@ -292,7 +292,6 @@ namespace zinhart
   	  {
 		std::uint32_t i{0}, j{0}, output_layer{total_layers.size()-1}, output_layer_index{0};
 		std::uint32_t thread_stride{0}, current_threads_workspace_index{0}; 
-	//	precision_type * output_layer_ptr{nullptr};
 
 		// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
 		thread_stride = total_hidden_outputs_length / n_threads;
@@ -303,8 +302,6 @@ namespace zinhart
 		for(i = 1; i < total_layers.size() - 1; ++i)
 		  output_layer_index += total_layers[i].second;
 		
-	//	output_layer_ptr = total_hidden_outputs + current_threads_workspace_index + output_layer_index;
-
 		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
 		  model_outputs[j] = total_hidden_outputs[i];
 	  }
