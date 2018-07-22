@@ -38,10 +38,15 @@ namespace zinhart
 								   precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
 								   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 								   const precision_type * total_bias,
-							       const std::uint32_t n_threads,
+							       const std::uint32_t n_threads = 1,
 								   const std::uint32_t thread_id = 0
 								  );
-			void get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, precision_type * model_outputs, const std::uint32_t & thread_id);
+			void get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
+							 const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length,
+							 precision_type * model_outputs, 
+							 const std::uint32_t n_threads = 1, 
+							 const std::uint32_t thread_id = 0
+							);
 
 			template <class LOSS_FUNCTION>
 			  void backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 
