@@ -53,7 +53,7 @@ namespace zinhart
 	// mean squared error
 	template <class precision_type>
 	  CUDA_CALLABLE_MEMBER precision_type mean_squared_error::objective(const precision_type & kth_output, const precision_type & kth_target)
-	  {	return 0.5 * (kth_output - kth_target) * (kth_output - kth_target); }
+	  {	return (kth_output - kth_target) * (kth_output - kth_target); }
 	template <class precision_type>
 	  CUDA_CALLABLE_MEMBER precision_type mean_squared_error::derivative(const precision_type & kth_output, const precision_type & kth_target)
 	  { return precision_type{2.0} * (kth_output - kth_target); }
