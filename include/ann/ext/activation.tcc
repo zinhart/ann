@@ -8,29 +8,19 @@ namespace zinhart
 	template <class precision_type>
 	  HOST precision_type activation_function::operator()(ACTIVATION_NAME name, ACTIVATION_TYPE at, precision_type x)
 	  {
-		try 
+		try
 		{
-		  switch(name)
-		  { 
-			case ACTIVATION_NAME::IDENTITY:
-			  return ( *static_cast< activation_interface<identity>* >(this) )(at, x);
-			case ACTIVATION_NAME::SIGMOID:
-			  return ( *static_cast< activation_interface<sigmoid>* >(this) )(at, x);
-			case ACTIVATION_NAME::SOFTPLUS:
-			  return ( *static_cast< activation_interface<softplus>* >(this) )(at, x);
-			case ACTIVATION_NAME::TANH:
-			  return ( *static_cast< activation_interface<hyperbolic_tangent>* >(this) )(at, x);
-			case ACTIVATION_NAME::RELU:
-			  return ( *static_cast< activation_interface<relu>* >(this) )(at, x);
-			case ACTIVATION_NAME::LEAKY_RELU:
-			  return ( *static_cast< activation_interface<leaky_relu>* >(this) )(at, x);
-			case ACTIVATION_NAME::EXP_LEAKY_RELU:
-			  return ( *static_cast< activation_interface<exp_leaky_relu>* >(this) )(at, x);
-			case ACTIVATION_NAME::SOFTMAX:
-			  return ( *static_cast< activation_interface<softmax>* >(this) )(at, x);
-			case ACTIVATION_NAME::INPUT:
-			  throw std::runtime_error("Their is no activation for the input layer");
-		  }
+		  if(name == ACTIVATION_NAME::IDENTITY) return ( *static_cast< activation_interface<identity>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::SIGMOID) return ( *static_cast< activation_interface<sigmoid>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::SOFTPLUS) return ( *static_cast< activation_interface<softplus>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::TANH) return ( *static_cast< activation_interface<hyperbolic_tangent>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::RELU) return ( *static_cast< activation_interface<relu>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::LEAKY_RELU) return ( *static_cast< activation_interface<leaky_relu>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::EXP_LEAKY_RELU) return ( *static_cast< activation_interface<exp_leaky_relu>* >(this) )(at, x);
+		  else if(name == ACTIVATION_NAME::SOFTMAX) return ( *static_cast< activation_interface<softmax>* >(this) )(at, x);
+		  else
+			  throw std::runtime_error("Their is no activation for the layer specified");
+
 		}
 		catch(std::runtime_error & e)
 		{

@@ -194,9 +194,9 @@ namespace zinhart
 			const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
 			
 			// variables for the thread calling this method, to determine it's workspace
-		    std::uint32_t current_threads_activation_index{0}, thread_stride{0};
+		    std::uint32_t current_threads_workspace_index{0}, thread_stride{0};
 			precision_type * current_threads_hidden_input_ptr{nullptr};
-		    precision_type * current_threads_activation_ptr{nullptr};
+		    precision_type * current_threads_output_ptr{nullptr};
 
 			// variables for gemm
 			precision_type alpha{1.0}, beta{0.0};
@@ -208,10 +208,10 @@ namespace zinhart
 			// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
 			thread_stride = total_activations_length / n_threads;
 
-			// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the activation vector
-			current_threads_activation_index = thread_id * thread_stride;
-			current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_activation_index;
-			current_threads_activation_ptr = total_activations + current_threads_activation_index;
+			// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
+			current_threads_workspace_index = thread_id * thread_stride;
+			current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_workspace_index;
+			current_threads_output_ptr = total_activations + current_threads_workspace_index;
 
 		    // do input layer and the first hidden layer -> Wx
 			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -223,7 +223,7 @@ namespace zinhart
 			
 
 			// add in bias, calc output of this layer
-			for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+			for(i = current_threads_workspace_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			{
 			  total_hidden_inputs[i] += total_bias[previous_layer];
   			  // apply activation functions
@@ -246,9 +246,9 @@ namespace zinhart
 			while( current_layer < total_layers.size() )
 			{
 			  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
-			  precision_type * current_layer_inputs_ptr{total_hidden_inputs + current_threads_activation_index + current_layer_index};
-			  precision_type * current_layer_outputs_ptr{total_activations + current_threads_activation_index + current_layer_index}; //= current_threads_activation_ptr + current_layer_index;
-			  const precision_type * prior_layer_ptr{total_activations + current_threads_activation_index + previous_layer_index}; 
+			  precision_type * current_layer_inputs_ptr{total_hidden_inputs + current_threads_workspace_index + current_layer_index};
+			  precision_type * current_layer_outputs_ptr{total_activations + current_threads_workspace_index + current_layer_index};
+			  const precision_type * prior_layer_ptr{total_activations + current_threads_workspace_index + previous_layer_index}; 
 			  m = total_layers[current_layer].second;
 			  n = 1;
 			  k = total_layers[previous_layer].second;
@@ -260,7 +260,7 @@ namespace zinhart
 						 );
 
 			  // add in bias, calc output of this layer
-			  for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+			  for(i = current_threads_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			  {
 				total_hidden_inputs[i] += total_bias[previous_layer];
 				// apply activation functions
@@ -277,7 +277,6 @@ namespace zinhart
 			  // increment layer counters 
 			  ++current_layer; 
 			  ++previous_layer;
-			  std::cout<<"\n";
 
 			 }	  
 		  }
@@ -306,12 +305,101 @@ namespace zinhart
 		  model_outputs[j] = total_hidden_outputs[i];
 	  }
 	template <class precision_type>
-	  template <class LOSS_FUNCTION>
-	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 
-																	  const std::uint32_t & ith_observation_index)
+	  void multi_layer_perceptron<precision_type>::backward_propagate(zinhart::error_metrics::LOSS_FUNCTION_NAME loss_name,
+											const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
+											const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+											precision_type * total_hidden_inputs, const precision_type * total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+											const precision_type * total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+											const precision_type * total_bias,
+											const std::uint32_t n_threads,
+											const std::uint32_t thread_id
+						   )
 	  {
-		//mkl gemm etc
+		std::uint32_t i{0}, j{0};
+
+		const std::uint32_t input_layer{0}, output_layer{total_layers.size() - 1};
+		std::uint32_t output_layer_index{0};
+
+		for(i = 1; i < total_layers.size() - 1; ++i)
+		  output_layer_index += total_layers[i].second;
+
+		// All layer counters
+		std::uint32_t current_layer{output_layer}, previous_layer{output_layer - 1}; 
+		std::uint32_t current_layer_index{output_layer_index}, previous_layer_index{output_layer_index - total_layers[previous_layer].second};
+
+		// The index of the beginning of the weight matrix between two layers 
+		std::uint32_t weight_index{0};
+		for(i = 1, j = 0; i < total_layers.size() - 1; ++i)
+		  weight_index += total_layers[i].second * total_layers[j].second; 
+
+		// variables for gemm
+		precision_type alpha{1.0}, beta{0.0};
+		std::uint32_t m{ total_layers[current_layer].second }, n{1}, k{ total_layers[previous_layer].second };
+
+		// a ptr to the current training case, 
+		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
+		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
+		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
+		const precision_type * current_target_vector{total_targets + (case_index * total_layers[output_layer].second)};
+		
+		// variables for the thread calling this method, to determine it's workspace
+		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index;
+		std::uint32_t thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_stride{0};
+		precision_type * current_threads_hidden_input_ptr{nullptr};
+		precision_type * current_threads_activation_ptr{nullptr};
+		precision_type * current_threads_output_ptr{nullptr};
+		precision_type * current_threads_delta_ptr{nullptr};
+		precision_type * current_threads_gradient_ptr{nullptr};
+		
+		// the loss function
+		zinhart::error_metrics::loss_function loss;
+		// the activation function of each layer
+		zinhart::activation::activation_function af;
+
+		// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
+		thread_activation_stride = total_activations_length / n_threads;
+		thread_gradient_stride = total_hidden_weights_length;
+		thread_output_stride = total_layers[output_layer].second;
+
+		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
+		current_threads_activation_workspace_index = thread_id * thread_activation_stride;
+		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
+		current_threads_output_workspace_index = thread_id * thread_output_stride;
+
+		precision_type error;
+		// calculate error
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
+  		  error += loss(loss_name, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, total_activations[i], total_targets[i]);
+
+		// set pointers for output layer gradient for the current thread
+	    current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_activation_workspace_index + output_layer_index;
+		current_threads_activation_ptr = total_activations + current_threads_activation_workspace_index + output_layer_index;
+		current_threads_delta_ptr = total_deltas + current_threads_activation_workspace_index + output_layer_index;
+
+		// set pointers for the current and previous layers;
+		precision_type * current_layer_inputs{current_threads_hidden_input_ptr + output_layer_index};
+		precision_type * current_layer_outputs{current_threads_activation_ptr + output_layer_index};
+		precision_type * current_layer_deltas{current_threads_delta_ptr + output_layer_index};
+		precision_type * weight_ptr{total_hidden_weights + weight_index};
+		precision_type * gradient_ptr{total_gradient + weight_index};
+
+		// set to output_layer weights
+		weight_ptr = total_hidden_weights + weight_index;
+
+		// calc output layer deltas
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
+		  total_deltas[i] = (total_activations[i] - total_targets[i]) * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
+
+		// calc output layer gradient
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+					m, n, k,
+					alpha, current_layer_deltas, k,
+					current_layer_outputs, n, beta, 
+					gradient_ptr, n
+				   );
+
 	  }
+
 
 #endif
 

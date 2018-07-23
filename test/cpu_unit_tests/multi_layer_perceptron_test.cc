@@ -405,10 +405,10 @@ TEST(multi_layer_perceptron, get_results)
 										      );
 					  }; 
   // BEGIN FORWARD PROP
-  for(ith_case = 0; ith_case < total_cases/*1*/; ++ith_case)
+  for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
 	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer].second)};
-	for(thread_id = 0; thread_id < n_threads/*1*/; ++thread_id)
+	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
 	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
@@ -462,7 +462,7 @@ TEST(multi_layer_perceptron, get_results)
 	  //increment layer counters
 	  ++current_layer;
 	  ++previous_layer;
-	  std::cout<<"\n";
+	  //std::cout<<"\n";
 	  while( current_layer < total_layers.size() )
 	  {
 		const double * current_weight_matrix{total_hidden_weights_ptr + weight_index};

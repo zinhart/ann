@@ -48,9 +48,13 @@ namespace zinhart
 							 const std::uint32_t thread_id = 0
 							);
 
-			template <class LOSS_FUNCTION>
-			  void backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, LOSS_FUNCTION error_metric, 
-								  const std::uint32_t & ith_observation_index
+			void backward_propagate(zinhart::error_metrics::LOSS_FUNCTION_NAME loss_name, const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
+									const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+									precision_type * total_hidden_inputs, const precision_type * total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+									const precision_type * total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+									const precision_type * total_bias,
+									const std::uint32_t n_threads = 1,
+									const std::uint32_t thread_id = 0
 								 );
 
 #endif

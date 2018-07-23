@@ -38,6 +38,7 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER activation_function(activation_function&&) = default;
 		CUDA_CALLABLE_MEMBER activation_function & operator = (const activation_function&) = default;
 		CUDA_CALLABLE_MEMBER activation_function & operator = (activation_function&&) = default;
+		CUDA_CALLABLE_MEMBER ~activation_function() = default;
 		template <class precision_type>
 		  HOST precision_type operator ()(ACTIVATION_NAME name, ACTIVATION_TYPE at, precision_type x);
 	};
