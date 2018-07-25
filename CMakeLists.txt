@@ -42,7 +42,9 @@ endif()
 
 # threading library
 find_package(Threads REQUIRED)
-# mkl for gemm etc
+# mkl blas
+set(MKL_USE_SINGLE_DYNAMIC_LIBRARY OFF CACHE BOOL "Use single dynamic library interface")
+set(MKL_MULTI_THREADED OFF CACHE BOOL "Use multi-threading(intel tbb, omp etc)")
 find_package(MKL REQUIRED)
 
 # find cuda package and set compute achitecture
@@ -126,7 +128,8 @@ if(BuildCuda)
   message(STATUS " CUDA_NVCC_FLAGS               : ${CUDA_NVCC_FLAGS}")
 else()
   message(STATUS "  FOUND THREADS       : ${THREADS_FOUND}")
-  message(STATUS " Found MKL			  : ${MKL_FOUND}")
+  message(STATUS " Found MKL include             : ${MKL_INCLUDE_DIR}")
+  message(STATUS " Found MKL libraries           : ${MKL_LIBRARIES}")
 endif()
 message(STATUS "  CXX_FLAGS             : ${CMAKE_CXX_FLAGS}")
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")

@@ -23,8 +23,6 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER loss_function & operator = (const loss_function &) = default;
 		CUDA_CALLABLE_MEMBER loss_function & operator = (loss_function &&) = default;
 		CUDA_CALLABLE_MEMBER ~loss_function() = default;
-/*		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, precision_type kth_output, precision_type kth_target);*/
 		template <class precision_type, class container>
 		  HOST void operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
 			                   precision_type & error,

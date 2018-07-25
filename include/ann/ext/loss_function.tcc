@@ -45,7 +45,12 @@ namespace zinhart
   		  }
 		  else if(name == LOSS_FUNCTION_NAME::MSE && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
 		  {
-			//zinhart::parallel::async::neumaier_sum(outputs, targets, results, pool.size(), pool);
+			auto mse_derivative = [](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<mean_squared_error> loss;
+			  return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target );
+			};
+			zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, mse_derivative, results, pool);
 		  }
 		  else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::OBJECTIVE)
 		  {

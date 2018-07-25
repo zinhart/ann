@@ -9,7 +9,7 @@
 # This module defines the following variables:
 #
 #   MKL_FOUND            : True mkl is found
-#   MKL_INCLUDE_DIR      : unclude directory
+#   MKL_INCLUDE_DIR      : include directory
 #   MKL_LIBRARIES        : the libraries to link against.
 
 
@@ -64,7 +64,8 @@ else()
      list(APPEND __mkl_libs sequential)
   endif()
 
-  list(APPEND __mkl_libs core cdft_core)
+  #list(APPEND __mkl_libs core cdft_core) for cluster versions of the lib
+  list(APPEND __mkl_libs core)
 endif()
 
 
@@ -87,34 +88,27 @@ foreach (__lib ${__mkl_libs})
   list(APPEND MKL_LIBRARIES ${${__mkl_lib_upper}_LIBRARY})
 endforeach()
 
-
 if(NOT MKL_USE_SINGLE_DYNAMIC_LIBRARY)
-  if (MKL_USE_STATIC_LIBS)
-    set(__iomp5_libs iomp5 libiomp5mt.lib)
-  else()
-    set(__iomp5_libs iomp5 libiomp5md.lib)
+  if(MKL_MULTI_THREADED)
+	if (MKL_USE_STATIC_LIBS)
+	    set(__iomp5_libs iomp5 libiomp5mt.lib)
+	 else()
+	  set(__iomp5_libs iomp5 libiomp5md.lib)
+	 endif()
+	if(WIN32)
+	  find_path(INTEL_INCLUDE_DIR omp.h PATHS ${INTEL_ROOT} PATH_SUFFIXES include)
+	  list(APPEND __looked_for INTEL_INCLUDE_DIR)
+	endif()
+
+	find_library(MKL_RTL_LIBRARY ${__iomp5_libs}
+	   PATHS ${INTEL_RTL_ROOT} ${INTEL_ROOT}/compiler ${MKL_ROOT}/.. ${MKL_ROOT}/../compiler
+	   PATH_SUFFIXES ${__path_suffixes}
+	   DOC "Path to OpenMP runtime library")
+
+	list(APPEND __looked_for MKL_RTL_LIBRARY)
+	list(APPEND MKL_LIBRARIES ${MKL_RTL_LIBRARY})
   endif()
-
-  if(WIN32)
-    find_path(INTEL_INCLUDE_DIR omp.h PATHS ${INTEL_ROOT} PATH_SUFFIXES include)
-    list(APPEND __looked_for INTEL_INCLUDE_DIR)
-  endif()
-
-  find_library(MKL_RTL_LIBRARY ${__iomp5_libs}
-     PATHS ${INTEL_RTL_ROOT} ${INTEL_ROOT}/compiler ${MKL_ROOT}/.. ${MKL_ROOT}/../compiler
-     PATH_SUFFIXES ${__path_suffixes}
-     DOC "Path to OpenMP runtime library")
-
-  list(APPEND __looked_for MKL_RTL_LIBRARY)
-  list(APPEND MKL_LIBRARIES ${MKL_RTL_LIBRARY})
 endif()
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MKL DEFAULT_MSG ${__looked_for})
-
-if(MKL_FOUND)
-  message(STATUS "Found MKL (include: ${MKL_INCLUDE_DIR}, lib: ${MKL_LIBRARIES}")
-endif()
-
-#caffe_clear_vars(__looked_for __mkl_libs __path_suffixes __lib_suffix __iomp5_libs)
