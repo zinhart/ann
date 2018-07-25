@@ -2,6 +2,7 @@
 #define LOSS_FUNCTION_H
 #include "typedefs.cuh"
 #include "activation.hh"
+#include "concurrent_routines/concurrent_routines.hh"
 #if CUDA_ENABLED == 1
 #include <math.h>
 #else
@@ -22,10 +23,16 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER loss_function & operator = (const loss_function &) = default;
 		CUDA_CALLABLE_MEMBER loss_function & operator = (loss_function &&) = default;
 		CUDA_CALLABLE_MEMBER ~loss_function() = default;
-		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, precision_type kth_output, precision_type kth_target);
-		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, precision_type kth_output, precision_type kth_target, precision_type epsilon);
+/*		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, precision_type kth_output, precision_type kth_target);*/
+		template <class precision_type, class container>
+		  HOST void operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
+			                   precision_type & error,
+							   precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths,
+							   container  & results,
+							   precision_type epsilon = 0, 
+							   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
+							  );
 	};
 	template <class LOSS_FUNCTION>
 	  class loss_function_interface : public loss_function
