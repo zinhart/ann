@@ -8,8 +8,8 @@ namespace zinhart
 	  CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name, 
 													  precision_type * theta, const precision_type * gradient, std::uint32_t theta_length,
 											          std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-													  zinhart::parallel::thread_pool & pool,
-													  const precision_type & eta
+													  const precision_type & eta,
+													  zinhart::parallel::thread_pool & pool
 													 )
 	  {
 		assert(name == OPTIMIZER_NAME::SGD);
@@ -33,8 +33,8 @@ namespace zinhart
 	template <class precision_type>
 	  CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name,
 										   precision_type * theta, precision_type * prior_gradient, const precision_type * current_gradient, std::uint32_t theta_length,
-										   zinhart::parallel::thread_pool & pool,
-										   const precision_type & eta_plus, const precision_type & eta_neg							   
+										   const precision_type & eta_plus, const precision_type & eta_neg,
+										   zinhart::parallel::thread_pool & pool
 										  )
 	  {
 	  }

@@ -11,7 +11,7 @@ TEST(optimizer, sgd)
   std::mt19937 mt(rd());
   std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
   double * theta{nullptr}, * gradient{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr};
-  double kth_theta{0.0}, kth_gradient{0.0}, eta{0.9/*real_dist(mt)*/};
+  double kth_theta{0.0}, kth_gradient{0.0}, eta{real_dist(mt)};
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
   theta = new double[n_elements];
   gradient = new double[n_elements];
@@ -27,7 +27,7 @@ TEST(optimizer, sgd)
 	gradient_test[i] = kth_gradient;
   }
   zinhart::optimizers::optimizer op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::SGD, theta, gradient, n_elements, results);
+  op(zinhart::optimizers::OPTIMIZER_NAME::SGD, theta, gradient, n_elements, results, eta);
   for(i = 0; i < n_elements; ++i)
   {
 	theta_test[i] -= eta * gradient_test[i]; 

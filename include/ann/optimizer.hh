@@ -31,16 +31,16 @@ namespace zinhart
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
 											   precision_type * theta, const precision_type * gradient, std::uint32_t theta_length,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
-											   const precision_type & eta = 0.9
+											   const precision_type & eta = 0.9,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 
 		// This overload is for rprop
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
 											   precision_type * theta, precision_type * prior_gradient, const precision_type * current_gradient, std::uint32_t theta_length,
-											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
-											   const precision_type & eta_plus = 1.2, const precision_type & eta_neg = -0.5							   
+											   const precision_type & eta_plus = 1.2, const precision_type & eta_neg = -0.5,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 		/*
 		 *  This overload is shared by momentum, nesterov momentum, and adagrad
