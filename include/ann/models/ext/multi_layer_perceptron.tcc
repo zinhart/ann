@@ -305,9 +305,9 @@ namespace zinhart
 		  model_outputs[j] = total_hidden_outputs[i];
 	  }
 	template <class precision_type>
-	  void multi_layer_perceptron<precision_type>::backward_propagate(zinhart::error_metrics::LOSS_FUNCTION_NAME loss_name,
-											const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
-											const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
+											const precision_type error,
+											const precision_type * total_training_cases, const std::uint32_t case_index,
 											precision_type * total_hidden_inputs, const precision_type * total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
 											const precision_type * total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
 											const precision_type * total_bias,
@@ -334,13 +334,14 @@ namespace zinhart
 
 		// variables for gemm
 		precision_type alpha{1.0}, beta{0.0};
-		std::uint32_t m{ total_layers[current_layer].second }, n{1}, k{ total_layers[previous_layer].second };
+		std::uint32_t m{0}, n{0}, k{0};
 
 		// a ptr to the current training case, 
 		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
 		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
-		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
-		const precision_type * current_target_vector{total_targets + (case_index * total_layers[output_layer].second)};
+		std::uint32_t input_stride{case_index * total_layers[input_layer].second};
+	    std::uint32_t target_stride{case_index * total_layers[output_layer].second}; 
+		const precision_type * current_training_case{total_training_cases + input_stride};
 		
 		// variables for the thread calling this method, to determine it's workspace
 		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index;
@@ -365,11 +366,7 @@ namespace zinhart
 		current_threads_activation_workspace_index = thread_id * thread_activation_stride;
 		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
 		current_threads_output_workspace_index = thread_id * thread_output_stride;
-
-		precision_type error;
-		// calculate error
-		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
-  		  error += loss(loss_name, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, total_activations[i], total_targets[i]);
+	//
 
 		// set pointers for output layer gradient for the current thread
 	    current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_activation_workspace_index + output_layer_index;
@@ -383,12 +380,14 @@ namespace zinhart
 		precision_type * weight_ptr{total_hidden_weights + weight_index};
 		precision_type * gradient_ptr{total_gradient + weight_index};
 
-		// set to output_layer weights
-		weight_ptr = total_hidden_weights + weight_index;
-
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
-		  total_deltas[i] = (total_activations[i] - total_targets[i]) * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
+		  total_deltas[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
+
+		// for gemm
+		m = total_layers[current_layer].second;
+		n = total_layers[previous_layer].second;
+	   	k = 1;
 
 		// calc output layer gradient
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,

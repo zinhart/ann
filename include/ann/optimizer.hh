@@ -11,6 +11,7 @@ namespace zinhart
 {
   namespace optimizers
   {
+	// to do ADD RPROP
 	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, MOMENTUM, NESTEROV_MOMENTUM, CONJUGATE_GRADIENT, ADAGRAD, ADADELTA, RMS_PROP, ADAMAX, AMSGRAD, ADAM, NADAM};
 	template <class OPTIMIZER>
 	  class optimizer
