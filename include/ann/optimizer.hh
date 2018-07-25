@@ -1,6 +1,7 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
 #include "typedefs.cuh"
+#include "concurrent_routines/concurrent_routines.hh"
 #include <memory>
 #if CUDA_ENABLED == 1
 #include <math.h>
@@ -12,86 +13,180 @@ namespace zinhart
   namespace optimizers
   {
 	// to do ADD RPROP
-	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, MOMENTUM, NESTEROV_MOMENTUM, CONJUGATE_GRADIENT, ADAGRAD, ADADELTA, RMS_PROP, ADAMAX, AMSGRAD, ADAM, NADAM};
+	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, RPROP, MOMENTUM, NESTEROV_MOMENTUM, CONJUGATE_GRADIENT, ADAGRAD, ADADELTA, RMS_PROP, ADAMAX, AMSGRAD, ADAM, NADAM};
+	class optimizer
+	{
+	  public:
+		optimizer() = default;
+		optimizer(const optimizer&) = default;
+		optimizer(optimizer&&) = default;
+		optimizer & operator = (const optimizer&) = default;
+		optimizer & operator = (optimizer&&) = default;
+		~optimizer() = default;
+
+		// Return whether the optimizer_interface is first order, second order, etc
+		std::uint32_t order();
+		// This overload is for SGD
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+											   precision_type * theta, const precision_type * gradient, std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta = 0.9
+											  );
+
+		// This overload is for rprop
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
+											   precision_type * theta, precision_type * prior_gradient, const precision_type * current_gradient, std::uint32_t theta_length,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta_plus = 1.2, const precision_type & eta_neg = -0.5							   
+											  );
+		/*
+		 *  This overload is shared by momentum, nesterov momentum, and adagrad
+		 *  for momentum and nesterove momentom free_2 = gamma, free_3 = eta
+		 *  for adagrad free_2 = eta, free_3 = epsilon
+		 *  */
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, precision_type & free_1, 
+											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3
+											  );
+		// This overload is for conjugate gradient
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+											   precision_type * theta, precision_type * prior_gradient,  precision_type * hessian, 
+											   const precision_type * current_gradient, const precision_type & epsilon
+											  );
+		// This overload is for adadelta
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+											   precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+											   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
+											  );
+
+		// This overload is for rms_prop
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+											   precision_type * theta, precision_type * prior_gradient, 
+											   const precision_type * current_gradient, const precision_type & eta, 
+											   const precision_type & beta, const precision_type & epsilon
+											  );
+
+
+		// This overload is for adamax
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, 
+											   const precision_type * current_gradient, const precision_type & beta_1_t, 
+											   const precision_type & eta, const precision_type & beta_1, 
+											   const precision_type & beta_2, const precision_type & epsilon
+											  );
+
+		// This overload is for amsgrad
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
+											   precision_type * theta, 
+											   precision_type * prior_mean, precision_type * prior_variance, precision_type * prior_bias_corrected_variance,
+											   const precision_type * current_gradient, const precision_type & eta, 
+											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+											  );
+		// This overload is for adam
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
+											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, const precision_type * current_gradient, 
+											   const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
+											   const precision_type & beta_2, const precision_type & epsilon
+											  );
+		// This overload is for nadam
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
+											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, precision_type * current_gradient, 
+											   const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
+											   const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+											  ); 
+	};
 	template <class OPTIMIZER>
-	  class optimizer
+	  class optimizer_interface : public optimizer
 	  {
 		public:
-		  optimizer() = default;
-		  optimizer(const optimizer&) = default;
-		  optimizer(optimizer&&) = default;
-		  optimizer & operator = (const optimizer&) = default;
-		  optimizer & operator = (optimizer&&) = default;
-		  ~optimizer() = default;
-		  // Return whether the optimizer is first order, second order, etc
+		  optimizer_interface() = default;
+		  optimizer_interface(const optimizer_interface&) = default;
+		  optimizer_interface(optimizer_interface&&) = default;
+		  optimizer_interface & operator = (const optimizer_interface&) = default;
+		  optimizer_interface & operator = (optimizer_interface&&) = default;
+		  ~optimizer_interface() = default;
+		  // Return whether the optimizer_interface is first order, second order, etc
 		  std::uint32_t order();
 		  // This overload is for SGD
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type & theta, const precision_type & gradient, const precision_type & eta);
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, const precision_type & gradient, const precision_type & eta);
+/*
+		  // This overload is for rprop
+		  template <class precision_type>
+			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
+												 precision_type & theta, 
+												 precision_type & prior_gradient,
+												 const precision_type & current_gradient,
+												 const precision_type & eta_plus,const precision_type & eta_neg
+												);*/
 		  /*
 		   *  This overload is shared by momentum, nesterov momentum, and adagrad
 		   *  for momentum and nesterove momentom free_2 = gamma, free_3 = eta
 		   *  for adagrad free_2 = eta, free_3 = epsilon
 		   *  */
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type & theta, precision_type & free_1, 
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & free_1, 
 												 const precision_type & current_gradient, const precision_type & free_2, const precision_type & free_3
 												);
 		  // This overload is for conjugate gradient
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
-												 precision_type & theta, precision_type & prior_gradient,  precision_type & hessian, 
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_gradient,  precision_type & hessian, 
 												 const precision_type & current_gradient, const precision_type & epsilon
 												);
 		  // This overload is for adadelta
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
-														   precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
-														   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
-														  );
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+												 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
+												);
 
 		  // This overload is for rms_prop
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
-														   precision_type & theta, precision_type & prior_gradient, 
-														   const precision_type & current_gradient, const precision_type & eta, 
-														   const precision_type & beta, const precision_type & epsilon);
-
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_gradient, 
+												 const precision_type & current_gradient, const precision_type & eta, 
+												 const precision_type & beta, const precision_type & epsilon
+												);
 
 		  // This overload is for adamax
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
-												  precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
-												  const precision_type & current_gradient, const precision_type & beta_1_t, 
-												  const precision_type & eta, const precision_type & beta_1, 
-												  const precision_type & beta_2, const precision_type & epsilon);
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+												 const precision_type & current_gradient, const precision_type & beta_1_t, 
+												 const precision_type & eta, const precision_type & beta_1, 
+												 const precision_type & beta_2, const precision_type & epsilon
+												);
 
 		  // This overload is for amsgrad
 		  template <class precision_type>
- 			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
-												 precision_type & theta, 
+ 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, 
 												 precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
 												 const precision_type & current_gradient, const precision_type & eta, 
 												 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 												);
 		  // This overload is for adam
 		  template <class precision_type>
- 			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
-												 precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+ 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 												 const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
 												 const precision_type & beta_2, const precision_type & epsilon
 												);
 		  // This overload is for nadam
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
-												 precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
+			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
 												 const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
 												 const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 				                                ); 
   /**/
 	  };
 
-	  class stochastic_gradient_descent : public optimizer<stochastic_gradient_descent>
+	  class stochastic_gradient_descent : public optimizer_interface<stochastic_gradient_descent>
 	  {
 		public:
 		  stochastic_gradient_descent() = default;
@@ -102,10 +197,10 @@ namespace zinhart
 		  ~stochastic_gradient_descent() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER  void update(OPTIMIZER_NAME name, precision_type & theta, const precision_type & gradient, const precision_type & eta);
+			CUDA_CALLABLE_MEMBER  void update(precision_type & theta, const precision_type & gradient, const precision_type & eta);
 	  };
 
-	  class momentum : public optimizer<momentum>
+	  class momentum : public optimizer_interface<momentum>
 	  {
 		public:
 		  momentum() = default;
@@ -116,12 +211,11 @@ namespace zinhart
 		  ~momentum() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta, precision_type & prior_velocity, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_velocity, 
 											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
 										   );
 	  };
-	  class nesterov_momentum : public optimizer<nesterov_momentum>
+	  class nesterov_momentum : public optimizer_interface<nesterov_momentum>
 	  {
 		public:
 		  nesterov_momentum() = default;
@@ -132,12 +226,11 @@ namespace zinhart
 		  ~nesterov_momentum() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta, precision_type & prior_velocity, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_velocity, 
 											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
 										   );
 	  };
-	  class conjugate_gradient_descent : public optimizer<conjugate_gradient_descent>
+	  class conjugate_gradient_descent : public optimizer_interface<conjugate_gradient_descent>
 	  {
 		public:
 		  conjugate_gradient_descent() = default;
@@ -148,13 +241,12 @@ namespace zinhart
 		  ~conjugate_gradient_descent() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
 											const precision_type & current_gradient, const precision_type & epsilon
 										   );
 	  };
 
-	  class adagrad : public optimizer<adagrad>
+	  class adagrad : public optimizer_interface<adagrad>
 	  {
 		public:
 		  adagrad() = default;
@@ -165,12 +257,11 @@ namespace zinhart
 		  ~adagrad() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta, precision_type & prior_gradient, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, 
 											const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
 										   );
 	  };
-	  class adadelta : public optimizer<adadelta>
+	  class adadelta : public optimizer_interface<adadelta>
 	  {
 		public:
 		  adadelta() = default;
@@ -181,12 +272,11 @@ namespace zinhart
 		  ~adadelta() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta,  precision_type & prior_gradient, precision_type & prior_delta,
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta,  precision_type & prior_gradient, precision_type & prior_delta,
 											const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
 										   );
 	  };
-	  class rms_prop : public optimizer<rms_prop>
+	  class rms_prop : public optimizer_interface<rms_prop>
 	  {
 		public:
 		  rms_prop() = default;
@@ -197,13 +287,12 @@ namespace zinhart
 		  ~rms_prop() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-										    precision_type & theta, precision_type & prior_gradient, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, 
 											const precision_type & current_gradient,  const precision_type & eta, 
 											const precision_type & beta, const precision_type & epsilon
 										   );
 	  };
-	  class adamax : public optimizer<adamax>
+	  class adamax : public optimizer_interface<adamax>
 	  {
 		public:
 		  adamax() = default;
@@ -214,16 +303,15 @@ namespace zinhart
 		  ~adamax() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name, 
-											precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
-											const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
-											const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-										   );
+			CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
+											 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+										    );
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER static void moment_update(precision_type & beta_1_t, const precision_type & beta_1);
 	  };
 
-	  class amsgrad : public optimizer<amsgrad>
+	  class amsgrad : public optimizer_interface<amsgrad>
 	  {
 		public:
 		  amsgrad() = default;
@@ -234,15 +322,14 @@ namespace zinhart
 		  ~amsgrad() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name,
-											precision_type & theta, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, 
 											precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
 											const precision_type & current_gradient, const precision_type & eta, 
 											const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 			                  			   );
 	  };
 
-	  class adam : public optimizer<adam>
+	  class adam : public optimizer_interface<adam>
 	  {
 		public:
 		  adam() = default;
@@ -253,8 +340,7 @@ namespace zinhart
 		  ~adam() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name,
-											precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 											const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
 											const precision_type & beta_2, const precision_type & epsilon
 										   );
@@ -262,7 +348,7 @@ namespace zinhart
 			CUDA_CALLABLE_MEMBER static void moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2);
 
 	  };
-	  class nadam : public optimizer<nadam>
+	  class nadam : public optimizer_interface<nadam>
 	  {
 		public:
 		  nadam() = default;
@@ -273,8 +359,7 @@ namespace zinhart
 		  ~nadam() = default;
 		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
 		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(OPTIMIZER_NAME name,
-											precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
 											const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
 											const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 										   );

@@ -2,18 +2,55 @@
 #include "gtest/gtest.h"
 #include <random>
 #include <limits>
-//using namespace zinhart::optimizers;
+
 TEST(optimizer, sgd)
 {
   std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::mt19937 mt(rd());	
-  double theta{dist(mt)}, gradient{dist(mt)}, eta{dist(mt)}, theta_copy{theta};
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, eta{0.9/*real_dist(mt)*/};
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::OPTIMIZER_NAME::SGD, theta, gradient, n_elements, results);
+  for(i = 0; i < n_elements; ++i)
+  {
+	theta_test[i] -= eta * gradient_test[i]; 
+  }
+/*  double theta{dist(mt)}, gradient{dist(mt)}, eta{dist(mt)}, theta_copy{theta};
   zinhart::optimizers::optimizer<zinhart::optimizers::stochastic_gradient_descent> op;
   op(zinhart::optimizers::OPTIMIZER_NAME::SGD, theta, gradient, eta);
-  ASSERT_EQ(theta_copy - eta * gradient, theta);
-}
+  ASSERT_EQ(theta_copy - eta * gradient, theta);*/
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+	ASSERT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+  }
 
+  delete [] theta;
+  delete [] gradient;
+  delete [] theta_test;
+  delete [] gradient_test;
+}
+/*
 TEST(optimizer, momentum)
 {
   std::random_device rd;
@@ -206,4 +243,4 @@ TEST(optimizer, nadam_moment_update)
 
   ASSERT_EQ(beta_1_t_copy, beta_1_t);
   ASSERT_EQ(beta_2_t_copy, beta_2_t);
-}
+}*/
