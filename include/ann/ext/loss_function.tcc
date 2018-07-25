@@ -2,26 +2,6 @@ namespace zinhart
 {
   namespace error_metrics
   {
-	/*
-	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, precision_type kth_output, precision_type kth_target)
-	  {
-		try
-		{
-		  if(name == LOSS_FUNCTION_NAME::MSE) return ( *static_cast< loss_function_interface<mean_squared_error>* >(this) )(type, kth_output, kth_target);
-		  else
-			  throw std::runtime_error("Their is no loss_function specified");
-
-		}
-		catch(std::runtime_error & e)
-		{
-		  std::cerr<<e.what()<<"\n";
-		  throw e;
-		}
-		catch(...)
-		{
-		}
-	  }*/
 	template <class precision_type, class container>
 	  HOST void loss_function::operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
 										  precision_type & error,
@@ -54,11 +34,21 @@ namespace zinhart
 		  }
 		  else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::OBJECTIVE)
 		  {
-			//return ( *static_cast< loss_function_interface<cross_entropy_multi_class>* >(this) )(type, kth_output, kth_target, epsilon);
+			auto ce = [epsilon](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<cross_entropy_multi_class> loss;
+			  return loss(LOSS_FUNCTION_TYPE::OBJECTIVE, kth_output, kth_target, epsilon );
+			};
+			zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, ce, results, pool);
 		  }
 		  else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
 		  {
-			//return ( *static_cast< loss_function_interface<cross_entropy_multi_class>* >(this) )(type, kth_output, kth_target, epsilon);
+			auto ce = [epsilon](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<cross_entropy_multi_class> loss;
+			  return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target, epsilon );
+			};
+			zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, ce, results, pool);
 		  }
 		  else
 			  throw std::runtime_error("Their is no loss_function specified");

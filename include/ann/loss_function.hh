@@ -28,7 +28,7 @@ namespace zinhart
 			                   precision_type & error,
 							   precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths,
 							   container  & results,
-							   precision_type epsilon = 0, 
+							   precision_type epsilon = 1.e-30, 
 							   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 							  );
 	};
