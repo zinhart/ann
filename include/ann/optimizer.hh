@@ -40,7 +40,7 @@ namespace zinhart
 		 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
 		 *  */
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, std::uint32_t theta_length, precision_type & free_1, 
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, std::uint32_t theta_length, precision_type * free_1, 
 											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()

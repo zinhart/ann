@@ -32,10 +32,6 @@ TEST(optimizer, sgd)
   {
 	theta_test[i] -= eta * gradient_test[i]; 
   }
-/*  double theta{dist(mt)}, gradient{dist(mt)}, eta{dist(mt)}, theta_copy{theta};
-  zinhart::optimizers::optimizer<zinhart::optimizers::stochastic_gradient_descent> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::SGD, theta, gradient, eta);
-  ASSERT_EQ(theta_copy - eta * gradient, theta);*/
   for(i = 0; i < results.size(); ++i)
 	results[i].get();
   results.clear(); 
@@ -44,15 +40,64 @@ TEST(optimizer, sgd)
 	ASSERT_DOUBLE_EQ(theta[i], theta_test[i]);
 	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
   }
-
   delete [] theta;
   delete [] gradient;
   delete [] theta_test;
   delete [] gradient_test;
 }
-/*
+
 TEST(optimizer, momentum)
 {
+  std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_velocity{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr}, *prior_velocity_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_velocity{0.0}, gamma{real_dist(mt)}, eta{real_dist(mt)};
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_velocity = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_velocity_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_velocity = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_velocity[i] = kth_velocity;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_velocity_test[i] = kth_velocity;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::OPTIMIZER_NAME::MOMENTUM, theta, n_elements, prior_velocity, gradient, gamma, eta, results);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	double current_velocity{ gamma * prior_velocity_test[i] + eta * gradient_test[i] };
+	theta_test[i] -= current_velocity;
+    prior_velocity_test[i] = current_velocity;	
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_velocity[i], prior_velocity_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_velocity;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_velocity_test;
+  /*
   std::random_device rd;
   std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::mt19937 mt(rd());
@@ -61,9 +106,9 @@ TEST(optimizer, momentum)
   theta_copy -= velocity;
   zinhart::optimizers::optimizer<zinhart::optimizers::momentum> op;
   op(zinhart::optimizers::OPTIMIZER_NAME::MOMENTUM, theta, prior_velocity, current_gradient, gamma, eta );
-  ASSERT_EQ(theta, theta_copy);
+  ASSERT_EQ(theta, theta_copy);*/
 }
-
+/*
 TEST(optimizer, nesterov_momentum)
 {
   std::random_device rd;
