@@ -49,7 +49,10 @@ namespace zinhart
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
 											   precision_type * theta, precision_type * prior_gradient,  precision_type * hessian, 
-											   const precision_type * current_gradient, const precision_type & epsilon
+											   const precision_type * current_gradient, const precision_type & epsilon,
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 
 		// This overload is for adadelta

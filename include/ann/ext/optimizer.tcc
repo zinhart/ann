@@ -114,9 +114,27 @@ namespace zinhart
 	  template <class precision_type>
 		CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name, 
 											 precision_type * theta, precision_type * prior_gradient,  precision_type * hessian, 
-											 const precision_type * current_gradient, const precision_type & epsilon
+											 const precision_type * current_gradient, const precision_type & epsilon,
+											 std::uint32_t theta_length,
+											 std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											 zinhart::parallel::thread_pool & pool
 											)
 		{
+		 auto conjugrad =[](precision_type * thetas, precision_type * prior_grad, precision_type * hess, const precision_type * gradient, 
+			                const precision_type & epsilon,
+							std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
+			               )
+		 {
+			std::uint32_t start{0}, stop{0};
+			optimizer_interface<conjugate_gradient_descent> opt;
+			zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
+			for(std::uint32_t op{start}; op < stop; ++op)
+			{
+			  opt(thetas[op], prior_grad[op], hess[op], gradient[op], epsilon);
+			}
+		 }; 
+		 for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+	   	   results.push_back(pool.add_task(conjugrad, theta, prior_gradient, hessian, current_gradient, epsilon, thread, pool.size(), theta_length));
 		}
 
 	  // This overload is for adadelta
