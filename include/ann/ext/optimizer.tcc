@@ -58,7 +58,7 @@ namespace zinhart
 		}
 		else if(name == OPTIMIZER_NAME::NESTEROV_MOMENTUM)
 		{
-		  auto nesterov_momentum_lambda = [](precision_type * prior_velocity, const precision_type * gradient, precision_type gamma, precision_type eta,
+		  auto nesterov_momentum_lambda = [](precision_type * thetas, precision_type * prior_velocity, const precision_type * gradients, precision_type gamma, precision_type eta,
 											 std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
 											)
 		  {
@@ -67,10 +67,11 @@ namespace zinhart
 			zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
 			for(std::uint32_t op{start}; op < stop; ++op)
 			{
-			  //opt(thetas[op], gradients[op], eta_init);
+			  opt(thetas[op], prior_velocity[op], gradients[op], gamma, eta);
 			}
-
 		  };
+		  for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+			results.push_back(pool.add_task(nesterov_momentum_lambda, theta, free_1, current_gradient, free_2, free_3, thread, pool.size(), theta_length));
 		}
 		/*else if(name == OPTIMIZER_NAME::RPROP)
 		{
