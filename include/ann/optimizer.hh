@@ -12,8 +12,7 @@ namespace zinhart
 {
   namespace optimizers
   {
-	// to do ADD RPROP
-	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, RPROP, MOMENTUM, NESTEROV_MOMENTUM, CONJUGATE_GRADIENT, ADAGRAD, ADADELTA, RMS_PROP, ADAMAX, AMSGRAD, ADAM, NADAM};
+	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, MOMENTUM, NESTEROV_MOMENTUM, ADAGRAD, CONJUGATE_GRADIENT, ADADELTA, RMS_PROP, RPROP, ADAMAX, AMSGRAD, ADAM, NADAM};
 	class optimizer
 	{
 	  public:
@@ -35,21 +34,16 @@ namespace zinhart
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 
-		// This overload is for rprop
-		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
-											   precision_type * theta, precision_type * prior_gradient, const precision_type * current_gradient, std::uint32_t theta_length,
-											   const precision_type & eta_plus = 1.2, const precision_type & eta_neg = -0.5,
-											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
-											  );
 		/*
 		 *  This overload is shared by momentum, nesterov momentum, and adagrad
-		 *  for momentum and nesterove momentom free_2 = gamma, free_3 = eta
-		 *  for adagrad free_2 = eta, free_3 = epsilon
+		 *  for momentum and nesterov-momentum free_1 = prior_velocity, free_2 = gamma, free_3 = eta
+		 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
 		 *  */
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, precision_type & free_1, 
-											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3
+		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, std::uint32_t theta_length, precision_type & free_1, 
+											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 		// This overload is for conjugate gradient
 		template <class precision_type>
@@ -57,6 +51,7 @@ namespace zinhart
 											   precision_type * theta, precision_type * prior_gradient,  precision_type * hessian, 
 											   const precision_type * current_gradient, const precision_type & epsilon
 											  );
+
 		// This overload is for adadelta
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
@@ -120,18 +115,10 @@ namespace zinhart
 		  // This overload is for SGD
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, const precision_type & gradient, const precision_type & eta);
-/*
-		  // This overload is for rprop
-		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
-												 precision_type & theta, 
-												 precision_type & prior_gradient,
-												 const precision_type & current_gradient,
-												 const precision_type & eta_plus,const precision_type & eta_neg
-												);*/
+	      
 		  /*
-		   *  This overload is shared by momentum, nesterov momentum, and adagrad
-		   *  for momentum and nesterove momentom free_2 = gamma, free_3 = eta
+		   *  This overload is shared by momentum, nesterov momentum, and adagrad 
+		   *  for momentum and nesterov momentom free_2 = gamma, free_3 = eta
 		   *  for adagrad free_2 = eta, free_3 = epsilon
 		   *  */
 		  template <class precision_type>
@@ -230,21 +217,6 @@ namespace zinhart
 											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
 										   );
 	  };
-	  class conjugate_gradient_descent : public optimizer_interface<conjugate_gradient_descent>
-	  {
-		public:
-		  conjugate_gradient_descent() = default;
-		  conjugate_gradient_descent(const conjugate_gradient_descent&) = default;
-		  conjugate_gradient_descent(conjugate_gradient_descent&&) = default;
-		  conjugate_gradient_descent & operator = (const conjugate_gradient_descent&) = default;
-		  conjugate_gradient_descent & operator = (conjugate_gradient_descent&&) = default;
-		  ~conjugate_gradient_descent() = default;
-		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
-		  template <class precision_type>
-		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
-											const precision_type & current_gradient, const precision_type & epsilon
-										   );
-	  };
 
 	  class adagrad : public optimizer_interface<adagrad>
 	  {
@@ -259,6 +231,22 @@ namespace zinhart
 		  template <class precision_type>
 		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, 
 											const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+										   );
+	  };
+
+	  class conjugate_gradient_descent : public optimizer_interface<conjugate_gradient_descent>
+	  {
+		public:
+		  conjugate_gradient_descent() = default;
+		  conjugate_gradient_descent(const conjugate_gradient_descent&) = default;
+		  conjugate_gradient_descent(conjugate_gradient_descent&&) = default;
+		  conjugate_gradient_descent & operator = (const conjugate_gradient_descent&) = default;
+		  conjugate_gradient_descent & operator = (conjugate_gradient_descent&&) = default;
+		  ~conjugate_gradient_descent() = default;
+		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();
+		  template <class precision_type>
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+											const precision_type & current_gradient, const precision_type & epsilon
 										   );
 	  };
 	  class adadelta : public optimizer_interface<adadelta>
@@ -292,6 +280,24 @@ namespace zinhart
 											const precision_type & beta, const precision_type & epsilon
 										   );
 	  };
+
+	  class resilient_propagation : public optimizer_interface<resilient_propagation>
+	  {
+		public:
+		  resilient_propagation() = default;
+		  resilient_propagation(const resilient_propagation&) = default;
+		  resilient_propagation(resilient_propagation&&) = default;
+		  resilient_propagation & operator = (const resilient_propagation&) = default;
+		  resilient_propagation & operator = (resilient_propagation&&) = default;
+		  ~resilient_propagation() = default;
+		  CUDA_CALLABLE_MEMBER std::uint32_t get_order();// memory order is 2
+		  template <class precision_type>// 8 parameters
+		   CUDA_CALLABLE_MEMBER void update(precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+											const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+											const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
+										   );
+	  };
+
 	  class adamax : public optimizer_interface<adamax>
 	  {
 		public:

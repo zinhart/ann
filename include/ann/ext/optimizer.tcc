@@ -28,16 +28,48 @@ namespace zinhart
 		  results.push_back(pool.add_task(sgd, theta, gradient, eta, thread, pool.size(), theta_length));
 
 	  }
-
-	// This overload is for rprop
+	/*
+	 *  This overload is shared by momentum, nesterov momentum, and adagrad
+	 *  for momentum and nesterov-momentum free_1 = prior_velocity, free_2 = gamma, free_3 = eta
+	 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
+	 *  */
 	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name,
-										   precision_type * theta, precision_type * prior_gradient, const precision_type * current_gradient, std::uint32_t theta_length,
-										   const precision_type & eta_plus, const precision_type & eta_neg,
-										   zinhart::parallel::thread_pool & pool
-										  )
+	  CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name, precision_type * theta, std::uint32_t theta_length, precision_type & free_1, 
+											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool
+											  )
 	  {
+		if(name == OPTIMIZER_NAME::MOMENTUM)
+		{
+		}
+		else if(name == OPTIMIZER_NAME::NESTEROV_MOMENTUM)
+		{
+		}
+		/*else if(name == OPTIMIZER_NAME::RPROP)
+		{
+		  auto rprop = [](precision_type * thetas, const precision_type * prior_gradients,  const precision_type * current_gradients,
+						  const precision_type & eta_pos, const precision_type & eta_minus,
+						  std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements)
+		  {
+			std::uint32_t start{0}, stop{0};
+			optimizer_interface<resilient_propagation> opt;
+			zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
+			for(std::uint32_t op{start}; op < stop; ++op)
+			{
+			  //opt(thetas[op], gradients[op], eta_init);
+			}
+		  };
+		  for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+			results.push_back(pool.add_task(rprop, theta, free_1, current_gradient, theta_length, free_2, free_3, thread, pool.size(), theta_length));
+		}*/
+		else if(name == OPTIMIZER_NAME::ADAGRAD)
+		{
+		}
+		else
+		  return;
 	  }
+
 	template <class OPTIMIZER>
   	  CUDA_CALLABLE_MEMBER std::uint32_t optimizer_interface<OPTIMIZER>::order()
 	  {return static_cast<OPTIMIZER*>(this)->get_order();}
@@ -150,7 +182,17 @@ namespace zinhart
 		  prior_velocity = velocity;
 		}
 
-	// conjugate gradient descent
+	
+  	// adagrad	
+  	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void adagrad::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon)
+		{
+		  prior_gradient += current_gradient * current_gradient;
+		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
+		}
+	  
+
+	  // conjugate gradient descent
 	  template <class precision_type>
 		CUDA_CALLABLE_MEMBER void conjugate_gradient_descent::update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
 																	 const precision_type & current_gradient, const precision_type & epsilon
@@ -162,15 +204,6 @@ namespace zinhart
 		prior_gradient = current_gradient;
 		hessian = step;
 	  }
-	
-  	// adagrad	
-  	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void adagrad::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon)
-		{
-		  prior_gradient += current_gradient * current_gradient;
-		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
-		}
-	
 	  // adadelta	
 	  template <class precision_type>	 
 		CUDA_CALLABLE_MEMBER void adadelta::update(precision_type & theta,  precision_type & prior_gradient, precision_type & prior_delta,
@@ -193,6 +226,31 @@ namespace zinhart
 		  prior_gradient = beta * prior_gradient + (1 - beta) * current_gradient * current_gradient;
 		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
 		}
+
+	//rprop
+	template <class precision_type>
+	 CUDA_CALLABLE_MEMBER void resilient_propagation::update(precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+															 const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+															 const precision_type & delta_max, const precision_type & delta_min
+															)
+	 {
+	   if(current_gradient * prior_gradient > 0) // if the sign of the gradient has stayed positive
+	   {
+		 current_delta = ( current_delta * eta_pos < delta_max) ? current_delta * eta_pos : delta_max;
+		 theta += -current_gradient * current_delta;
+		 prior_gradient = current_gradient; 
+	   }
+	   else if(current_gradient * prior_gradient < 0)// if the sign of the gradient has stayed negative
+	   {
+		 current_delta = ( current_delta * eta_neg > delta_min) ? current_delta * eta_neg : delta_min;
+		 prior_gradient = 0;
+	   } 
+	   else// if either the prior or current gradient is 0, because of a negative gradient
+	   {
+		 theta += -current_gradient * current_delta;
+		 prior_gradient = current_gradient; 
+	   }
+	 }
 
 	// adamax, the max operation is w.r.t the infinity norm
   	template <class precision_type>
