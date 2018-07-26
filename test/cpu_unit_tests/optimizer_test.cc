@@ -150,15 +150,65 @@ TEST(optimizer, nesterov_momentum)
   delete [] theta_test;
   delete [] gradient_test;
   delete [] prior_velocity_test;
-  /*
+}
+TEST(optimizer, adagrad)
+{
   std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_gradient{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr}, * prior_gradient_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_prior_gradient{0.0}, eta{real_dist(mt)}, epsilon{real_dist(mt)};
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_gradient = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_gradient_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_prior_gradient = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_gradient[i] = kth_prior_gradient;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_gradient_test[i] = kth_prior_gradient;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::OPTIMIZER_NAME::ADAGRAD, theta, n_elements, prior_gradient, gradient, eta, epsilon, results);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	prior_gradient_test[i] += gradient_test[i] * gradient_test[i];
+	theta_test[i] -= eta * gradient_test[i] / sqrt(prior_gradient_test[i] + epsilon);
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_gradient[i], prior_gradient_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_gradient;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_gradient_test;
+/*  std::random_device rd;
   std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::mt19937 mt(rd());
-  double theta {dist(mt)}, prior_velocity{dist(mt)}, current_gradient{dist(mt)}, theta_copy{theta}, gamma{dist(mt)}, eta{dist(mt)};
-  double velocity{gamma * prior_velocity + eta * current_gradient * ( theta - gamma * prior_velocity)};
-  theta_copy -= velocity;
-  zinhart::optimizers::optimizer<zinhart::optimizers::nesterov_momentum> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::NESTEROV_MOMENTUM, theta, prior_velocity, current_gradient, gamma, eta );
+  double theta {dist(rd)}, prior_gradient{dist(rd)}, prior_gradient_copy{prior_gradient}, current_gradient{dist(rd)}, theta_copy{theta}, eta{dist(rd)}, epsilon{dist(rd)};
+  prior_gradient_copy += current_gradient * current_gradient;
+  theta_copy -= eta * current_gradient / sqrt(prior_gradient_copy + epsilon);
+  zinhart::optimizers::optimizer<zinhart::optimizers::adagrad> op;
+  op(zinhart::optimizers::OPTIMIZER_NAME::ADAGRAD, theta, prior_gradient, current_gradient, eta, epsilon);
   ASSERT_EQ(theta, theta_copy);*/
 }
 /*
@@ -175,18 +225,7 @@ TEST(optimizer, conjugate_gradient)
   op(zinhart::optimizers::OPTIMIZER_NAME::CONJUGATE_GRADIENT, theta, prior_gradient, hessian, current_gradient, epsilon);
   ASSERT_EQ(theta, theta_copy);
 }
-TEST(optimizer, adagrad)
-{
-  std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::mt19937 mt(rd());
-  double theta {dist(rd)}, prior_gradient{dist(rd)}, prior_gradient_copy{prior_gradient}, current_gradient{dist(rd)}, theta_copy{theta}, eta{dist(rd)}, epsilon{dist(rd)};
-  prior_gradient_copy += current_gradient * current_gradient;
-  theta_copy -= eta * current_gradient / sqrt(prior_gradient_copy + epsilon);
-  zinhart::optimizers::optimizer<zinhart::optimizers::adagrad> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::ADAGRAD, theta, prior_gradient, current_gradient, eta, epsilon);
-  ASSERT_EQ(theta, theta_copy);
-}
+
 
 TEST(optimizer, adadelta)
 {

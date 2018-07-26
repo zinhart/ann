@@ -92,7 +92,7 @@ namespace zinhart
 		}*/
 		else if(name == OPTIMIZER_NAME::ADAGRAD)
 		{
-		  auto adagrad_lambda = [](precision_type * prior_gradient, precision_type eta, precision_type epsilon,
+		  auto adagrad_lambda = [](precision_type * thetas, precision_type * prior_gradient, const precision_type * gradients, precision_type eta, precision_type epsilon,
 								   std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
 								  )
 		  {
@@ -101,9 +101,11 @@ namespace zinhart
 			zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
 			for(std::uint32_t op{start}; op < stop; ++op)
 			{
-			  //opt(thetas[op], gradients[op], eta_init);
+			  opt(thetas[op], prior_gradient[op], gradients[op], eta, epsilon);
 			}
 		  };
+		  for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+			results.push_back(pool.add_task(adagrad_lambda, theta, free_1, current_gradient, free_2, free_3, thread, pool.size(), theta_length));
 		}
 		else
 		  return;
