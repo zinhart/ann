@@ -2,6 +2,7 @@
 #define OPTIMIZER_H
 #include "typedefs.cuh"
 #include "concurrent_routines/concurrent_routines.hh"
+#include <type_traits>
 #include <memory>
 #if CUDA_ENABLED == 1
 #include <math.h>
@@ -12,7 +13,22 @@ namespace zinhart
 {
   namespace optimizers
   {
-	enum class OPTIMIZER_NAME : std::uint32_t{SGD = std::uint32_t{0}, MOMENTUM, NESTEROV_MOMENTUM, ADAGRAD, CONJUGATE_GRADIENT, ADADELTA, RMS_PROP, RPROP, ADAMAX, AMSGRAD, ADAM, NADAM};
+	// all the optimizers
+	typedef std::integral_constant<std::uint32_t, 0> SGD;
+	typedef std::integral_constant<std::uint32_t, 1> MOMENTUM;
+	typedef std::integral_constant<std::uint32_t, 2> NESTEROV_MOMENTUM;
+	typedef std::integral_constant<std::uint32_t, 3> ADAGRAD;
+	typedef std::integral_constant<std::uint32_t, 4> CONJUGATE_GRADIENT;
+	typedef std::integral_constant<std::uint32_t, 5> ADADELTA;
+	typedef std::integral_constant<std::uint32_t, 6> RMS_PROP;
+	typedef std::integral_constant<std::uint32_t, 7> RPROP;
+	typedef std::integral_constant<std::uint32_t, 8> ADAMAX;
+	typedef std::integral_constant<std::uint32_t, 9> AMSGRAD;
+	typedef std::integral_constant<std::uint32_t, 10> ADAM;
+	typedef std::integral_constant<std::uint32_t, 11> NADAM;/**/
+
+	
+//	enum {SGD, MOMENTUM, NESTEROV_MOMENTUM, ADAGRAD, CONJUGATE_GRADIENT, ADADELTA, RMS_PROP, RPROP, ADAMAX, AMSGRAD, ADAM, NADAM};
 	class optimizer
 	{
 	  public:
@@ -27,7 +43,7 @@ namespace zinhart
 		std::uint32_t order();
 		// This overload is for SGD
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+		  CUDA_CALLABLE_MEMBER void operator()(SGD &&,
 											   precision_type * theta, const precision_type * gradient, std::uint32_t theta_length,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
 											   const precision_type & eta = 0.9,
@@ -40,14 +56,31 @@ namespace zinhart
 		 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
 		 *  */
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, precision_type * theta, std::uint32_t theta_length, precision_type * free_1, 
-											   const precision_type * current_gradient, const precision_type & free_2, const precision_type & free_3,
+		  CUDA_CALLABLE_MEMBER void operator()(MOMENTUM &&, 
+											   precision_type * theta, std::uint32_t theta_length, precision_type * prior_velocity, 
+											   const precision_type * current_gradient, const precision_type & eta, const precision_type & epsilon,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
+											  );
+
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(NESTEROV_MOMENTUM &&, 
+											   precision_type * theta, std::uint32_t theta_length, precision_type * prior_velocity, 
+											   const precision_type * current_gradient, const precision_type & eta, const precision_type & epsilon,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
+											  );
+
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(ADAGRAD &&, 
+											   precision_type * theta, std::uint32_t theta_length, precision_type * prior_gradient, 
+											   const precision_type * current_gradient, const precision_type & eta, const precision_type & epsilon,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 		// This overload is for conjugate gradient
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+		  CUDA_CALLABLE_MEMBER void operator()(CONJUGATE_GRADIENT&&, 
 											   precision_type * theta, precision_type * prior_gradient,  precision_type * hessian, 
 											   const precision_type * current_gradient, const precision_type & epsilon,
 											   std::uint32_t theta_length,
@@ -57,27 +90,45 @@ namespace zinhart
 
 		// This overload is for adadelta
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
-											   precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
-											   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
+		  CUDA_CALLABLE_MEMBER void operator()(ADADELTA&&, 
+											   precision_type * theta, precision_type * prior_gradient, precision_type * prior_delta, 
+											   const precision_type * current_gradient, std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   const precision_type gamma = 0.99, const precision_type epsilon= 1.e-8,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
+							
 
 		// This overload is for rms_prop
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+		  CUDA_CALLABLE_MEMBER void operator()(RMS_PROP&&, 
 											   precision_type * theta, precision_type * prior_gradient, 
-											   const precision_type * current_gradient, const precision_type & eta, 
-											   const precision_type & beta, const precision_type & epsilon
+											   const precision_type * current_gradient, std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta = 0.001, const precision_type & gamma = 0.9, const precision_type & epsilon = 1.e-8
 											  );
 
-
+		//This overload is for rprop
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER void operator()(RPROP &&,
+											   precision_type * theta, precision_type * prior_gradient, precision_type * current_delta, const precision_type * current_gradient, 
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   const precision_type & eta_pos = 1.2, const precision_type & eta_neg = 0.5, const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
+											  );
+/*
 		// This overload is for adamax
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
 											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, 
 											   const precision_type * current_gradient, const precision_type & beta_1_t, 
-											   const precision_type & eta, const precision_type & beta_1, 
-											   const precision_type & beta_2, const precision_type & epsilon
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta = 0.002 , const precision_type & beta_1 = 0.9, 
+											   const precision_type & beta_2 = 0.999, const precision_type & epsilon = 1.e-8
 											  );
 
 		// This overload is for amsgrad
@@ -85,23 +136,34 @@ namespace zinhart
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
 											   precision_type * theta, 
 											   precision_type * prior_mean, precision_type * prior_variance, precision_type * prior_bias_corrected_variance,
-											   const precision_type * current_gradient, const precision_type & eta, 
-											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+											   const precision_type * current_gradient,
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta= 0.001, const precision_type & beta_1 = 0.9, const precision_type & beta_2 = 0.999, const precision_type & epsilon = 1.e-8 
 											  );
 		// This overload is for adam
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
 											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, const precision_type * current_gradient, 
-											   const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
-											   const precision_type & beta_2, const precision_type & epsilon
+											   const precision_type & beta_1_t, const precision_type & beta_2_t, 
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta= 0.001, const precision_type & beta_1 = 0.9, const precision_type & beta_2 = 0.999, const precision_type & epsilon = 1.e-8 
 											  );
 		// This overload is for nadam
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name,
 											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, precision_type * current_gradient, 
-											   const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
-											   const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+											   const precision_type & beta_1_t, const precision_type & beta_2_t,
+											   std::uint32_t theta_length,
+											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
+											   const precision_type & eta = 0.001, const precision_type & gamma = 0.9, const precision_type & beta_1 = 0.9, 
+											   const precision_type & beta_2 = 0.9, const precision_type & epsilon= 1.e-8
 											  ); 
+		*/
 	};
 	template <class OPTIMIZER>
 	  class optimizer_interface : public optimizer
@@ -150,8 +212,7 @@ namespace zinhart
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
 												 const precision_type & current_gradient, const precision_type & beta_1_t, 
-												 const precision_type & eta, const precision_type & beta_1, 
-												 const precision_type & beta_2, const precision_type & epsilon
+												 const precision_type & eta, const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 												);
 
 		  // This overload is for amsgrad
