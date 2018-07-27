@@ -308,7 +308,7 @@ TEST(optimizer, adadelta)
   for(i = 0; i < n_elements; ++i)
   {   		   
 	prior_gradient_test[i] = gamma * prior_gradient_test[i] + (double{1.0} - gamma) * gradient_test[i] * gradient_test[i];
-	double delta { -(sqrt(prior_delta_test[i] + epsilon) / sqrt(prior_gradient_test[i] + epsilon)) * gradient_test[i] };
+	double delta { -(sqrt(prior_delta_test[i] * prior_delta_test[i] + epsilon) / sqrt(prior_gradient_test[i] * prior_gradient_test[i] + epsilon)) * gradient_test[i] };
 	theta_test[i] += delta;
 	prior_delta_test[i] = gamma * prior_delta_test[i] + (double{1.0} - gamma) * delta * delta;
   }
