@@ -164,10 +164,23 @@ namespace zinhart
 														  precision_type * theta, precision_type * prior_gradient, 
 														  const precision_type * current_gradient, std::uint32_t theta_length,
 														  std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-														  zinhart::parallel::thread_pool & pool,
-														  const precision_type & eta, const precision_type & gamma, const precision_type & epsilon
+														  const precision_type & eta, const precision_type & gamma, const precision_type & epsilon,
+														  zinhart::parallel::thread_pool & pool
 														 )
 		  {
+			auto thread_launch = [](precision_type * thetas, precision_type * prior_grad, const precision_type * gradient, 
+				                    const precision_type & eta, const precision_type & gamma, const precision_type & epsilon,
+								    std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
+								   )
+			{
+		  	  std::uint32_t start{0}, stop{0};
+			  optimizer_interface<rms_prop> opt;
+		  	  zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
+	  		  for(std::uint32_t op{start}; op < stop; ++op)
+				opt(thetas[op], prior_grad[op], gradient[op], eta, gamma ,epsilon);
+			 }; 
+			 for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+			   results.push_back(pool.add_task(thread_launch, theta, prior_gradient, current_gradient, eta, gamma, epsilon, thread, pool.size(), theta_length));
 		  }
 
 		//This overload is for rprop
@@ -401,8 +414,8 @@ namespace zinhart
 												   const precision_type & eta, const precision_type & gamma, const precision_type & epsilon
 												  )
 		{
-		  prior_gradient = gamma * prior_gradient + (precision_type{1} - gamma) * current_gradient * current_gradient;
-		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
+		  prior_gradient = gamma * prior_gradient * prior_gradient + (precision_type{1} - gamma) * current_gradient * current_gradient;
+		  theta -= eta * current_gradient / sqrt(prior_gradient * prior_gradient + epsilon);
 		}
 
 	//rprop

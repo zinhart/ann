@@ -25,10 +25,8 @@ namespace zinhart
 	typedef std::integral_constant<std::uint32_t, 8> ADAMAX;
 	typedef std::integral_constant<std::uint32_t, 9> AMSGRAD;
 	typedef std::integral_constant<std::uint32_t, 10> ADAM;
-	typedef std::integral_constant<std::uint32_t, 11> NADAM;/**/
+	typedef std::integral_constant<std::uint32_t, 11> NADAM;
 
-	
-//	enum {SGD, MOMENTUM, NESTEROV_MOMENTUM, ADAGRAD, CONJUGATE_GRADIENT, ADADELTA, RMS_PROP, RPROP, ADAMAX, AMSGRAD, ADAM, NADAM};
 	class optimizer
 	{
 	  public:
@@ -105,8 +103,8 @@ namespace zinhart
 											   precision_type * theta, precision_type * prior_gradient, 
 											   const precision_type * current_gradient, std::uint32_t theta_length,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
-											   const precision_type & eta = 0.001, const precision_type & gamma = 0.9, const precision_type & epsilon = 1.e-8
+											   const precision_type & eta = 0.001, const precision_type & gamma = 0.9, const precision_type & epsilon = 1.e-8,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 
 		//This overload is for rprop

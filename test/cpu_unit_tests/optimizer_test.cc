@@ -330,36 +330,61 @@ TEST(optimizer, adadelta)
   delete [] gradient_test;
   delete [] prior_gradient_test;
   delete [] prior_delta_test;
-  /*
-  std::random_device rd;
-
-  std::uniform_real_distribution<float> dist(0, std::numeric_limits<float>::max());
-
-  std::mt19937 mt(rd());
-  double theta{dist(rd)}, prior_gradient{dist(rd)}, prior_gradient_copy{prior_gradient}, prior_delta{dist(rd)}, 
-							current_gradient{dist(rd)}, theta_copy{theta}, gamma{0.9}, epsilon{dist(rd)};
-  prior_gradient_copy = gamma * prior_gradient_copy + (1 - gamma) * current_gradient * current_gradient;
-  double delta = -(sqrt(prior_delta + epsilon) / sqrt(prior_gradient_copy + epsilon)) * current_gradient;
-  theta_copy += delta;
-  zinhart::optimizers::optimizer<zinhart::optimizers::adadelta> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::ADADELTA, theta, prior_gradient, prior_delta, current_gradient, gamma, epsilon);
-  ASSERT_EQ(theta, theta_copy);
-  */
 }
-/*
+
 TEST(optimizer, rms_prop)
 {
   std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  double theta{dist(rd)}, prior_gradient{dist(rd)}, prior_gradient_copy{prior_gradient}, current_gradient{dist(rd)}, theta_copy{theta}, eta{dist(rd)}, beta{0.9},  epsilon{dist(rd)};
-  prior_gradient_copy = beta * prior_gradient_copy + (1 - beta) * current_gradient * current_gradient;
-  theta_copy -= eta * current_gradient / sqrt(prior_gradient_copy + epsilon);
-  zinhart::optimizers::optimizer<zinhart::optimizers::rms_prop> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::RMS_PROP, theta, prior_gradient, current_gradient, eta, beta, epsilon);
-  ASSERT_EQ(theta, theta_copy);
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_gradient{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr}, * prior_gradient_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_prior_gradient{0.0}, eta{real_dist(mt)}, gamma{real_dist(mt)}, epsilon{real_dist(mt)};
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_gradient = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_gradient_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_prior_gradient = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_gradient[i] = kth_prior_gradient;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_gradient_test[i] = kth_prior_gradient;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::RMS_PROP(), theta, prior_gradient, gradient, n_elements, results, eta, gamma, epsilon);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	prior_gradient_test[i] = gamma * prior_gradient_test[i] * prior_gradient_test[i] + (double{1} - gamma) * gradient_test[i] * gradient_test[i];
+	theta_test[i] -= eta * gradient_test[i] / sqrt(prior_gradient_test[i] * prior_gradient_test[i] + epsilon);
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_gradient[i], prior_gradient_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_gradient;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_gradient_test;
 }
-
+// rprop
+/*
 TEST(optimizer, adamax)
 {
   std::random_device rd;
