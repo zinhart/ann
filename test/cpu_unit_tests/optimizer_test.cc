@@ -268,7 +268,6 @@ TEST(optimizer, conjugate_gradient)
   delete [] prior_hessian_test;
 }
 
-
 TEST(optimizer, adadelta)
 {
   std::random_device rd;
@@ -321,7 +320,7 @@ TEST(optimizer, adadelta)
 	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
 	ASSERT_DOUBLE_EQ(prior_gradient[i], prior_gradient_test[i]);
 	ASSERT_DOUBLE_EQ(prior_delta[i], prior_delta_test[i]);
-  }/**/
+  }
   delete [] theta;
   delete [] gradient;
   delete [] prior_gradient;
@@ -383,7 +382,81 @@ TEST(optimizer, rms_prop)
   delete [] gradient_test;
   delete [] prior_gradient_test;
 }
-// rprop
+
+TEST(optimizer, rprop)
+{
+  std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_gradient{nullptr}, * prior_delta{nullptr}; 
+  double * theta_test{nullptr}, * gradient_test{nullptr}, * prior_gradient_test{nullptr}, * prior_delta_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_prior_gradient{0.0}, kth_prior_delta{0.0}, eta_pos{real_dist(mt)}, eta_neg{real_dist(mt)}, delta_max{real_dist(mt)}, delta_min{delta_max - real_dist(mt)};
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_gradient = new double[n_elements];
+  prior_delta = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_gradient_test = new double[n_elements];
+  prior_delta_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_prior_gradient = real_dist(mt);
+	kth_prior_delta = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_gradient[i] = kth_prior_gradient;
+	prior_delta[i] = kth_prior_delta;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_gradient_test[i] = kth_prior_gradient;
+	prior_delta_test[i] = kth_prior_delta;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::RPROP(), theta, prior_gradient, prior_delta, gradient, n_elements, results, eta_pos, eta_neg, delta_max, delta_min);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	if(gradient_test[i] * prior_gradient_test[i] > 0) // if the sign of the gradient has stayed positive
+	{
+	  prior_delta_test[i] = ( prior_delta_test[i] * eta_pos < delta_max) ? prior_delta_test[i] * eta_pos : delta_max;
+	  theta_test[i] = theta_test[i] - gradient_test[i] * prior_delta_test[i];
+	  prior_gradient_test[i] = gradient_test[i]; 
+	}
+	else if(gradient_test[i] * prior_gradient_test[i] < 0)// if the sign of the gradient has stayed negative
+	{
+	  prior_delta_test[i] = ( prior_delta_test[i] * eta_neg > delta_min) ? prior_delta_test[i] * eta_neg : delta_min;
+	  prior_gradient_test[i] = 0;
+	} 
+	else// if either the prior or current gradient is 0, because of a negative gradient
+	{
+	  theta_test[i] = theta_test[i] - gradient_test[i] * prior_delta_test[i];
+	  prior_gradient_test[i] = gradient_test[i]; 
+	}
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_gradient[i], prior_gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_delta[i], prior_delta_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_gradient;
+  delete [] prior_delta;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_gradient_test;
+  delete [] prior_delta_test;
+}
 /*
 TEST(optimizer, adamax)
 {

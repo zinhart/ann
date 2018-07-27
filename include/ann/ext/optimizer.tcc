@@ -193,20 +193,21 @@ namespace zinhart
 														  zinhart::parallel::thread_pool & pool
 														 )
 		  {
-  			auto thread_launch = [](precision_type * thetas, const precision_type * prior_gradients,  const precision_type * current_gradients,
-						  const precision_type & eta_pos, const precision_type & eta_minus, const precision_type & dmin, const precision_type & dmax,
-						  std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements)
+  			auto thread_launch = [](precision_type * thetas, precision_type * prior_gradients, precision_type * current_delta, const precision_type * current_gradients,
+								    const precision_type & eta_pos, const precision_type & eta_minus, const precision_type & dmax, const precision_type & dmin,
+						            std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
+								   )
 			{
 			  std::uint32_t start{0}, stop{0};
 			  optimizer_interface<resilient_propagation> opt;
 			  zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
 			  for(std::uint32_t op{start}; op < stop; ++op)
 			  {
-				//opt(thetas[op], gradients[op], eta_init);
+				opt(thetas[op], prior_gradients[op], current_delta[op], current_gradients[op], eta_pos, eta_minus, dmax, dmin);
 			  }
 			};
 			for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
-			  results.push_back(pool.add_task(thread_launch, theta, prior_gradient, current_gradient, theta_length, eta_pos, eta_neg, delta_min, delta_max, thread, pool.size(), theta_length));
+			  results.push_back(pool.add_task(thread_launch, theta, prior_gradient, current_delta, current_gradient, eta_pos, eta_neg, delta_max, delta_min, thread, pool.size(), theta_length));
 			}
   /*
 		// This overload is for adamax
@@ -306,6 +307,16 @@ namespace zinhart
 																		   const precision_type & beta, const precision_type & epsilon
 																		  )
 	  { static_cast<OPTIMIZER*>(this)->update(theta, prior_gradient, current_gradient, eta, beta, epsilon); }
+
+	  //This overload is for rprop
+	  template <class OPTIMIZER>
+		template <class precision_type>
+		CUDA_CALLABLE_MEMBER void optimizer_interface<OPTIMIZER>::operator()(precision_type & theta, precision_type & prior_gradient, 
+																			 precision_type & current_delta, const precision_type & current_gradient, 
+																			 const precision_type & eta_pos, const precision_type & eta_neg, 
+																			 const precision_type & delta_max, const precision_type & delta_min
+																			)
+		{ static_cast<OPTIMIZER*>(this)->update(theta, prior_gradient, current_delta, current_gradient, eta_pos, eta_neg, delta_max, delta_min);}
 	
 	// This overload is for adamax
 	template <class OPTIMIZER>
