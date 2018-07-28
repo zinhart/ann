@@ -296,20 +296,36 @@ namespace zinhart
 			for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
 			  results.push_back(pool.add_task(thread_launch, theta, prior_mean, prior_variance, current_gradient, beta_1_t, beta_2_t, eta, beta_1, beta_2, epsilon, thread, pool.size(), theta_length));
 		  }
-		/*
+		
 		// This overload is for nadam
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void optimizer::operator()(OPTIMIZER_NAME name,
-											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, precision_type * current_gradient, 
+		  CUDA_CALLABLE_MEMBER void optimizer::operator()(NADAM && ndm,
+											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, const precision_type * current_gradient, 
 											   const precision_type & beta_1_t, const precision_type & beta_2_t,
 											   std::uint32_t theta_length,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-											   zinhart::parallel::thread_pool & pool,
 											   const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
-											   const precision_type & beta_2, const precision_type & epsilon
-											  )
+											   const precision_type & beta_2, const precision_type & epsilon,
+											   zinhart::parallel::thread_pool & pool
+												  )
 		  {
-		  }*/
+  			auto thread_launch = [](precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, const precision_type * current_gradient,
+								    const precision_type & beta_1_t, const precision_type & beta_2_t, 
+									const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon,
+						            std::uint32_t thread_id, std::uint32_t n_threads, std::uint32_t n_elements
+								   )
+			{
+			  std::uint32_t start{0}, stop{0};
+			  optimizer_interface<nadam> opt;
+			  zinhart::serial::map(thread_id, n_threads, n_elements, start, stop);
+			  for(std::uint32_t op{start}; op < stop; ++op)
+			  {
+				opt(theta[op], prior_mean[op], prior_variance[op], current_gradient[op], eta, gamma, beta_1, beta_2, beta_1_t, beta_2_t, epsilon);
+			  }
+			};
+			for(std::uint32_t thread = 0; thread < pool.size(); ++thread)
+			  results.push_back(pool.add_task(thread_launch, theta, prior_mean, prior_variance, current_gradient, beta_1_t, beta_2_t, eta, gamma ,beta_1, beta_2, epsilon, thread, pool.size(), theta_length));
+		  }
 
 	template <class OPTIMIZER>
   	  CUDA_CALLABLE_MEMBER std::uint32_t optimizer_interface<OPTIMIZER>::order()
@@ -398,7 +414,7 @@ namespace zinhart
 	  // This overload is for nadam
 	  template <class OPTIMIZER>
 		template <class precision_type>
-		CUDA_CALLABLE_MEMBER void optimizer_interface<OPTIMIZER>::operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
+		CUDA_CALLABLE_MEMBER void optimizer_interface<OPTIMIZER>::operator()(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 																			 const precision_type & eta, const precision_type & gamma, 
 																			 const precision_type & beta_1, const precision_type & beta_2,
 																			 const precision_type & beta_1_t, const precision_type & beta_2_t, 
@@ -553,7 +569,7 @@ namespace zinhart
 	  
 	// nadam 
 	template <class precision_type>	 
-	  CUDA_CALLABLE_MEMBER void nadam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, precision_type & current_gradient, 
+	  CUDA_CALLABLE_MEMBER void nadam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 											  const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, const precision_type & beta_2, 
 											  const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 											 )
