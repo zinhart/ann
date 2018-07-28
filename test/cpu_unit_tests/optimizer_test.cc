@@ -518,23 +518,8 @@ TEST(optimizer, adamax)
   delete [] gradient_test;
   delete [] prior_mean_test;
   delete [] prior_variance_test;
-  /*
-  std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::mt19937 mt(rd());
-  double theta {dist(mt)}, prior_mean{dist(mt)}, prior_mean_copy{prior_mean}, prior_variance{dist(mt)}, prior_variance_copy{prior_variance}, current_gradient{dist(mt)}, 
-	  						  			  theta_copy{theta},  beta_1_t{0.9}, eta{0.003}, beta_1{0.9}, beta_2{0.999}, epsilon{1e-8};
-  prior_mean_copy = beta_1 * prior_mean_copy + (double(1.0) - beta_1) * current_gradient; 
-  prior_variance_copy = (beta_2 * prior_variance_copy > fabs(current_gradient)) ? beta_2 * prior_variance : fabs(current_gradient);
-  theta_copy -= (eta / (double(1.0) - beta_1_t) ) * (prior_mean_copy / (prior_variance_copy + epsilon));
-
-  zinhart::optimizers::optimizer<zinhart::optimizers::adamax> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::ADAMAX, theta, prior_mean, prior_variance, current_gradient, beta_1_t, eta, beta_1, beta_2, epsilon);
-
-  ASSERT_EQ(theta, theta_copy);
-*/
 }
-/*
+
 TEST(optimizer, adamax_moment_update)
 {
   std::random_device rd;
@@ -546,7 +531,7 @@ TEST(optimizer, adamax_moment_update)
   ASSERT_EQ(beta_1_t_copy, beta_1_t);
 }
 
-
+/*
 TEST(optimizer, amsgrad)
 {
   std::random_device rd;
