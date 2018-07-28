@@ -531,44 +531,69 @@ TEST(optimizer, adamax_moment_update)
   ASSERT_EQ(beta_1_t_copy, beta_1_t);
 }
 
-/*
-TEST(optimizer, amsgrad)
-{
-  std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::mt19937 mt(rd());
-  double theta{dist(mt)}, prior_mean{dist(mt)}, prior_mean_copy{prior_mean}, 
-		 prior_variance{dist(mt)}, prior_variance_copy{prior_variance}, 
-		 prior_bias_corrected_variance{dist(mt)}, prior_bias_corrected_variance_copy{prior_variance_copy},
-		 current_gradient{dist(mt)}, theta_copy{theta}, eta{0.0001}, beta_1{0.9},
-		 beta_2{0.999},  epsilon{dist(mt)};
-  prior_mean_copy = beta_1 * prior_mean_copy + (double(1) - beta_1) * current_gradient;
-  prior_variance_copy = beta_2 * prior_mean_copy + (double(1) - beta_2) * current_gradient * current_gradient;
-  prior_bias_corrected_variance_copy = (prior_variance_copy > prior_bias_corrected_variance_copy) ? prior_variance : prior_bias_corrected_variance_copy; 
-  theta_copy -= eta * prior_mean_copy / ( sqrt(prior_bias_corrected_variance_copy) + epsilon  );
-
-  zinhart::optimizers::optimizer<zinhart::optimizers::amsgrad> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::AMSGRAD, theta, prior_mean, prior_variance, prior_bias_corrected_variance, current_gradient, eta, beta_1, beta_2, epsilon);
-
-  ASSERT_EQ(theta, theta_copy);
-}
-
 TEST(optimizer, adam)
 {
   std::random_device rd;
-  std::uniform_real_distribution<float> dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  double theta{dist(mt)}, prior_mean{dist(mt)}, prior_mean_copy{prior_mean}, prior_variance{dist(mt)}, prior_variance_copy{prior_variance}, current_gradient{dist(mt)}, 
-									  theta_copy{theta}, beta_1_t{0.999}, beta_2_t{0.999}, eta{0.0001}, beta_1{0.9},
-									  beta_2{0.999},  epsilon{dist(mt)};
-  prior_mean_copy = beta_1 * prior_mean_copy + (double(1) - beta_1) * current_gradient;
-  prior_variance_copy = beta_2 * prior_mean_copy + (double(1) - beta_2) * current_gradient * current_gradient;
-  theta_copy -= eta * ( prior_mean_copy / (double(1) - beta_1_t) ) / (sqrt( prior_variance_copy / (double(1) - beta_2_t) ) + epsilon );
-
-  zinhart::optimizers::optimizer<zinhart::optimizers::adam> op;
-  op(zinhart::optimizers::OPTIMIZER_NAME::ADAM, theta, prior_mean, prior_variance, current_gradient, beta_1_t, beta_2_t, eta, beta_1, beta_2, epsilon);
-
-  ASSERT_EQ(theta, theta_copy);
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_gradient{nullptr}, * prior_mean{nullptr},* prior_variance{nullptr}; 
+  double * theta_test{nullptr}, * gradient_test{nullptr}, * prior_mean_test{nullptr}, * prior_variance_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_prior_mean{0.0}, kth_prior_variance{0.0}, beta_1_t{real_dist(mt)}, beta_2_t{real_dist(mt)},
+		 eta{real_dist(mt)}, beta_1{real_dist(mt)}, beta_2{real_dist(mt)}, epsilon{real_dist(mt)}; 
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_mean = new double[n_elements];
+  prior_variance = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_mean_test = new double[n_elements];
+  prior_variance_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_prior_mean = real_dist(mt);
+	kth_prior_variance = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_mean[i] = kth_prior_mean;
+	prior_variance[i] = kth_prior_variance;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_mean_test[i] = kth_prior_mean;
+	prior_variance_test[i] = kth_prior_variance;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::ADAM(), theta, prior_mean, prior_variance, gradient, beta_1_t, beta_2_t, n_elements, results, eta, beta_1, beta_2, epsilon);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	prior_mean_test[i] = beta_1 * prior_mean_test[i] + (double{1} - beta_1) * gradient_test[i];
+	prior_variance_test[i] = beta_2 * prior_variance_test[i] + (double{1} - beta_2) * gradient_test[i] * gradient_test[i];
+	double bias_corrected_mean{ prior_mean_test[i] / (double{1} - beta_1_t) };
+	double bias_corrected_variace{ prior_variance_test[i] / (double{1} - beta_2_t) };
+	theta_test[i] -= eta * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_mean[i], prior_mean_test[i]);
+	ASSERT_DOUBLE_EQ(prior_variance[i], prior_variance_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_mean;
+  delete [] prior_variance;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_mean_test;
+  delete [] prior_variance_test;
 }
 TEST(optimizer, adam_moment_update)
 {
@@ -584,6 +609,80 @@ TEST(optimizer, adam_moment_update)
   ASSERT_EQ(beta_1_t_copy, beta_1_t);
   ASSERT_EQ(beta_2_t_copy, beta_2_t);
 }
+
+TEST(optimizer, amsgrad)
+{
+  std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  double * theta{nullptr}, * gradient{nullptr}, * prior_gradient{nullptr}, * prior_mean{nullptr}, * prior_variance{nullptr},* prior_bias_corrected_variance{nullptr}; 
+  double * theta_test{nullptr}, * gradient_test{nullptr}, * prior_mean_test{nullptr}, * prior_variance_test{nullptr}, * prior_bias_corrected_variance_test{nullptr};
+  double kth_theta{0.0}, kth_gradient{0.0}, kth_prior_mean{0.0}, kth_prior_variance{0.0}, kth_prior_bias_corrected_variance{0.0}, 
+		 eta{real_dist(mt)}, beta_1{real_dist(mt)}, beta_2{real_dist(mt)}, epsilon{real_dist(mt)}; 
+  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  theta = new double[n_elements];
+  gradient = new double[n_elements];
+  prior_mean = new double[n_elements];
+  prior_variance = new double[n_elements];
+  prior_bias_corrected_variance = new double[n_elements];
+  theta_test = new double[n_elements];
+  gradient_test = new double[n_elements];
+  prior_mean_test = new double[n_elements];
+  prior_variance_test = new double[n_elements];
+  prior_bias_corrected_variance_test = new double[n_elements];
+  for(i = 0; i < n_elements; ++i)
+  {
+	kth_theta = real_dist(mt);
+	kth_gradient = real_dist(mt);
+	kth_prior_mean = real_dist(mt);
+	kth_prior_variance = real_dist(mt);
+	kth_prior_bias_corrected_variance = real_dist(mt);
+	theta[i] = kth_theta;
+	gradient[i] = kth_gradient;
+	prior_mean[i] = kth_prior_mean;
+	prior_variance[i] = kth_prior_variance;
+	prior_bias_corrected_variance[i] = kth_prior_bias_corrected_variance;
+	theta_test[i] = kth_theta;
+	gradient_test[i] = kth_gradient;
+	prior_mean_test[i] = kth_prior_mean;
+	prior_variance_test[i] = kth_prior_variance;
+	prior_bias_corrected_variance_test[i] = kth_prior_bias_corrected_variance;
+  }
+  zinhart::optimizers::optimizer op;
+  op(zinhart::optimizers::AMSGRAD(), theta, prior_mean, prior_variance, prior_bias_corrected_variance, gradient, n_elements, results, eta, beta_1, beta_2, epsilon);
+  for(i = 0; i < n_elements; ++i)
+  {   		   
+	prior_mean_test[i] = beta_1 * prior_mean_test[i] + (double{1} - beta_1) * gradient_test[i];
+	prior_variance_test[i] = beta_2 * prior_variance_test[i] + (double{1} - beta_2) * gradient_test[i] * gradient_test[i];
+	// max(prior_variance > prior_bias_corrected_variance)
+	prior_bias_corrected_variance_test[i] = (prior_variance_test[i] > prior_bias_corrected_variance_test[i]) ? prior_variance_test[i] : prior_bias_corrected_variance_test[i];
+	theta_test[i] -= eta * ( prior_mean_test[i] ) / ( sqrt( prior_bias_corrected_variance_test[i]) + epsilon ) ;
+  }
+  for(i = 0; i < results.size(); ++i)
+	results[i].get();
+  results.clear(); 
+  for(i = 0; i < n_elements; ++i)
+  {
+    EXPECT_DOUBLE_EQ(theta[i], theta_test[i]);
+	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
+	ASSERT_DOUBLE_EQ(prior_mean[i], prior_mean_test[i]);
+	ASSERT_DOUBLE_EQ(prior_variance[i], prior_variance_test[i]);
+	ASSERT_DOUBLE_EQ(prior_bias_corrected_variance[i], prior_bias_corrected_variance_test[i]);
+  }
+  delete [] theta;
+  delete [] gradient;
+  delete [] prior_mean;
+  delete [] prior_variance;
+  delete [] prior_bias_corrected_variance;
+  delete [] theta_test;
+  delete [] gradient_test;
+  delete [] prior_mean_test;
+  delete [] prior_variance_test;
+  delete [] prior_bias_corrected_variance_test;
+}
+/*
 TEST(optimizer, nadam)
 {
   std::random_device rd;
