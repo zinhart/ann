@@ -116,18 +116,19 @@ namespace zinhart
 											   const precision_type & eta_pos = 1.2, const precision_type & eta_neg = 0.5, const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6,
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
-/*
+
 		// This overload is for adamax
 		template <class precision_type>
-		  CUDA_CALLABLE_MEMBER void operator()(OPTIMIZER_NAME name, 
+		  CUDA_CALLABLE_MEMBER void operator()(ADAMAX &&, 
 											   precision_type * theta, precision_type * prior_mean, precision_type * prior_variance, 
 											   const precision_type * current_gradient, const precision_type & beta_1_t, 
 											   std::uint32_t theta_length,
 											   std::vector<zinhart::parallel::thread_pool::task_future<void>> & results,
-											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool(),
 											   const precision_type & eta = 0.002 , const precision_type & beta_1 = 0.9, 
-											   const precision_type & beta_2 = 0.999, const precision_type & epsilon = 1.e-8
+											   const precision_type & beta_2 = 0.999, const precision_type & epsilon = 1.e-8,
+											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
+/*
 
 		// This overload is for amsgrad
 		template <class precision_type>
