@@ -560,11 +560,12 @@ TEST(multi_layer_perceptron, backward_propagate)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, 10);
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types() - 1);// does not include input layer
+  std::uniform_int_distribution<std::uint32_t> loss_function_dist(0, 1);
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
   // declarations for vector lengths
-  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_bias_length{0}, total_case_length{0}, total_cases{0};
+  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_case_length{0}, total_cases{0};
   
   // declarations for pointers
   double * total_activations_ptr{nullptr};
@@ -581,6 +582,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
   double * current_threads_hidden_input_ptr{nullptr};
+  double * gradient_ptr{nullptr};
   double * outputs_ptr{nullptr};
   double * outputs_ptr_test{nullptr};
 
@@ -597,7 +599,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   std::uint32_t current_threads_activation_index{0};
   std::uint32_t case_index{0};
   std::uint32_t m{0}, n{0}, k{0};
-  double alpha{1.0}, beta{0.0};
+  double alpha{1.0}, beta{0.0}, error{0.0};
 
 
   // the thread pool & futures
@@ -607,6 +609,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   // the model
   multi_layer_perceptron<double> model;
   zinhart::activation::activation_function af;
+  zinhart::error_metrics::loss_function loss;
 
 
   // set layers
@@ -638,6 +641,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   // calc number of hidden weights
   for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
 	total_hidden_weights_length += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
+  total_gradient_length = total_hidden_weights_length * n_threads;// important!
   total_bias_length = total_layers.size() - 1;
 
   const std::uint32_t alignment{64};
@@ -656,8 +660,8 @@ TEST(multi_layer_perceptron, backward_propagate)
   outputs_ptr = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   outputs_ptr_test = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
-  total_gradient_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
-  total_gradient_ptr_test = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+  total_gradient_ptr = (double*) mkl_malloc( total_gradient_length * sizeof( double ), alignment );
+  total_gradient_ptr_test = (double*) mkl_malloc( total_gradient_length * sizeof( double ), alignment );
   total_bias_ptr = (double*) mkl_malloc( total_bias_length * sizeof( double ), alignment );
   total_cases_ptr = (double*) mkl_malloc( total_case_length * sizeof( double ), alignment );
 
@@ -842,15 +846,31 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
 	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");*/
 	}
+	// clear futures
 	results.clear();
 
 	// set up for calculating output layer gradients
+	current_layer = 1;
+	previous_layer = 0;
+	weight_index = 0;
+	for(i = 1, j = 0; i < total_layers.size() - 1; ++i)
+	  weight_index += total_layers[i].second * total_layers[j].second; 
+	gradient_ptr = total_gradient_ptr_test + weight_index;// set gradient pointer
+	// adjust to output layer
 	current_layer = output_layer;
 	previous_layer = output_layer - 1;
+	// adjust pointer indices
 	current_layer_index = output_layer_index;
 	previous_layer_index = output_layer_index - total_layers[previous_layer].second;
-	// calculate error 
+
+
+	current_threads_activation_index = thread_id * thread_stride;
+	current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
+	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
+    // calculate error 
+	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, error, outputs, targets, n_elements, results);
 	// calculate error derivative
+	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE, error, outputs, targets, n_elements, results);
 	// calculate output layer deltas
 	// calculate output layer gradient 
 	// for gemm
