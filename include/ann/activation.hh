@@ -1,6 +1,5 @@
 #ifndef ACTIVATION_H
 #define ACTIVATION_H
-#include "typedefs.cuh"
 #include "concurrent_routines/concurrent_routines_error.hh"
 #include <cstdint>
 #include <utility>

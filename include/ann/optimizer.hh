@@ -1,9 +1,7 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
-#include "typedefs.cuh"
 #include "concurrent_routines/concurrent_routines.hh"
 #include <type_traits>
-#include <memory>
 #if CUDA_ENABLED == 1
 #include <math.h>
 #else

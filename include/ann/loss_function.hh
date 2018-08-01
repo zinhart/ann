@@ -1,6 +1,5 @@
 #ifndef LOSS_FUNCTION_H
 #define LOSS_FUNCTION_H
-#include "typedefs.cuh"
 #include "activation.hh"
 #include "concurrent_routines/concurrent_routines.hh"
 #if CUDA_ENABLED == 1

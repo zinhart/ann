@@ -5,13 +5,10 @@
 #include "loss_function.hh"
 #include "activation.hh"
 #include "optimizer.hh"
-#include <memory>
-//#include <zinhart/vector_space>
 #include <vector>
 #if CUDA_ENABLED == true
 #define ERROR_CUDA_ERROR 1
 #include <cublas_v2.h>
-//#include <thrust>
 #else
 #include "mkl.h"
 #endif
