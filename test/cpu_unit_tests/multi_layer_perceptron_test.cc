@@ -569,9 +569,13 @@ TEST(multi_layer_perceptron, backward_propagate)
   // declarations for pointers
   double * total_activations_ptr{nullptr};
   double * total_activations_ptr_test{nullptr};
+  double * total_deltas_ptr{nullptr};
+  double * total_deltas_ptr_test{nullptr};
   double * total_hidden_input_ptr{nullptr};
   double * total_hidden_input_ptr_test{nullptr};
   double * total_hidden_weights_ptr{nullptr};
+  double * total_gradient_ptr{nullptr};
+  double * total_gradient_ptr_test{nullptr};
   double * total_bias_ptr{nullptr};
   double * current_inputs_ptr{nullptr};
   double * total_cases_ptr{nullptr};
@@ -645,11 +649,15 @@ TEST(multi_layer_perceptron, backward_propagate)
   // allocate vectors
   total_activations_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_activations_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_deltas_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_deltas_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_input_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_input_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   outputs_ptr = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   outputs_ptr_test = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+  total_gradient_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+  total_gradient_ptr_test = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
   total_bias_ptr = (double*) mkl_malloc( total_bias_length * sizeof( double ), alignment );
   total_cases_ptr = (double*) mkl_malloc( total_case_length * sizeof( double ), alignment );
 
@@ -662,9 +670,15 @@ TEST(multi_layer_perceptron, backward_propagate)
 	total_activations_ptr_test[i] = 0.0;
 	total_hidden_input_ptr[i] = 0.0;
 	total_hidden_input_ptr_test[i] = 0.0;
+	total_deltas_ptr[i] = 0.0;
+	total_deltas_ptr_test[i] = 0.0;
   }
   for(i = 0; i < total_hidden_weights_length; ++i)
+  {
 	total_hidden_weights_ptr[i] = real_dist(mt);
+	total_gradient_ptr[i] = 0.0;
+	total_gradient_ptr_test[i] = 0.0;
+  }
   for(i = 0; i < total_bias_length; ++i)
 	total_bias_ptr[i] = real_dist(mt);
   for(i = 0; i < output_layer_nodes; ++i)
@@ -843,17 +857,22 @@ TEST(multi_layer_perceptron, backward_propagate)
 	m = total_layers[current_layer].second;
 	n = total_layers[previous_layer].second;
 	k = 1;
+	// calc hidden layer deltas
 
   }
   // END FORWARD & BACKPROP PROP
   // release memory
   mkl_free(total_activations_ptr);
   mkl_free(total_activations_ptr_test);
+  mkl_free(total_deltas_ptr);
+  mkl_free(total_deltas_ptr_test);
   mkl_free(total_hidden_input_ptr);
   mkl_free(total_hidden_input_ptr_test);
   mkl_free(outputs_ptr);
   mkl_free(outputs_ptr_test);
   mkl_free(total_hidden_weights_ptr);
+  mkl_free(total_gradient_ptr);
+  mkl_free(total_gradient_ptr_test);
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
