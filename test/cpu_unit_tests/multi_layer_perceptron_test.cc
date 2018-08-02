@@ -565,7 +565,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
   // declarations for vector lengths
-  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_case_length{0}, total_cases{0};
+  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_case_length{0}, total_targets_length{0}, total_cases{0};
   
   // declarations for pointers
   double * total_activations_ptr{nullptr};
@@ -578,6 +578,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   double * total_gradient_ptr{nullptr};
   double * total_gradient_ptr_test{nullptr};
   double * total_bias_ptr{nullptr};
+  double * total_targets_ptr{nullptr};
   double * current_inputs_ptr{nullptr};
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
@@ -646,6 +647,8 @@ TEST(multi_layer_perceptron, backward_propagate)
   gradient_stride = total_hidden_weights_length;
   total_gradient_length = total_hidden_weights_length * n_threads;// important!
   total_bias_length = total_layers.size() - 1;
+  total_targets_length = total_layers[output_layer].second * total_cases;
+
 
   const std::uint32_t alignment{64};
   const std::uint32_t output_layer_nodes{total_layers[total_layers.size() - 1].second};
@@ -667,10 +670,13 @@ TEST(multi_layer_perceptron, backward_propagate)
   total_gradient_ptr_test = (double*) mkl_malloc( total_gradient_length * sizeof( double ), alignment );
   total_bias_ptr = (double*) mkl_malloc( total_bias_length * sizeof( double ), alignment );
   total_cases_ptr = (double*) mkl_malloc( total_case_length * sizeof( double ), alignment );
+  total_targets_ptr = (double*) mkl_malloc(total_targets_length * sizeof(double), alignment );
 
   // set random training data 
   for(i = 0; i < total_case_length; ++i)
 	total_cases_ptr[i] = real_dist(mt);
+  for(i = 0; i < total_targets_length; ++i)
+	total_targets_ptr[i] = 0.0;
   for(i = 0; i < total_activations_length; ++i)
   {
 	total_activations_ptr[i] = 0.0;
@@ -868,6 +874,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
 	current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
 	current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
+	const double * current_target{total_targets_ptr + (ith_case * total_layers[output_layer].second)};
     // calculate error 
 	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, error, outputs, targets, n_elements, results);
 	// calculate error derivative
@@ -896,4 +903,5 @@ TEST(multi_layer_perceptron, backward_propagate)
   mkl_free(total_gradient_ptr_test);
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
+  mkl_free(total_targets_ptr);
 }
