@@ -582,12 +582,12 @@ TEST(multi_layer_perceptron, backward_propagate)
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
   double * current_threads_hidden_input_ptr{nullptr};
-  double * gradient_ptr{nullptr};
+  double * current_threads_gradient_ptr{nullptr};
   double * outputs_ptr{nullptr};
   double * outputs_ptr_test{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, gradient_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation & backward propagation
   const std::uint32_t input_layer{0};
@@ -597,6 +597,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   std::uint32_t previous_layer_index{0};
   std::uint32_t weight_index{0};
   std::uint32_t current_threads_activation_index{0};
+  std::uint32_t current_threads_gradient_index{0};
   std::uint32_t case_index{0};
   std::uint32_t m{0}, n{0}, k{0};
   double alpha{1.0}, beta{0.0}, error{0.0};
@@ -852,21 +853,17 @@ TEST(multi_layer_perceptron, backward_propagate)
 	// set up for calculating output layer gradients
 	current_layer = 1;
 	previous_layer = 0;
-	weight_index = 0;
-	for(i = 1, j = 0; i < total_layers.size() - 1; ++i)
-	  weight_index += total_layers[i].second * total_layers[j].second; 
-	gradient_ptr = total_gradient_ptr_test + weight_index;// set gradient pointer
 	// adjust to output layer
 	current_layer = output_layer;
 	previous_layer = output_layer - 1;
 	// adjust pointer indices
 	current_layer_index = output_layer_index;
 	previous_layer_index = output_layer_index - total_layers[previous_layer].second;
-
-
 	current_threads_activation_index = thread_id * thread_stride;
+	current_threads_gradient_index = thread_id * gradient_stride;
 	current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
 	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
+	current_threads_gradient_ptr = total_gradient_ptr + current_threads_gradient_index; 
     // calculate error 
 	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, error, outputs, targets, n_elements, results);
 	// calculate error derivative
