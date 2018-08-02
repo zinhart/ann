@@ -327,7 +327,7 @@ namespace zinhart
 		std::uint32_t current_layer{output_layer}, previous_layer{output_layer - 1}; 
 		std::uint32_t current_layer_index{output_layer_index}, previous_layer_index{output_layer_index - total_layers[previous_layer].second};
 
-		// The index of the beginning of the weight matrix between two layers 
+		// The index of the beginning of the weight matrix between the last hidden layer and the output layer 
 		std::uint32_t weight_index{0};
 		for(i = 1, j = 0; i < total_layers.size() - 1; ++i)
 		  weight_index += total_layers[i].second * total_layers[j].second; 
@@ -364,21 +364,22 @@ namespace zinhart
 
 		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
 		current_threads_activation_workspace_index = thread_id * thread_activation_stride;
-		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
 		current_threads_output_workspace_index = thread_id * thread_output_stride;
+		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
 	//
 
 		// set pointers for output layer gradient for the current thread
 	    current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_activation_workspace_index + output_layer_index;
 		current_threads_activation_ptr = total_activations + current_threads_activation_workspace_index + output_layer_index;
 		current_threads_delta_ptr = total_deltas + current_threads_activation_workspace_index + output_layer_index;
+		current_threads_gradient_ptr = total_gradient + current_threads_gradient_workspace_index;
 
 		// set pointers for the current and previous layers;
 		precision_type * current_layer_inputs{current_threads_hidden_input_ptr + output_layer_index};
 		precision_type * current_layer_outputs{current_threads_activation_ptr + output_layer_index};
 		precision_type * current_layer_deltas{current_threads_delta_ptr + output_layer_index};
 		precision_type * weight_ptr{total_hidden_weights + weight_index};
-		precision_type * gradient_ptr{total_gradient + weight_index};
+		precision_type * gradient_ptr{current_threads_gradient_ptr + weight_index};
 
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)

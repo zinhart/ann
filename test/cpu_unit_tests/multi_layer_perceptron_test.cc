@@ -582,6 +582,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
   double * current_threads_hidden_input_ptr{nullptr};
+  double * current_threads_delta_ptr{nullptr};
   double * current_threads_gradient_ptr{nullptr};
   double * outputs_ptr{nullptr};
   double * outputs_ptr_test{nullptr};
@@ -642,6 +643,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   // calc number of hidden weights
   for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
 	total_hidden_weights_length += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
+  gradient_stride = total_hidden_weights_length;
   total_gradient_length = total_hidden_weights_length * n_threads;// important!
   total_bias_length = total_layers.size() - 1;
 
@@ -861,9 +863,11 @@ TEST(multi_layer_perceptron, backward_propagate)
 	previous_layer_index = output_layer_index - total_layers[previous_layer].second;
 	current_threads_activation_index = thread_id * thread_stride;
 	current_threads_gradient_index = thread_id * gradient_stride;
+	// set pointers
 	current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
 	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
-	current_threads_gradient_ptr = total_gradient_ptr + current_threads_gradient_index; 
+	current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
+	current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
     // calculate error 
 	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, error, outputs, targets, n_elements, results);
 	// calculate error derivative
