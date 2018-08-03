@@ -874,11 +874,11 @@ TEST(multi_layer_perceptron, backward_propagate)
 	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
 	current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
 	current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
-	const double * current_target{total_targets_ptr + (ith_case * total_layers[output_layer].second)};
+	double * current_target{total_targets_ptr + (ith_case * total_layers[output_layer].second)};
     // calculate error 
-	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, error, outputs, targets, n_elements, results);
+	//error  = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, outputs, targets, n_elements);
 	// calculate error derivative
-	//loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE, error, outputs, targets, n_elements, results);
+	error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE,  current_threads_activation_ptr, current_target, total_layers[output_layer].second);
 	// calculate output layer deltas
 	// calculate output layer gradient 
 	// for gemm
