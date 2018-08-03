@@ -22,6 +22,7 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER loss_function & operator = (const loss_function &) = default;
 		CUDA_CALLABLE_MEMBER loss_function & operator = (loss_function &&) = default;
 		CUDA_CALLABLE_MEMBER ~loss_function() = default;
+		// parallelizing the loop by splitting it into n sub loops
 		template <class precision_type, class container>
 		  HOST void operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
 			                   precision_type & error,
@@ -30,6 +31,13 @@ namespace zinhart
 							   precision_type epsilon = 1.e-30, 
 							   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 							  );
+		// for parallelizing the entire loop
+		template <class precision_type>
+		  CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type,
+			                            precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths,    
+										precision_type epsilon = 1.e-30
+			                           );
+
 	};
 	template <class LOSS_FUNCTION>
 	  class loss_function_interface : public loss_function

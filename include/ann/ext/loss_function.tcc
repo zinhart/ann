@@ -63,6 +63,51 @@ namespace zinhart
 		{
 		}
 	  }
+
+	template <class precision_type>
+	  CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type,
+									precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths,    
+									precision_type epsilon
+								   )
+	  {
+
+		  if(name == LOSS_FUNCTION_NAME::MSE && type == LOSS_FUNCTION_TYPE::OBJECTIVE) 
+		  {
+			auto mse = [](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<mean_squared_error> loss;
+			  return loss(LOSS_FUNCTION_TYPE::OBJECTIVE, kth_output, kth_target);
+			};
+			zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, mse);
+  		  }
+		  else if(name == LOSS_FUNCTION_NAME::MSE && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
+		  {
+			auto mse = [](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<mean_squared_error> loss;
+			  return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target );
+			};
+			zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, mse);
+		  }
+		  else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::OBJECTIVE)
+		  {
+			auto ce = [epsilon](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<cross_entropy_multi_class> loss;
+			  return loss(LOSS_FUNCTION_TYPE::OBJECTIVE, kth_output, kth_target, epsilon );
+			};
+			return zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, ce);
+		  }
+		  else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
+		  {
+			auto ce = [epsilon](const double & kth_output, const double & kth_target)
+			{
+			  loss_function_interface<cross_entropy_multi_class> loss;
+			  return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target, epsilon );
+			};
+			return zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, ce);
+		  }
+	  }
 	// loss function
 	template <class LOSS_FUNCTION>
 	  template <class precision_type>
