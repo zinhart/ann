@@ -882,7 +882,8 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  // calculate error 
 	  // error  = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, outputs, targets, n_elements);
 	  // calculate error derivative
-	  error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE,  current_threads_activation_ptr, current_target, total_layers[output_layer].second);
+	  error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE, current_threads_activation_ptr, current_target, total_layers[output_layer].second);
+	  //std::cout<<"error: "<<error<<"\n";
 	  // begin backprop 
 	  results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), error, total_cases_ptr, total_targets_ptr, ith_case, 
 									  total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
@@ -916,7 +917,6 @@ TEST(multi_layer_perceptron, backward_propagate)
 	}
 	// clear futures
 	results.clear();
-
   }
   // END FORWARD & BACKPROP PROP
   // release memory

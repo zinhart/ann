@@ -361,7 +361,7 @@ namespace zinhart
 		current_threads_activation_workspace_index = thread_id * thread_activation_stride;
 		current_threads_output_workspace_index = thread_id * thread_output_stride;
 		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
-/*
+
 		// set pointers for output layer gradient for the current thread
 	    const precision_type * current_threads_hidden_input_ptr{total_hidden_inputs + current_threads_activation_workspace_index + output_layer_index};
 		const precision_type * current_threads_activation_ptr{total_activations + current_threads_activation_workspace_index + output_layer_index};
@@ -371,7 +371,7 @@ namespace zinhart
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
 		  total_deltas[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
-
+/*
 		// for gemm
 		m = total_layers[current_layer].second;
 		n = total_layers[previous_layer].second;
