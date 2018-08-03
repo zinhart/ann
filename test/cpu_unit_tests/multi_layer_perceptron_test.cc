@@ -35,7 +35,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   double * current_threads_hidden_input_ptr{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation
   const std::uint32_t input_layer{0};
@@ -81,7 +81,7 @@ TEST(multi_layer_perceptron, forward_propagate)
   // calc number of activations
   for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations_length += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
-  thread_stride = total_activations_length;// important!
+  activation_stride = total_activations_length;// important!
   total_activations_length *= n_threads;
   
   // calc number of hidden weights
@@ -154,7 +154,7 @@ TEST(multi_layer_perceptron, forward_propagate)
 	  m = total_layers[current_layer].second;
 	  n = 1;
 	  k = total_layers[previous_layer].second;
-	  current_threads_activation_index = thread_id * thread_stride;
+	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
 	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
@@ -293,7 +293,7 @@ TEST(multi_layer_perceptron, get_results)
   double * outputs_ptr_test{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation
   const std::uint32_t input_layer{0};
@@ -339,7 +339,7 @@ TEST(multi_layer_perceptron, get_results)
   // calc number of activations
   for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations_length += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
-  thread_stride = total_activations_length;// important!
+  activation_stride = total_activations_length;// important!
   total_activations_length *= n_threads;
   
   // calc number of hidden weights
@@ -423,7 +423,7 @@ TEST(multi_layer_perceptron, get_results)
 	  m = total_layers[current_layer].second;
 	  n = 1;
 	  k = total_layers[previous_layer].second;
-	  current_threads_activation_index = thread_id * thread_stride;
+	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
 	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
@@ -589,7 +589,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   double * outputs_ptr_test{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, thread_stride{0}, gradient_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, gradient_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation & backward propagation
   const std::uint32_t input_layer{0};
@@ -638,7 +638,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   // calc number of activations
   for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
 	total_activations_length += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
-  thread_stride = total_activations_length;// important!
+  activation_stride = total_activations_length;// important!
   total_activations_length *= n_threads;
   
   // calc number of hidden weights
@@ -652,9 +652,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 
   const std::uint32_t alignment{64};
   const std::uint32_t output_layer_nodes{total_layers[total_layers.size() - 1].second};
-  std::uint32_t output_layer_index{0};
-  for(i = 1; i < total_layers.size(); ++i)
-	output_layer_index += total_layers[i].second;
+
 
   // allocate vectors
   total_activations_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
@@ -692,6 +690,12 @@ TEST(multi_layer_perceptron, backward_propagate)
 	total_gradient_ptr[i] = 0.0;
 	total_gradient_ptr_test[i] = 0.0;
   }
+  for(i = 0; i < total_gradient_length; ++i)
+  {
+	total_gradient_ptr[i] = 0.0;
+	total_gradient_ptr_test[i] = 0.0;
+  }
+
   for(i = 0; i < total_bias_length; ++i)
 	total_bias_ptr[i] = real_dist(mt);
   for(i = 0; i < output_layer_nodes; ++i)
@@ -760,7 +764,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  m = total_layers[current_layer].second;
 	  n = 1;
 	  k = total_layers[previous_layer].second;
-	  current_threads_activation_index = thread_id * thread_stride;
+	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
 	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
@@ -888,16 +892,16 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), error, total_cases_ptr, total_targets_ptr, ith_case, 
 									  total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
 									  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id );
+	  std::uint32_t output_layer_index{0};
+	  for(i = 1; i < total_layers.size() - 1; ++i)
+		output_layer_index += total_layers[i].second;
 	  // set up for calculating output layer gradients
-	  current_layer = 1;
-	  previous_layer = 0;
-	  // adjust to output layer
 	  current_layer = output_layer;
 	  previous_layer = output_layer - 1;
 	  // adjust pointer indices
 	  current_layer_index = output_layer_index;
 	  previous_layer_index = output_layer_index - total_layers[previous_layer].second;
-	  current_threads_activation_index = thread_id * thread_stride;
+	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_gradient_index = thread_id * gradient_stride;
 	  // set pointers
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
@@ -905,8 +909,8 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
 	  current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
 	  // calculate output layer deltas
-	  //for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
-		//total_deltas_ptr_test[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
+	  for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
+		total_deltas_ptr_test[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
 	  // calculate output layer gradient 
 	  m = total_layers[current_layer].second;
 	  n = total_layers[previous_layer].second;
@@ -914,6 +918,17 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  // calc hidden layer deltas
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
+
+	  // validate bprop outputs
+	  for(i = 0; i < total_activations_length; ++i)
+		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
+	  for(i = 0; i < total_activations_length; ++i)
+		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
+	  // validate forward prop outputs
+	  for(i = 0; i < total_activations_length; ++i)
+		EXPECT_DOUBLE_EQ(total_deltas_ptr[i], total_deltas_ptr_test[i]);
+	  for(i = 0; i < total_gradient_length; ++i)
+		EXPECT_DOUBLE_EQ(total_gradient_ptr[i], total_gradient_ptr_test[i]);
 	}
 	// clear futures
 	results.clear();
