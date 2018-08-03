@@ -720,6 +720,27 @@ TEST(multi_layer_perceptron, backward_propagate)
 											   thread_index
 										      );
 					  }; 
+  auto bprop_model = [](const std::vector<zinhart::activation::LAYER_INFO> & layers, 
+					 const double error,
+					 const double * total_training_cases_init, const double * total_targets_init, const std::uint32_t ith_training_case,
+					 double * total_hidden_inputs_init, double * total_activations_init, double * total_deltas_init, const std::uint32_t activations_length,
+					 const double * total_hidden_weights_init, double * total_gradient_init, const std::uint32_t weights_length,
+					 const double * const total_bias_init,
+					 const std::uint32_t total_threads,
+					 const std::uint32_t thread_index
+					)
+					{
+					  multi_layer_perceptron<double> mlp;
+				 	  mlp.backward_propagate(layers,
+											error,
+											total_training_cases_init, total_targets_init, ith_training_case,
+											total_hidden_inputs_init, total_activations_init, total_deltas_init, activations_length,
+											total_hidden_weights_init, total_gradient_init, weights_length,
+											total_bias_init,
+											total_threads,
+											thread_index
+										   );
+					};
   // BEGIN FORWARD & BACKWARD PROP
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
@@ -830,10 +851,12 @@ TEST(multi_layer_perceptron, backward_propagate)
 // 		std::cout<<"\n";
 	   }
 
-	  // synchronize w.r.t the current thread 
+	  // synchronize w.r.t the current thread, forward prop for the current thread ends here
 	  results[thread_id].get();
 
-	  // validate
+
+
+	  // validate forward prop outputs
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
 	  for(i = 0; i < total_activations_length; ++i)
@@ -846,7 +869,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 					  n_threads,
 					  thread_id
 					 );
-	  // validate
+	  // validate output_layer
 	  for(i = 0; i < output_layer_nodes; ++i)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
 /*
@@ -854,38 +877,45 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr, 1, total_activations_length, "parallel hidden inputs vector");
 	  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
 	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");*/
+	  
+	  double * current_target{total_targets_ptr + (ith_case * total_layers[output_layer].second)};
+	  // calculate error 
+	  // error  = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, outputs, targets, n_elements);
+	  // calculate error derivative
+	  error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE,  current_threads_activation_ptr, current_target, total_layers[output_layer].second);
+	  // begin backprop 
+	  results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), error, total_cases_ptr, total_targets_ptr, ith_case, 
+									  total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
+									  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id );
+	  // set up for calculating output layer gradients
+	  current_layer = 1;
+	  previous_layer = 0;
+	  // adjust to output layer
+	  current_layer = output_layer;
+	  previous_layer = output_layer - 1;
+	  // adjust pointer indices
+	  current_layer_index = output_layer_index;
+	  previous_layer_index = output_layer_index - total_layers[previous_layer].second;
+	  current_threads_activation_index = thread_id * thread_stride;
+	  current_threads_gradient_index = thread_id * gradient_stride;
+	  // set pointers
+	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
+	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
+	  current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
+	  current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
+	  // calculate output layer deltas
+	  //for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
+		//total_deltas_ptr_test[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
+	  // calculate output layer gradient 
+	  m = total_layers[current_layer].second;
+	  n = total_layers[previous_layer].second;
+	  k = 1;
+	  // calc hidden layer deltas
+	  // synchronize w.r.t the current thread, back prop ends here
+	  results[thread_id].get();
 	}
 	// clear futures
 	results.clear();
-
-	// set up for calculating output layer gradients
-	current_layer = 1;
-	previous_layer = 0;
-	// adjust to output layer
-	current_layer = output_layer;
-	previous_layer = output_layer - 1;
-	// adjust pointer indices
-	current_layer_index = output_layer_index;
-	previous_layer_index = output_layer_index - total_layers[previous_layer].second;
-	current_threads_activation_index = thread_id * thread_stride;
-	current_threads_gradient_index = thread_id * gradient_stride;
-	// set pointers
-	current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index + current_layer_index;
-	current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index +  current_layer_index;
-	current_threads_delta_ptr = total_deltas_ptr_test + current_threads_activation_index + current_layer_index;
-	current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index; 
-	double * current_target{total_targets_ptr + (ith_case * total_layers[output_layer].second)};
-    // calculate error 
-	//error  = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::OBJECTIVE, outputs, targets, n_elements);
-	// calculate error derivative
-	error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE,  current_threads_activation_ptr, current_target, total_layers[output_layer].second);
-	// calculate output layer deltas
-	// calculate output layer gradient 
-	// for gemm
-	m = total_layers[current_layer].second;
-	n = total_layers[previous_layer].second;
-	k = 1;
-	// calc hidden layer deltas
 
   }
   // END FORWARD & BACKPROP PROP

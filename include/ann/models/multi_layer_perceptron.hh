@@ -50,10 +50,10 @@ namespace zinhart
 
 			void backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
 								  	const precision_type error,
-									const precision_type * total_training_cases, const std::uint32_t case_index,
-									precision_type * total_hidden_inputs, const precision_type * total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
-									const precision_type * total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
-									const precision_type * total_bias,
+									const precision_type * const total_training_cases, const precision_type * const total_targets, const std::uint32_t case_index,
+									const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+									const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+									const precision_type * const total_bias,
 									const std::uint32_t n_threads = 1,
 									const std::uint32_t thread_id = 0
 								 );
