@@ -327,10 +327,10 @@ namespace zinhart
 		std::uint32_t current_layer{output_layer}, previous_layer{output_layer - 1}; 
 		std::uint32_t current_layer_index{output_layer_index}, previous_layer_index{output_layer_index - total_layers[previous_layer].second};
 
-		// The index of the beginning of the weight matrix between the last hidden layer and the output layer 
-		std::uint32_t weight_index{0};
-		for(i = 1, j = 0; i < total_layers.size() - 1; ++i)
-		  weight_index += total_layers[i].second * total_layers[j].second; 
+		// The index of the beginning of the gradient matrix between the last hidden layer and the output layer 
+		std::uint32_t gradient_index{0};
+		for(i = 1, j = 0; i < total_layers.size() - 1; ++i, ++j)
+		  gradient_index += total_layers[i].second * total_layers[j].second; 
 
 		// variables for gemm
 		precision_type alpha{1.0}, beta{0.0};
@@ -363,15 +363,20 @@ namespace zinhart
 		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
 
 		// set pointers for output layer gradient for the current thread
-	    const precision_type * current_threads_hidden_input_ptr{total_hidden_inputs + current_threads_activation_workspace_index + output_layer_index};
-		const precision_type * current_threads_activation_ptr{total_activations + current_threads_activation_workspace_index + output_layer_index};
-		precision_type * current_threads_delta_ptr{total_deltas + current_threads_activation_workspace_index + output_layer_index};
+	    const precision_type * current_threads_hidden_input_ptr{total_hidden_inputs + current_threads_activation_workspace_index};
+		const precision_type * current_threads_activation_ptr{total_activations + current_threads_activation_workspace_index};
+		precision_type * current_threads_delta_ptr{total_deltas + current_threads_activation_workspace_index};
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
+
+		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + output_layer_index};
+		const precision_type * output_layer_activation_ptr{current_threads_activation_ptr + output_layer_index};
+		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + output_layer_index};
+		precision_type * current_gradient_ptr{current_threads_gradient_ptr + gradient_index};
 
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
 		  total_deltas[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
-/*
+
 		// for gemm
 		m = total_layers[current_layer].second;
 		n = total_layers[previous_layer].second;
@@ -380,12 +385,12 @@ namespace zinhart
 		// calc output layer gradient
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 					m, n, k,
-					alpha, current_threads_delta_ptr, k,
-					current_threads_activation_ptr, n, beta, 
+					alpha, current_layer_deltas_ptr, k,
+					output_layer_hidden_inputs_ptr, n, beta, 
 					current_threads_gradient_ptr, n
-				   );
+				   );/**/
 
-      
+     /* 
 		// set pointers for the current and previous layers;
 		precision_type * current_layer_inputs{current_threads_hidden_input_ptr + output_layer_index};
 		precision_type * current_layer_outputs{current_threads_activation_ptr + output_layer_index};
