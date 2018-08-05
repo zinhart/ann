@@ -369,7 +369,7 @@ namespace zinhart
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
 
 		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + output_layer_index};
-		const precision_type * output_layer_activation_ptr{current_threads_activation_ptr + output_layer_index};
+		const precision_type * prior_layer_activation_ptr{current_threads_activation_ptr + previous_layer_index};
 		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + output_layer_index};
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + gradient_index};
 
@@ -383,10 +383,10 @@ namespace zinhart
 	   	k = 1;
 
 		// calc output layer gradient
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_layer_deltas_ptr, k,
-					output_layer_hidden_inputs_ptr, n, beta, 
+					prior_layer_activation_ptr, n, beta,// should be the prior layer activations 
 					current_threads_gradient_ptr, n
 				   );/**/
 
