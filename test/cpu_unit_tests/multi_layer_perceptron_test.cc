@@ -954,35 +954,42 @@ TEST(multi_layer_perceptron, backward_propagate)
 
 	  s = "Gradient matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
  	  zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-	  std::uint32_t current_weight_index{total_hidden_weights_length};
+	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};
+	  std::uint32_t next_layer_index{current_layer_index};
+	  std::uint32_t next_layer{current_layer};
+	  --current_layer;
+	  --previous_layer;
 	  // calc hidden layer deltas
-	  while(current_layer > /*total_layers.size() - 2*/0)
+	  while(current_layer > 0)
 	  {
-		current_weight_index -= total_layers[current_layer].second * total_layers[previous_layer].second;	
-   		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + current_weight_index};
-		double * next_layer_delta_ptr{current_layer_deltas_ptr};
+		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
+		current_layer_index = previous_layer_index;
+		previous_layer_index -= total_layers[previous_layer].second; 
 
-		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
-	  	zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-	    zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[current_layer].second, 1, "next layers deltas");
+   		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
+		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
+		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
 
-		current_layer_deltas_ptr = current_threads_delta_ptr + previous_layer_index ;
-		m = total_layers[previous_layer].second;
+
+		s = "Weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
+	  	zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[next_layer].second, s);
+	    zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[next_layer].second, 1, "next layers deltas");
+
+		m = total_layers[current_layer].second;
 	    n = 1;
-	    k = total_layers[current_layer].second;
+	    k = total_layers[next_layer].second;
 
    		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
 				  alpha, weight_ptr, k,
 				  next_layer_delta_ptr, n, beta, 
 				  current_layer_deltas_ptr, n
-				 );
+				 );/**/
 
-		// set up for hidden layer gradients
+		--next_layer;
 		--current_layer;
 		--previous_layer;
-		//current_layer_index = previous_layer_index; 
-		//previous_layer_index = current_layer_index - total_layers[previous_layer].second;
+		next_layer_index = current_layer_index;
 
 	    
 /*
@@ -992,11 +999,11 @@ TEST(multi_layer_perceptron, backward_propagate)
 	    prior_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index; 
 	    current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
 	    current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
-
+*/
 		std::cout<<"current_layer: "<<current_layer<<"\n";
 		std::cout<<"previous_layer: "<<previous_layer<<"\n";
-//		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
-//		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";*/
+		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
+		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";
 	  }
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
