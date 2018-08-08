@@ -757,8 +757,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  std::string s;
 	  s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
  	  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-/*	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
-	  */
+	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
 	  current_layer_index = 0;
 	  previous_layer_index = 0;
 	  weight_index = 0;
@@ -903,6 +902,10 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 for(i = 1; i < total_layers.size() - 2; ++i)
 	   previous_layer_index += total_layers[i].second;// the start of the layer right behind the output layer
 
+
+
+
+
 	 std::uint32_t current_gradient_index{0};
    	 // calc number of hidden weights
 	 for(i = 0 ; i < total_layers.size() - 2; ++i)
@@ -922,7 +925,8 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 // set pointers
 	 double * current_layers_hidden_input_ptr{current_threads_hidden_input_ptr + current_layer_index};
 	 double * current_layer_activation_ptr{current_threads_activation_ptr + current_layer_index};
-	 double * prior_layer_activation_ptr{current_threads_activation_ptr + previous_layer_index}; 
+	 // if this is a 2 layer model then the prior activations are essentially the inputs to the model
+	 const double * prior_layer_activation_ptr{(total_layers.size() > 2) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case}; 
 	 double * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
 	 double * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
@@ -936,7 +940,6 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 n = total_layers[previous_layer].second;
 	 k = 1; 
 
-	  
 	 // calc output layer gradient
 	 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 				  m, n, k,
@@ -971,7 +974,7 @@ TEST(multi_layer_perceptron, backward_propagate)
    		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
 		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
-		prior_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index;
+		double * previous_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index;
 
 
 		s = "weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
@@ -996,7 +999,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 		  total_deltas_ptr_test[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
 
 	    zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, total_layers[current_layer].second, 1, "current layers deltas");
-	    zinhart::serial::print_matrix_row_major(prior_layer_activation_ptr, 1, total_layers[previous_layer].second, "prior layers activation");
+	    zinhart::serial::print_matrix_row_major(previous_layer_activation_ptr, 1, total_layers[previous_layer].second, "prior layers activation");
 
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
@@ -1005,7 +1008,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 				  m, n, k,
 				  alpha, current_layer_deltas_ptr, k,
-				  prior_layer_activation_ptr, n, beta, 
+				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
 				 );
 
@@ -1030,21 +1033,40 @@ TEST(multi_layer_perceptron, backward_propagate)
 		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
 		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";
 	  }
-	  // calc input layer matrix gradient
-	  
-	  next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
-	  double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
 
+	  // calc gradient for the matrix connecting the input layer to the first hidden layer
+	  if(total_layers.size() > 2)
+	  {
+		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
+		current_layer_index = previous_layer_index;
+		zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
+		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
+		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
+		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
 
-	  s = "weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
-	  zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[next_layer].second, s);
-/*	  zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[next_layer].second, 1, "next layers deltas");
-	  current_layer_index = previous_layer_index;
-	  previous_layer_index -= total_layers[previous_layer].second; 
-	  current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;	
-	  current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;*/
-	  
-	  // backprop done
+		m = total_layers[current_layer].second;
+		n = 1;
+		k = total_layers[next_layer].second;
+
+		cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+					m, n, k,
+					alpha, weight_ptr, m,
+					next_layer_delta_ptr, n, beta, 
+					current_layer_deltas_ptr, n
+				   );
+
+		s = "weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
+		zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[next_layer].second, s);
+
+  /*	  zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[next_layer].second, 1, "next layers deltas");
+		current_layer_index = previous_layer_index;
+		previous_layer_index -= total_layers[previous_layer].second; 
+		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;	
+		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;*/
+
+	  }
+	  std::cout<<"total_layers: "<<total_layers.size()<<"\n";	
+	  // serial backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
 
