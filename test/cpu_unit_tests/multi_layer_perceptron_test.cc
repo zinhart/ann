@@ -790,7 +790,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 		
 	 // std::cout<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
 
-	//  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "activation vector");
+	  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "activation vector");
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
 
@@ -934,7 +934,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 // set up to calculate output layer gradient 
 	 m = total_layers[current_layer].second;
 	 n = total_layers[previous_layer].second;
-	 k = 1;
+	 k = 1; 
 
 	  
 	 // calc output layer gradient
@@ -959,19 +959,22 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
-	  // calc hidden layer deltas
-	  while(current_layer > 0)
+	  // calc hidden layer gradients
+	  while(current_layer > 1)
 	  {
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
 		current_layer_index = previous_layer_index;
 		previous_layer_index -= total_layers[previous_layer].second; 
+		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;
+		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
 
    		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
 		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
+		prior_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index;
 
 
-		s = "Weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
+		s = "weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
 	  	zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[next_layer].second, s);
 	    zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[next_layer].second, 1, "next layers deltas");
 
@@ -993,13 +996,26 @@ TEST(multi_layer_perceptron, backward_propagate)
 		  total_deltas_ptr_test[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
 
 	    zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, total_layers[current_layer].second, 1, "current layers deltas");
+	    zinhart::serial::print_matrix_row_major(prior_layer_activation_ptr, 1, total_layers[previous_layer].second, "prior layers activation");
 
+		m = total_layers[current_layer].second;
+   		n = total_layers[previous_layer].second;
+   		k = 1;
+   
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+				  m, n, k,
+				  alpha, current_layer_deltas_ptr, k,
+				  prior_layer_activation_ptr, n, beta, 
+				  current_gradient_ptr, n
+				 );
 
+		s = "current gradient matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+	  	zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
+
+		next_layer_index = current_layer_index;
 		--next_layer;
 		--current_layer;
 		--previous_layer;
-		next_layer_index = current_layer_index;
-
 	    
 /*
 		// set pointers
@@ -1014,6 +1030,9 @@ TEST(multi_layer_perceptron, backward_propagate)
 		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
 		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";
 	  }
+	  // calc input layer matrix gradient
+	  
+	  // backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
 
