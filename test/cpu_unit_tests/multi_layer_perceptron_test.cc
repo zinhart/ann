@@ -938,7 +938,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 
 	  
 	 // calc output layer gradient
-	 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	 cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 				  m, n, k,
 				  alpha, current_layer_deltas_ptr, k,
 				  prior_layer_activation_ptr, n, beta, 
@@ -982,9 +982,9 @@ TEST(multi_layer_perceptron, backward_propagate)
 	    n = 1;
 	    k = total_layers[next_layer].second;
 
-   		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+   		cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
 				  m, n, k,
-				  alpha, weight_ptr, k,
+				  alpha, weight_ptr, m,
 				  next_layer_delta_ptr, n, beta, 
 				  current_layer_deltas_ptr, n
 				 );/**/
@@ -1002,7 +1002,7 @@ TEST(multi_layer_perceptron, backward_propagate)
    		n = total_layers[previous_layer].second;
    		k = 1;
    
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 				  m, n, k,
 				  alpha, current_layer_deltas_ptr, k,
 				  prior_layer_activation_ptr, n, beta, 
@@ -1031,6 +1031,18 @@ TEST(multi_layer_perceptron, backward_propagate)
 		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";
 	  }
 	  // calc input layer matrix gradient
+	  
+	  next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
+	  double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
+
+
+	  s = "weight matrix between layers: " + std::to_string(next_layer) + " " + std::to_string(current_layer) + " dimensions: " + std::to_string(total_layers[next_layer].second) + " " + std::to_string(total_layers[current_layer].second);
+	  zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[next_layer].second, s);
+/*	  zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[next_layer].second, 1, "next layers deltas");
+	  current_layer_index = previous_layer_index;
+	  previous_layer_index -= total_layers[previous_layer].second; 
+	  current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;	
+	  current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;*/
 	  
 	  // backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
