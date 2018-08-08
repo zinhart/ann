@@ -746,18 +746,18 @@ TEST(multi_layer_perceptron, backward_propagate)
 										   );
 					};
   // BEGIN FORWARD & BACKWARD PROP
-  for(ith_case = 0; ith_case < total_cases; ++ith_case)
+  for(ith_case = 0; ith_case < /*total_cases*/1; ++ith_case)
   {
 	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer].second)};
-	for(thread_id = 0; thread_id < n_threads; ++thread_id)
+	for(thread_id = 0; thread_id < /*n_threads*/1; ++thread_id)
 	{
 	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  std::string s;
-/*	  s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+	  s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
  	  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
+/*	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
 	  */
 	  current_layer_index = 0;
 	  previous_layer_index = 0;
@@ -811,9 +811,9 @@ TEST(multi_layer_perceptron, backward_propagate)
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
 		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
-/*		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
 	  	zinhart::serial::print_matrix_row_major(current_weight_matrix, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-	    zinhart::serial::print_matrix_row_major(prior_layer_ptr, total_layers[previous_layer].second, 1, "Inputs");*/
+/*	    zinhart::serial::print_matrix_row_major(prior_layer_ptr, total_layers[previous_layer].second, 1, "Inputs");*/
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[previous_layer].second;
@@ -892,10 +892,10 @@ TEST(multi_layer_perceptron, backward_propagate)
 	  error = loss(zinhart::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::error_metrics::LOSS_FUNCTION_TYPE::DERIVATIVE, outputs_ptr_test, current_target, total_layers[output_layer].second);
 	  //std::cout<<"error: "<<error<<"\n";
 	  // begin backprop 
-	 /* results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), error, total_cases_ptr, total_targets_ptr, ith_case, 
+	  results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), error, total_cases_ptr, total_targets_ptr, ith_case, 
 									  total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
 									  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id );
-*/
+/**/
 	 current_layer_index = 0; 
 	 for(i = 1; i < total_layers.size() - 1; ++i)
 	   current_layer_index += total_layers[i].second;// the start of the output layer
@@ -954,12 +954,52 @@ TEST(multi_layer_perceptron, backward_propagate)
 
 	  s = "Gradient matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
  	  zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-
-	  // gradient check for output layer
-
+	  std::uint32_t current_weight_index{total_hidden_weights_length};
 	  // calc hidden layer deltas
+	  while(current_layer > /*total_layers.size() - 2*/0)
+	  {
+		current_weight_index -= total_layers[current_layer].second * total_layers[previous_layer].second;	
+   		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + current_weight_index};
+		double * next_layer_delta_ptr{current_layer_deltas_ptr};
+
+		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
+	  	zinhart::serial::print_matrix_row_major(weight_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
+	    zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, total_layers[current_layer].second, 1, "next layers deltas");
+
+		current_layer_deltas_ptr = current_threads_delta_ptr + previous_layer_index ;
+		m = total_layers[previous_layer].second;
+	    n = 1;
+	    k = total_layers[current_layer].second;
+
+   		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+				  m, n, k,
+				  alpha, weight_ptr, k,
+				  next_layer_delta_ptr, n, beta, 
+				  current_layer_deltas_ptr, n
+				 );
+
+		// set up for hidden layer gradients
+		--current_layer;
+		--previous_layer;
+		//current_layer_index = previous_layer_index; 
+		//previous_layer_index = current_layer_index - total_layers[previous_layer].second;
+
+	    
+/*
+		// set pointers
+	    current_layers_hidden_input_ptr = current_threads_hidden_input_ptr + current_layer_index;
+	    current_layer_activation_ptr = current_threads_activation_ptr + current_layer_index;
+	    prior_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index; 
+	    current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
+	    current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
+
+		std::cout<<"current_layer: "<<current_layer<<"\n";
+		std::cout<<"previous_layer: "<<previous_layer<<"\n";
+//		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
+//		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";*/
+	  }
 	  // synchronize w.r.t the current thread, back prop ends here
-//	  results[thread_id].get();
+	  results[thread_id].get();
 
 	  // validate bprop outputs
 	  for(i = 0; i < total_activations_length; ++i)
@@ -970,7 +1010,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 /* for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_deltas_ptr[i], total_deltas_ptr_test[i]);
 	  for(i = 0; i < total_gradient_length; ++i)
-		EXPECT_DOUBLE_EQ(total_gradient_ptr[i], total_gradient_ptr_test[i]);
+		EXPECT_NEAR(total_gradient_ptr[i], total_gradient_ptr_test[i], std::numeric_limits<double>::epsilon())<< "i: "<<i<<"\n";
 		*/
 	}
 	// clear futures

@@ -318,19 +318,19 @@ namespace zinhart
 		std::uint32_t i{0}, j{0};
 
 		const std::uint32_t input_layer{0}, output_layer{total_layers.size() - 1};
-		std::uint32_t output_layer_index{0};
-
-		for(i = 1; i < total_layers.size() - 1; ++i)
-		  output_layer_index += total_layers[i].second;
+		std::uint32_t current_layer_index{0}, previous_layer_index{0}, current_gradient_index{0};
+		// the start of the output layer
+ 		for(i = 1; i < total_layers.size() - 1; ++i)
+ 		  current_layer_index += total_layers[i].second;
+		// the start of the layer right behind the output layer
+ 		for(i = 1; i < total_layers.size() - 2; ++i)
+ 		  previous_layer_index += total_layers[i].second;	   
+		// The index of the beginning of the gradient matrix between the last hidden layer and the output layer 
+	   	for(i = 0 ; i < total_layers.size() - 2; ++i)
+		  current_gradient_index += total_layers[i + 1].second * total_layers[i].second;
 
 		// All layer counters
 		std::uint32_t current_layer{output_layer}, previous_layer{output_layer - 1}; 
-		std::uint32_t current_layer_index{output_layer_index}, previous_layer_index{output_layer_index - total_layers[previous_layer].second};
-
-		// The index of the beginning of the gradient matrix between the last hidden layer and the output layer 
-		std::uint32_t gradient_index{0};
-		for(i = 1, j = 0; i < total_layers.size() - 1; ++i, ++j)
-		  gradient_index += total_layers[i].second * total_layers[j].second; 
 
 		// variables for gemm
 		precision_type alpha{1.0}, beta{0.0};
@@ -344,11 +344,9 @@ namespace zinhart
 		const precision_type * current_training_case{total_training_cases + input_stride};
 		
 		// variables for the thread calling this method, to determine it's workspace
-		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index;
+		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index{0};
 		std::uint32_t thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_stride{0};
 		
-		// the loss function
-		zinhart::error_metrics::loss_function loss;
 		// the activation function of each layer
 		zinhart::activation::activation_function af;
 
@@ -368,10 +366,10 @@ namespace zinhart
 		precision_type * current_threads_delta_ptr{total_deltas + current_threads_activation_workspace_index};
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
 
-		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + output_layer_index};
-		const precision_type * prior_layer_activation_ptr{current_threads_activation_ptr + previous_layer_index};
-		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + output_layer_index};
-		precision_type * current_gradient_ptr{current_threads_gradient_ptr + gradient_index};
+		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + current_layer_index};
+		const precision_type * last_hidden_layer_activation_ptr{current_threads_activation_ptr + previous_layer_index};
+		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
+		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
@@ -386,8 +384,8 @@ namespace zinhart
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_layer_deltas_ptr, k,
-					prior_layer_activation_ptr, n, beta,// should be the prior layer activations 
-					current_threads_gradient_ptr, n
+					last_hidden_layer_activation_ptr, n, beta,// should be the prior layer activations 
+					current_gradient_ptr, n
 				   );/**/
 
      /* 
