@@ -927,7 +927,7 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 double * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
 	 // calculate output layer deltas
-	 for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
+	 for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 	   total_deltas_ptr_test[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
 
 
@@ -985,6 +985,15 @@ TEST(multi_layer_perceptron, backward_propagate)
 				  next_layer_delta_ptr, n, beta, 
 				  current_layer_deltas_ptr, n
 				 );/**/
+
+	    zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, total_layers[current_layer].second, 1, "current layers deltas");
+
+   		// calculate current layer deltas
+		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+		  total_deltas_ptr_test[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_input_ptr_test[i]);
+
+	    zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, total_layers[current_layer].second, 1, "current layers deltas");
+
 
 		--next_layer;
 		--current_layer;
