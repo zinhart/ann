@@ -42,7 +42,7 @@ namespace zinhart
 			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size);
+			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon = 1.e-30);

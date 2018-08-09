@@ -83,17 +83,14 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
 
 			if(name == LOSS_FUNCTION_NAME::MSE) 
 			{
-			  auto mse = [label, batch_size](const double & kth_output, const double & kth_target)
-			  {
-				loss_function_interface<mean_squared_error> loss;
-				return loss(label, kth_output, kth_target, batch_size);
-			  };
-			  zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, mse);
+			  loss_function_interface<mean_squared_error> loss;
+			  for(std::uint32_t i = 0; i < vector_lengths; ++i)
+				*(results + i) = loss(label, *(outputs + i), *(targets + i), batch_size);
 			}
 		}
 
