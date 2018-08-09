@@ -367,7 +367,8 @@ namespace zinhart
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
 
 		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + current_layer_index};
-		const precision_type * last_hidden_layer_activation_ptr{current_threads_activation_ptr + previous_layer_index};
+   		// if this is a 2 layer model then the prior activations are essentially the inputs to the model, i.e the while loop does not activate
+		const precision_type * prior_activation_ptr{ (total_layers.size() > 2) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
 		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
@@ -381,37 +382,63 @@ namespace zinhart
 	   	k = 1;
 
 		// calc output layer gradient
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
 					m, n, k,
 					alpha, current_layer_deltas_ptr, k,
-					last_hidden_layer_activation_ptr, n, beta,// should be the prior layer activations 
+					prior_activation_ptr, n, beta,// should be the prior layer activations 
 					current_gradient_ptr, n
 				   );/**/
 
-     /* 
-		// set pointers for the current and previous layers;
-		precision_type * current_layer_inputs{current_threads_hidden_input_ptr + output_layer_index};
-		precision_type * current_layer_outputs{current_threads_activation_ptr + output_layer_index};
-		precision_type * current_layer_deltas{current_threads_delta_ptr + output_layer_index};
-		//precision_type * weight_ptr{total_hidden_weights + weight_index};
-		precision_type * gradient_ptr{current_threads_gradient_ptr + weight_index};
-
-
-		while (current_layer > 0)
-		{
-
-		  const precision_type * current_layer_inputs{current_threads_hidden_input_ptr + output_layer_index};
-		  const precision_type * current_layer_outputs{current_threads_activation_ptr + output_layer_index};
-		  --current_layer;
-		  --previous_layer;
-		}
+	  // set up for hidden layer gradients
+	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};
+	  std::uint32_t next_layer_index{current_layer_index};
+	  std::uint32_t next_layer{current_layer};
+	  --current_layer;
+	  --previous_layer;
 	  
-	  */
+	  while(current_layer > 0)
+	  {
+		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;
+		current_layer_index = previous_layer_index;
+		previous_layer_index -= total_layers[previous_layer].second;
+		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;
+		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
+		// the weight matrix one layer in front of the current gradient matrix
+		const precision_type * weight_ptr{total_hidden_weights + current_threads_gradient_workspace_index + next_weight_matrix_index};
+		precision_type * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
+		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
+		const precision_type * previous_layer_activation_ptr{ (current_layer > 1) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
 
+		m = total_layers[current_layer].second;
+		n = 1;
+		k = total_layers[next_layer].second;
+
+   		cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+				  m, n, k,
+				  alpha, weight_ptr, m,
+				  next_layer_delta_ptr, n, beta, 
+				  current_layer_deltas_ptr, n
+				 );
+
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
+
+		m = total_layers[current_layer].second;
+   		n = total_layers[previous_layer].second;
+   		k = 1;
+   
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+				  m, n, k,
+				  alpha, current_layer_deltas_ptr, k,
+				  previous_layer_activation_ptr, n, beta, 
+				  current_gradient_ptr, n
+				 );
+		next_layer_index = current_layer_index;
+		--next_layer;
+		--current_layer;
+		--previous_layer;
 	  }
-
-
+	}	  
 #endif
-
   }
 }

@@ -562,8 +562,7 @@ TEST(multi_layer_perceptron, backward_propagate)
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types() - 1);// does not include input layer
   std::uniform_int_distribution<std::uint32_t> loss_function_dist(0, 1);
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
-  std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
-
+  std::uniform_real_distribution<float> real_dist(-1, 1);
   // declarations for vector lengths
   std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_case_length{0}, total_targets_length{0}, total_cases{0};
   
@@ -902,10 +901,6 @@ TEST(multi_layer_perceptron, backward_propagate)
 	 for(i = 1; i < total_layers.size() - 2; ++i)
 	   previous_layer_index += total_layers[i].second;// the start of the layer right behind the output layer
 
-
-
-
-
 	 std::uint32_t current_gradient_index{0};
    	 // calc number of hidden weights
 	 for(i = 0 ; i < total_layers.size() - 2; ++i)
@@ -1023,21 +1018,16 @@ TEST(multi_layer_perceptron, backward_propagate)
 		--next_layer;
 		--current_layer;
 		--previous_layer;
-	    
-/*
-		// set pointers
-	    current_layers_hidden_input_ptr = current_threads_hidden_input_ptr + current_layer_index;
-	    current_layer_activation_ptr = current_threads_activation_ptr + current_layer_index;
-	    prior_layer_activation_ptr = current_threads_activation_ptr + previous_layer_index; 
-	    current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
-	    current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
-*/
+		/*
 		std::cout<<"current_layer: "<<current_layer<<"\n";
 		std::cout<<"previous_layer: "<<previous_layer<<"\n";
 		std::cout<<"current_layer_index: "<<current_layer_index<<"\n";
 		std::cout<<"previous_layer_index: "<<previous_layer_index<<"\n";
+		*/
 	  }
 	  std::cout<<"total_layers: "<<total_layers.size()<<"\n";	
+	  std::cout<<"Total threads: "<<n_threads<<"\n";
+	  std::cout<<"total cases: "<<total_cases<<"\n";
 	  // serial backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
@@ -1047,12 +1037,11 @@ TEST(multi_layer_perceptron, backward_propagate)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
-	  // validate forward prop outputs
-	 /* for(i = 0; i < total_activations_length; ++i)
+	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_deltas_ptr[i], total_deltas_ptr_test[i]);
 	  for(i = 0; i < total_gradient_length; ++i)
 		EXPECT_NEAR(total_gradient_ptr[i], total_gradient_ptr_test[i], std::numeric_limits<double>::epsilon())<< "i: "<<i<<"\n";
-		*/
+		/**/
 	}
 	// clear futures
 	results.clear();
