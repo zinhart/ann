@@ -8,7 +8,7 @@ namespace zinhart
 #if CUDA_ENABLED == 1
 	template <class precision_type>
 	  template <class LOSS_FUNCTION>
-	  HOST std::int32_t multi_layer_perceptron<precision_type>::forward_propagate_async(const bool & copy_device_to_host, 
+	  HOST std::int32_t multi_layer_perceptron<connection::dense, precision_type>::forward_propagate_async(const bool & copy_device_to_host, 
 								 const cudaStream_t & stream, const cublasHandle_t & context, LOSS_FUNCTION error_metric,
 								 const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 								 const std::uint32_t & total_targets, const double * host_total_targets, const double * device_total_targets,
@@ -149,7 +149,7 @@ namespace zinhart
 		  }
 	template <class precision_type>
 	  //template <class LOSS_FUNCTION>
-		  HOST void multi_layer_perceptron<precision_type>::backward_propagate(cublasHandle_t & context)
+		  HOST void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(cublasHandle_t & context)
 		  {
 			//cublas gemm here
 			
@@ -169,7 +169,7 @@ namespace zinhart
 	//cpu multi-threaded code will go here
 #else
 	template <class precision_type>
-	  void multi_layer_perceptron<precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
+	  void multi_layer_perceptron<connection::dense, precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 																	 const precision_type * total_training_cases, const std::uint32_t case_index,
 																	 precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
 																	 const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
@@ -282,7 +282,7 @@ namespace zinhart
 		  }
 
 	template <class precision_type>
-  	  void multi_layer_perceptron<precision_type>::get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
+  	  void multi_layer_perceptron<connection::dense, precision_type>::get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
 															   const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
 															   precision_type * model_outputs, 
 															   const std::uint32_t n_threads, 
@@ -305,7 +305,7 @@ namespace zinhart
 		  model_outputs[j] = total_hidden_outputs[i];
 	  }
 	template <class precision_type>
-	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
+	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
 								  	const precision_type error,
 									const precision_type * const total_training_cases, const precision_type * const total_targets, const std::uint32_t case_index,
 									const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
@@ -388,6 +388,9 @@ namespace zinhart
 					prior_activation_ptr, n, beta,// should be the prior layer activations 
 					current_gradient_ptr, n
 				   );/**/
+
+		zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, m, k, "current_deltas");
+		zinhart::serial::print_matrix_row_major(prior_activation_ptr, k, n, "prior_activation");
 
 	  // set up for hidden layer gradients
 	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};

@@ -1,36 +1,38 @@
-#include <cassert>
+#include <ann/models/multi_layer_perceptron.hh>
 namespace zinhart
 {
   namespace models
   {
-  	template <class model_type, class precision_type>
-  	  HOST void ann<model_type, precision_type>::add_layer(const zinhart::activation::LAYER_INFO & ith_layer)
+ 	template <class precision_type>
+  	  HOST void ann<architecture::mlp_dense, precision_type>::add_layer(const zinhart::activation::LAYER_INFO & ith_layer)
   	  { total_layers.push_back(ith_layer); }
-	template <class model_type, class precision_type>
-	  HOST const std::vector<zinhart::activation::LAYER_INFO> ann<model_type, precision_type>::get_total_layers()const
+	template <class precision_type>
+	  HOST const std::vector<zinhart::activation::LAYER_INFO> ann<architecture::mlp_dense, precision_type>::get_total_layers()const
 	  {return total_layers; }
-	template <class model_type, class precision_type>
-	  HOST void ann<model_type, precision_type>::clear_layers()
+	template <class precision_type>
+	  HOST void ann<architecture::mlp_dense, precision_type>::clear_layers()
 	  {total_layers.clear(); }
-	template <class model_type, class precision_type>
-	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_activations()const
+
+
+	template <class precision_type>
+	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_activations()const
 	  {return total_activations_length;}
-	template <class model_type, class precision_type>
-	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_deltas()const
+	template <class precision_type>
+	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_deltas()const
 	  {return total_deltas_length;}
-	template <class model_type, class precision_type>
-	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_hidden_weights()const
+	template <class precision_type>
+	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_hidden_weights()const
 	  {return total_hidden_weights_length;}
-	template <class model_type, class precision_type>
-	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_gradients()const
+	template <class precision_type>
+	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_gradients()const
 	  {return total_gradient_length;}
-	template <class model_type, class precision_type>
-	  HOST const std::uint32_t ann<model_type, precision_type>::get_total_bias()const
+	template <class precision_type>
+	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_bias()const
 	  {return total_bias_length;}
 	/* 
 	// partial cpu and gpu functions here
-  	template <class model_type, class precision_type>
-	  HOST std::int32_t ann<model_type, precision_type>::train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
+  	template <class architecture::mlp_dense, class precision_type>
+	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty)
 		{
 		  int error = 0;
 		  std::uint32_t ith_epoch, ith_observation;
@@ -82,7 +84,7 @@ namespace zinhart
 			  //call back_propagate
 #else
 			  std::cout<<"Apples\n";
-			  static_cast<model_type*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
+			  static_cast<architecture::mlp_dense*>(this)->forward_propagate(total_layers, ith_observation, total_observations, total_targets, total_hidden_weights, total_activations);
 #endif
 			}
 		  }
@@ -103,8 +105,8 @@ namespace zinhart
 */
 // gpu only functions here
 #if CUDA_ENABLED == 1
-  	template <class model_type, class precision_type>
-  	  HOST std::int32_t ann<model_type, precision_type>::init(std::pair<std::uint32_t, double *> & total_observations,
+  	template <class precision_type>
+  	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::init(std::pair<std::uint32_t, double *> & total_observations,
 						   std::pair<std::uint32_t, double *> & total_targets,
 						   std::uint32_t device_id = 0
 				          )
@@ -144,8 +146,8 @@ namespace zinhart
 		  zinhart::check_cuda_api(cudaHostAlloc((void**)&this->total_error.second, sizeof(double) * this->total_targets.first, cudaHostAllocDefault),__FILE__,__LINE__);
 		  return cuda_init();
 		}
-	template <class model_type, class precision_type>
-  	  HOST std::int32_t ann<model_type, precision_type>::cuda_init()
+	template <class precision_type>
+  	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::cuda_init()
 		{
 		  // allocate space for observations		
   		  if( check_cuda_api(cudaMalloc( (void **) &global_device_total_observations, total_observations.first * total_layers[0].second * sizeof(double)),__FILE__, __LINE__) == 1)
@@ -197,8 +199,8 @@ namespace zinhart
 		   return 1;
 		 return 0; 
 		}
-	template <class model_type, class precision_type>
-		HOST std::int32_t ann<model_type, precision_type>::cuda_cleanup()
+	template <class precision_type>
+		HOST std::int32_t ann<architecture::mlp_dense, precision_type>::cuda_cleanup()
 		{
 
 		  if(check_cuda_api(cudaFreeHost(total_observations.second),__FILE__,__LINE__) == 1)
@@ -235,19 +237,19 @@ namespace zinhart
 		   return 1;
 		  return 0;
 		}
-	template <class model_type, class precision_type>
-  	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
+	template <class precision_type>
+  	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::forward_propagate(const bool & copy_device_to_host, cublasHandle_t & context, 
 			                   const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 							   const std::pair<std::uint32_t, double *> & total_targets, 
 			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
 							   const std::pair<std::uint32_t, double *> & total_activations,
 							   double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight)
-		{ return static_cast<model_type*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
+		{ return static_cast<architecture::mlp_dense*>(this)->forward_propagate(copy_device_to_host, context, ith_observation_index, total_layers, total_targets, total_hidden_weights, total_activations
 			,device_total_observation, device_total_activation, device_total_bia, device_total_hidden_weight); }
 	//cpu only functions here
 #else
-	template <class model_type, class precision_type>
-		HOST void ann<model_type, precision_type>::init(const std::uint32_t & n_threads)
+	template <class precision_type>
+		HOST void ann<architecture::mlp_dense, precision_type>::init(const std::uint32_t & n_threads)
 		{
 		  assert(this->total_layers.size() != 0);
 		  assert(n_threads > 0);
@@ -278,10 +280,10 @@ namespace zinhart
 		  this->total_gradient = (precision_type*) mkl_malloc( this->total_gradient_length * sizeof( precision_type ), alignment );
 		  this->total_bias = (precision_type*) mkl_malloc( this->total_bias_length * sizeof( precision_type ), alignment );
 		}
-	template <class model_type, class precision_type>
-	  HOST std::int32_t ann<model_type, precision_type>::forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id )
+	template <class precision_type>
+	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id )
 	  {
-		static_cast<model_type*>(this)->forward_propagate(this->total_layers, 
+		static_cast<multi_layer_perceptron<connection::dense, precision_type>>(this)->forward_propagate(this->total_layers, 
 			                                              total_training_cases, case_index, 
 			                                              this->total_activations, this->total_activations_length, 
 														  this->total_hidden_weights, this->total_hidden_weights_length,
@@ -289,11 +291,11 @@ namespace zinhart
 														  thread_id
 														 );
 	  }
-	template <class model_type, class precision_type>
-	  HOST void ann<model_type, precision_type>::get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id)
-	  {	static_cast<model_type*>(this)->get_outputs(this->total_layers, model_outputs, thread_id); }
-	template <class model_type, class precision_type>
-	  HOST void ann<model_type, precision_type>::cleanup()
+	template <class precision_type>
+	  HOST void ann<architecture::mlp_dense, precision_type>::get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id)
+	  {	static_cast<multi_layer_perceptron<connection::dense, precision_type>>(this)->get_outputs(this->total_layers, model_outputs, thread_id); }
+	template <class precision_type>
+	  HOST void ann<architecture::mlp_dense, precision_type>::cleanup()
 	  {
 		mkl_free(this->total_activations);
 		mkl_free(this->total_deltas);
@@ -309,5 +311,6 @@ namespace zinhart
 	  }
 #endif
 
+	
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART

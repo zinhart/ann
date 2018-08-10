@@ -1,5 +1,4 @@
 #include "ann/ann.hh"
-#include "ann/models/multi_layer_perceptron.hh"
 #include "ann/activation.hh"
 #include "gtest/gtest.h"
 #include <limits>
@@ -9,6 +8,7 @@
 
 using namespace zinhart::models;
 using namespace zinhart::activation;
+
 TEST(ann_test, get_layer_add_layer_clear_layers)
 {
   std::random_device rd;
@@ -16,7 +16,7 @@ TEST(ann_test, get_layer_add_layer_clear_layers)
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, std::numeric_limits<std::uint16_t>::max() );// random number of neurons
   std::uniform_int_distribution<std::uint32_t> layer_dist(0, total_activation_types());// random activation function
   std::uint32_t i, n_layers{layer_dist(mt)};
-  ann<multi_layer_perceptron<double>, double> model;
+  ann<architecture::mlp_dense, double> model;
   std::vector<LAYER_INFO> total_layers, total_layers_copy;
   for(i = 0; i < n_layers; ++i)
   {
@@ -48,7 +48,7 @@ TEST(ann_test, initialize_model_cleanup_model)
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
   std::uint32_t total_activations, total_deltas, total_hidden_weights, total_gradients, total_bias;
   std::uint32_t ith_layer, n_layers{layer_dist(mt)}, n_threads{thread_dist(mt)};
-  ann<multi_layer_perceptron<double>, double> model;
+  ann<architecture::mlp_dense, double> model;
   std::vector<LAYER_INFO> total_layers, total_layers_copy;
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
@@ -88,14 +88,14 @@ TEST(ann_test, initialize_model_cleanup_model)
   ASSERT_EQ(0, model.get_total_bias());
 } 
 
-/*
+
 TEST(ann_test, forward_propagate)
 {
 }
 
 TEST(ann_test, ann_train)
 {
-}*/
+}/**/
 
 
 

@@ -1,12 +1,16 @@
 #ifndef MULTI_LAYER_PERCEPTRON_HH
 #define MULTI_LAYER_PERCEPTRON_HH
-#include "../ann.hh"
+#include "ann_mlp.hh"
 namespace zinhart
 {
   namespace models
   {
+
+	template<connection c, class precision_type>
+	  class multi_layer_perceptron;
+	
 	template<class precision_type>
-  	  class multi_layer_perceptron : public ann< multi_layer_perceptron<precision_type>, precision_type>
+  	  class multi_layer_perceptron<connection::dense, precision_type> : public ann< architecture::mlp_dense, precision_type>
 	  {
 		public:
 		  multi_layer_perceptron() = default;
