@@ -25,30 +25,19 @@ namespace zinhart
 		  CUDA_CALLABLE_MEMBER loss_function & operator = (const loss_function &) = default;
 		  CUDA_CALLABLE_MEMBER loss_function & operator = (loss_function &&) = default;
 		  CUDA_CALLABLE_MEMBER ~loss_function() = default;
-		  // parallelizing the loop by splitting it into n sub loops
-		  template <class precision_type, class container>
-			HOST void operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
-								 precision_type & error,
-								 precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size,
-								 container  & results,
-								 precision_type epsilon = 1.e-30, 
-								 zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
-								);
-
-
 
 		  // for parallelizing the entire loop
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size);
+			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon = 1.e-30);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths);
+			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths);
 
 	  };
 	  template <class LOSS_FUNCTION>

@@ -4,69 +4,6 @@ namespace zinhart
   {
 	namespace error_metrics
 	{
-	  /*
-	  template <class precision_type, class container>
-		HOST void loss_function::operator()(LOSS_FUNCTION_NAME name, LOSS_FUNCTION_TYPE type, 
-											precision_type & error,
-											precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size,
-											container & results,
-											precision_type epsilon,
-											zinhart::parallel::thread_pool & pool
-										   )
-		{
-		  try
-		  {
-			error = precision_type{0};
-			if(name == LOSS_FUNCTION_NAME::MSE && type == LOSS_FUNCTION_TYPE::OBJECTIVE) 
-			{
-			  auto mse = [batch_size](const double & kth_output, const double & kth_target)
-			  {
-				loss_function_interface<mean_squared_error> loss;
-				return loss(LOSS_FUNCTION_TYPE::OBJECTIVE, kth_output, kth_target, batch_size);
-			  };
-			  zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, mse, results, pool);
-			}
-			else if(name == LOSS_FUNCTION_NAME::MSE && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
-			{
-			  auto mse_derivative = [batch_size](const double & kth_output, const double & kth_target)
-			  {
-				loss_function_interface<mean_squared_error> loss;
-				return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target, batch_size );
-			  };
-			  zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, mse_derivative, results, pool);
-			}
-			else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::OBJECTIVE)
-			{
-			  auto ce = [epsilon, batch_size](const double & kth_output, const double & kth_target)
-			  {
-				loss_function_interface<cross_entropy_multi_class> loss;
-				return loss(LOSS_FUNCTION_TYPE::OBJECTIVE, kth_output, kth_target, epsilon, batch_size );
-			  };
-			  zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, ce, results, pool);
-			}
-			else if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS && type == LOSS_FUNCTION_TYPE::DERIVATIVE)
-			{
-			  auto ce = [epsilon, batch_size](const double & kth_output, const double & kth_target)
-			  {
-				loss_function_interface<cross_entropy_multi_class> loss;
-				return loss(LOSS_FUNCTION_TYPE::DERIVATIVE, kth_output, kth_target, epsilon, batch_size );
-			  };
-			  zinhart::parallel::async::neumaier_sum(outputs, targets, vector_lengths, error, ce, results, pool);
-			}
-			else
-				throw std::runtime_error("Their is no loss_function specified");
-
-		  }
-		  catch(std::runtime_error & e)
-		  {
-			std::cerr<<e.what()<<"\n";
-			throw e;
-		  }
-		  catch(...)
-		  {
-		  }
-		}
-*/
 	  template <class precision_type>
 		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
@@ -83,7 +20,7 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
 
 			if(name == LOSS_FUNCTION_NAME::MSE) 
@@ -109,16 +46,13 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths)
+		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths)
 		{
 		  if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS)
 		  {
-			auto ce = [label](const double & kth_output, const double & kth_target)
-			{
-			  loss_function_interface<cross_entropy_multi_class> loss;
-			  return loss(label, kth_output, kth_target);
-			};
-			return zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, ce);
+			loss_function_interface<cross_entropy_multi_class> loss;
+			  for(std::uint32_t i = 0; i < vector_lengths; ++i)
+				*(results + i) = loss(label, *(outputs + i), *(targets + i));
 		  }
 		}
 
@@ -139,7 +73,7 @@ namespace zinhart
 	  template <class LOSS_FUNCTION>
 		template <class precision_type>// ce
 		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( OBJECTIVE label, precision_type kth_output, precision_type kth_target, precision_type epsilon)
-		{ return static_cast<LOSS_FUNCTION*>(this)->derivative(kth_output, kth_target, epsilon);}
+		{ return static_cast<LOSS_FUNCTION*>(this)->objective(kth_output, kth_target, epsilon);}
 
 
 	  template <class LOSS_FUNCTION>
