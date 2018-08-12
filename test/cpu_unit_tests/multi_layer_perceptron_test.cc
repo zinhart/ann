@@ -1412,18 +1412,19 @@ TEST(mlp, pre_gradient_check_mazur)
   zinhart::serial::print_matrix_row_major(weights, 1, 8, "weights");
   // gradient check
   const double gradient_epsilon = 1.e-4;
-  for(i = 0; i < 1; ++i)
-  {
-	for(j = 0; j < /*weights_length*/1; ++j)
+  //for(i = 0; i < 1; ++i)
+  //{
+	for(j = 0; j < weights_length; ++j)
 	{
 	  double theta = weights1[j];
 	  double theta_plus =  weights1[j] + gradient_epsilon;
 	  double theta_minus = weights1[j] - gradient_epsilon;
 	  double numerical_gradient{0};
 	  double analytic_gradient{0};
-	  double gradient_plus{0};
-	  double gradient_minus{0};
+	  double loss_right_hand_side{0};
+	  double loss_left_hand_side{0};
 
+/*
 	  for(k = 0; k < total_layers[output_layer].second; ++k)
 		d_error[k] = 0;
 	  for(k = 0; k < activations_length; ++k)
@@ -1434,36 +1435,13 @@ TEST(mlp, pre_gradient_check_mazur)
 	  }
 	  for(k = 0; k < weights_length; ++k)
 		gradients[k] = 0;
-
-	  weights1[j] = theta;
-	  mlp.forward_propagate(std::ref(total_layers), inputs, 0, hidden_input, activations, 4, weights1, 8, bias, 1, 0);
-	  loss(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::function_space::DERIVATIVE(), activations + 2, targets, d_error, total_layers[2].second, 2);
-	  mlp.backward_propagate(std::ref(total_layers), inputs, targets, d_error, 0, 
-										  hidden_input, activations, deltas, 4, 
-										  weights1, gradients, 8, bias);
-	  numerical_gradient = gradients[j];  
-
-	  for(k = 0; k < total_layers[output_layer].second; ++k)
-		d_error[k] = 0;
-	  for(k = 0; k < activations_length; ++k)
-	  {
-		hidden_input[k] = 0;
-		activations[k] = 0;
-		deltas[k] = 0;
-	  }
-	  for(k = 0; k < weights_length; ++k)
-		gradients[k] = 0;
-
+*/
 	  
 	  weights1[j] = theta_plus;
 	  std::cout<<weights1[j]<<"\n";
 	  mlp.forward_propagate(std::ref(total_layers), inputs, 0, hidden_input, activations, 4, weights1, 8, bias, 1, 0);
-	  loss(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::function_space::DERIVATIVE(), activations + 2, targets, d_error, total_layers[2].second, 2);
-	  mlp.backward_propagate(std::ref(total_layers), inputs, targets, d_error, 0, 
-										  hidden_input, activations, deltas, 4, 
-										  weights1, gradients, 8, bias);
-	  gradient_plus = gradients[j];
-
+	  loss_right_hand_side = loss(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::function_space::OBJECTIVE(), activations + 2, targets, total_layers[2].second, 2);
+/*
 	  for(k = 0; k < total_layers[output_layer].second; ++k)
 		d_error[k] = 0;
 	  for(k = 0; k < activations_length; ++k)
@@ -1473,26 +1451,25 @@ TEST(mlp, pre_gradient_check_mazur)
 		deltas[k] = 0;
 	  }
 	  for(k = 0; k < weights_length; ++k)
-		gradients[k] = 0;
+		gradients[k] = 0;*/
 	  weights1[j] = theta_minus;
 	  mlp.forward_propagate(std::ref(total_layers), inputs, 0, hidden_input, activations, 4, weights1, 8, bias, 1, 0);
-	  loss(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::function_space::DERIVATIVE(), activations + 2, targets, d_error, total_layers[2].second, 2);
-	  mlp.backward_propagate(std::ref(total_layers), inputs, targets, d_error, 0, 
-										  hidden_input, activations, deltas, 4, 
-										  weights1, gradients, 8, bias);
-	  gradient_minus = gradients[j];
 	
-  	  analytic_gradient = (gradient_plus - gradient_minus) / (2 * gradient_epsilon);
-	  EXPECT_DOUBLE_EQ(analytic_gradient, numerical_gradient )<< "i: "<<i<<"\n";
+	  loss_left_hand_side = loss(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE, zinhart::function_space::OBJECTIVE(), activations + 2, targets, total_layers[2].second, 2);
+	  std::cout<<loss_left_hand_side<<" "<<loss_right_hand_side<<"\n";
+	  std::cout<<loss_right_hand_side - loss_left_hand_side<<"\n";
+	  std::cout<<(2 * 0.0001)<<"\n";
+	  std::cout<<(loss_right_hand_side - loss_left_hand_side) / (2 * 1.e-4)<<"\n";
+	  numerical_gradient = (loss_right_hand_side - loss_left_hand_side) / (2 * 1.e-4);
+	  EXPECT_NEAR(numerical_gradient, gradients[j], gradient_epsilon)<<"j: "<< j <<"\n";
 
 
-	  std::cout<<"analytic_gradient: "<<analytic_gradient<< " numerical_gradient: "<< numerical_gradient <<"\n"; 
+	  //std::cout<<"analytic_gradient: "<<analytic_gradient<< " numerical_gradient: "<< numerical_gradient <<"\n"; 
 	  //for(i = ; i < weights_length; ++i)
 		//weights[i] -= 0.5 * gradients[i];
 
 	}
-
-  }
+  //}
     
   
   mkl_free(inputs);

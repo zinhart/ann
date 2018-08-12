@@ -40,6 +40,8 @@ namespace zinhart
 		  ann<architecture::mlp_dense, precision_type> & operator = (ann<architecture::mlp_dense, precision_type> &&) = delete;
 		  ~ann() = default;
 
+	//	  HOST void gradient_check(precision_type * theta, precision_type * numerically_approx_gradient, std::uint32_t theta_length, precision_type epsilon = 1.e-4, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
+
 		  //debugging functions
 		  HOST const std::uint32_t get_total_activations()const;
 		  HOST const std::uint32_t get_total_deltas()const;

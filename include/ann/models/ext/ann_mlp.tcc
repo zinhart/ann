@@ -12,7 +12,10 @@ namespace zinhart
 	template <class precision_type>
 	  HOST void ann<architecture::mlp_dense, precision_type>::clear_layers()
 	  {total_layers.clear(); }
-
+/*	template <class precision_type>
+  	  HOST void ann<architecture::mlp_dense, precision_type>::gradient_check(precision_type * theta, precision_type * numerically_approx_gradient, std::uint32_t theta_length, precision_type epsilon, std::uint32_t n_threads, std::uint32_t thread_id)
+	  { static_cast<multi_layer_perceptron<connection::dense, precision_type>*>(this)->gradient_check(theta, numerically_approx_gradient, theta_length, epsilon, n_threads, thread_id); }
+*/
 
 	template <class precision_type>
 	  HOST const std::uint32_t ann<architecture::mlp_dense, precision_type>::get_total_activations()const

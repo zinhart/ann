@@ -10,7 +10,7 @@ namespace zinhart
 	  class multi_layer_perceptron;
 	
 	template<class precision_type>
-  	  class multi_layer_perceptron<connection::dense, precision_type> : public ann< architecture::mlp_dense, precision_type>
+  	  class multi_layer_perceptron<connection::dense, precision_type> : private ann< architecture::mlp_dense, precision_type>
 	  {
 		public:
 		  multi_layer_perceptron() = default;
@@ -19,6 +19,17 @@ namespace zinhart
 		  multi_layer_perceptron & operator = (const multi_layer_perceptron &) = default;
 		  multi_layer_perceptron & operator = (multi_layer_perceptron &&) = default;
 		  ~multi_layer_perceptron() = default;
+		  // defaults to single threaded
+		  HOST void gradient_check(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name,
+								   const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
+								   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+								   precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+								   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+								   const precision_type * total_bias, 
+								   precision_type * numerically_approx_gradient, 
+			                       const precision_type limit_epsilon = 1.e-4, 
+								   const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0
+								  );
 
 #if CUDA_ENABLED == 1
 		  template <class LOSS_FUNCTION>
