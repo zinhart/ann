@@ -15,7 +15,7 @@ namespace zinhart
 				loss_function_interface<mean_squared_error> loss;
 				return loss(label, kth_output, kth_target, batch_size);
 			  };
-			  zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, mse);
+			  return zinhart::serial::neumaier_sum(outputs, targets, vector_lengths, mse);
 			}
 		}
 

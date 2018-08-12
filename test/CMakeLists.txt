@@ -37,9 +37,9 @@ else()
 	  cpu_unit_tests/multi_layer_perceptron_test.cc
 	  cpu_unit_tests/ann_test.cc
 	 )
-  add_executable(ann_tests ${test_lib})
+  add_executable(ann_unit_tests ${test_lib})
   
-  target_link_libraries(ann_tests
+  target_link_libraries(ann_unit_tests
 						gtest_ann
 						ann
 				   	    ${MKL_LIBRARIES}
@@ -51,5 +51,5 @@ endif()
 
 add_test(
   NAME tests
-  COMMAND ann_tests
+  COMMAND ann_unit_tests
 )

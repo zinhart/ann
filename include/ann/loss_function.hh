@@ -1,8 +1,8 @@
 #ifndef LOSS_FUNCTION_H
 #define LOSS_FUNCTION_H
-#include "activation.hh"
-#include "concurrent_routines/concurrent_routines.hh"
-#include "function_space.hh"
+#include <ann/activation.hh>
+#include <concurrent_routines/concurrent_routines.hh>
+#include <ann/function_space.hh>
 #if CUDA_ENABLED == 1
 #include <math.h>
 #else

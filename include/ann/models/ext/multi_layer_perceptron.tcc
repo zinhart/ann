@@ -181,6 +181,7 @@ namespace zinhart
 			std::uint32_t i{0}, j{0};
 
 			const std::uint32_t input_layer{0};
+			const std::uint32_t output_layer{total_layers.size() - 1};
 
 			// All layer counters
 			std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
@@ -277,8 +278,9 @@ namespace zinhart
 			  // increment layer counters 
 			  ++current_layer; 
 			  ++previous_layer;
-
 			 }	  
+
+			// calculate the error for this case
 		  }
 
 	template <class precision_type>
@@ -306,8 +308,7 @@ namespace zinhart
 	  }
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
-								  	const precision_type error,
-									const precision_type * const total_training_cases, const precision_type * const total_targets, const std::uint32_t case_index,
+									const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
 									const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
 									const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
 									const precision_type * const total_bias,
@@ -341,7 +342,9 @@ namespace zinhart
 		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
 		std::uint32_t input_stride{case_index * total_layers[input_layer].second};
 	    std::uint32_t target_stride{case_index * total_layers[output_layer].second}; 
-		const precision_type * current_training_case{total_training_cases + input_stride};
+		std::uint32_t error_stride{case_index * total_layers[output_layer].second};
+		const precision_type * const current_training_case{total_training_cases + input_stride};
+		const precision_type * const current_error_matrix{d_error + error_stride};
 		
 		// variables for the thread calling this method, to determine it's workspace
 		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index{0};
@@ -372,35 +375,43 @@ namespace zinhart
 		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
+	//	std::cout<<"--\n";
 		// calc output layer deltas
-		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
-		  total_deltas[i] = error * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = error_stride, k = 0; j < total_layers[output_layer].second; ++i, ++j, ++k)
+		{
+	//	  std::cout<< current_error_matrix[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i])<<"\n";
+		  total_deltas[i] = current_error_matrix[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
+		}
+	//	zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, 1, total_layers[current_layer].second, "deltas ptr");
+	//	zinhart::serial::print_matrix_row_major(prior_activation_ptr, 1, total_layers[previous_layer].second, "previous_layer activation");
+	//	std::cout<<"--\n";
 
 		// for gemm
 		m = total_layers[current_layer].second;
 		n = total_layers[previous_layer].second;
 	   	k = 1;
 
+    //    zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
 		// calc output layer gradient
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_layer_deltas_ptr, k,
-					prior_activation_ptr, n, beta,// should be the prior layer activations 
+					prior_activation_ptr, n, beta, 
 					current_gradient_ptr, n
 				   );/**/
 
-		zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, m, k, "current_deltas");
-		zinhart::serial::print_matrix_row_major(prior_activation_ptr, k, n, "prior_activation");
-
+  //      zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
 	  // set up for hidden layer gradients
 	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};
 	  std::uint32_t next_layer_index{current_layer_index};
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
+//	  std::cout<<"A: "<<current_layer<<" B: "<<previous_layer<<"\n";
 	  
 	  while(current_layer > 0)
 	  {
+//		std::cout<<"Here\n";
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;
 		current_layer_index = previous_layer_index;
 		previous_layer_index -= total_layers[previous_layer].second;
@@ -422,20 +433,36 @@ namespace zinhart
 				  next_layer_delta_ptr, n, beta, 
 				  current_layer_deltas_ptr, n
 				 );
+		
+//		zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, k, n, "next layer delta ptr");
 
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
-		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_hidden_inputs[i]);
-
+		{
+		  //std::cout<< af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i])<<"\n";
+		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
+		}
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
-   
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+/*
+		zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, m, k, "current delta ptr");
+		zinhart::serial::print_matrix_row_major(previous_layer_activation_ptr, k, n, "previous layer actvation ptr");
+		std::cout<<"current layer index: "<<current_layer_index<<"\n";
+		std::cout<<"current gradient index: "<<current_gradient_index<<"\n";
+		std::cout<<"m: "<<m<<" n: "<<total_layers[previous_layer].second<<" k: "<<k<<"\n";
+*/
+//		
+ //       zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
+
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
 				  alpha, current_layer_deltas_ptr, k,
 				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
-				 );
+				 );/**/
+//		zinhart::serial::serial_matrix_product(current_layer_deltas_ptr, previous_layer_activation_ptr, current_gradient_ptr, m,n,k);
+//		zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
+
 		next_layer_index = current_layer_index;
 		--next_layer;
 		--current_layer;

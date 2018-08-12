@@ -89,6 +89,5 @@ namespace zinhart
 	  */
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART
-//#include "ext/ann.tcc"
 #include <ann/models/ann_mlp.hh>
 #endif
