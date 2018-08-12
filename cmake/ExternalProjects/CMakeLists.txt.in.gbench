@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.1)
+
+project(googlebench-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(googlebench
+  GIT_REPOSITORY    https://github.com/google/benchmark.git
+  GIT_TAG           master
+  CMAKE_ARGS        "${CMAKE_ARGS}"
+  CMAKE_CACHE_ARGS        "${CMAKE_CACHE_ARGS}"
+  SOURCE_DIR        "${CMAKE_BINARY_DIR}/googlebench-src"
+  BINARY_DIR        "${CMAKE_BINARY_DIR}/googlebench-build"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      ""
+)
+MESSAGE(STATUS "Apples CMAKE_ARGS: ${CMAKE_ARGS}")
+MESSAGE(STATUS "Oranges CMAKE_CACHE_ARGS: ${CMAKE_CACHE_ARGS}")

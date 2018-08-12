@@ -8,7 +8,9 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 # for unit tests using google test
-option(BuildTest "BuildTest" ON)
+option(BuildUnitTest "BuildUnitTest" ON)
+# for benchmarking using google bench
+option(BuildBenchmarks "BuildBenchmarks" OFF)
 # for cuda when this is off will use stl threads and lapack instead of cuda and cublas
 option(BuildCuda "BuildCuda" ON)
 # library type
@@ -29,7 +31,7 @@ else()
 endif()
 
 #set module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 # set lib type
 if(PTHREADS)
@@ -94,9 +96,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set cxx flags
 set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
 # set cxx release flags
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fPIC")
 # set cxx debug flags
-set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC")
 
 # sanitize flags
 if (Sanitize)
@@ -109,11 +111,83 @@ add_subdirectory(concurrent_routines)
 # add src directory
 add_subdirectory(src)
 
+##enable testing and add test directory
+#if (BuildUnitTest)
+#  enable_testing()
+#  add_subdirectory(test)
+#endif ()
+
 #enable testing and add test directory
-if (BuildTest)
+if(BuildUnitTest)
   enable_testing()
+
+  # Download and unpack googletest at configure time
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ExternalProjects/CMakeLists.txt.in.gtest googletest-download/CMakeLists.txt)
+  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+  if(result)
+	message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+  endif()
+  execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+  if(result)
+	message(FATAL_ERROR "Build step for googletest failed: ${result}")
+  endif()
+
+  # Prevent overriding the parent project's compiler/linker
+  # settings on Windows
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+  # Conditionally Add googletest directly to our build, if this is not a sub project. This defines
+  # the gtest and gtest_main targets.
+  string(REGEX MATCH "${CMAKE_CURRENT_SOURCE_DIR}" result "${CMAKE_SOURCE_DIR}")
+  if(${result} MATCHES "${CMAKE_CURRENT_SOURCE_DIR}")
+	add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+  				     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+  				     EXCLUDE_FROM_ALL 
+				    )
+  endif()
   add_subdirectory(test)
-endif ()
+
+endif()
+
+if(BuildBenchmarks)
+  #  set(CMAKE_ARGS "${CMAKE_ARGS} -DBENCHMARK_ENABLE_TESTING${STRING}=OFF") would like to config this with cmake args
+  #  set(CMAKE_CACHE_ARGS "${CMAKE_CACHE_ARGS} -DBENCHMARK_ENABLE_TESTING${STRING}=OFF")
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Suppressing benchmark's tests" FORCE)
+  if(BuildUnitTest)
+	set(GTEST_ROOT_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/googletest-src/googletest" CACHE PATH "Path to externally added gtest")
+	#$  list(APPEND CMAKE_ARGS "-D${GTEST_ROOT}:${string}=\"${GTEST_ROOT_LOCATION}\"")
+  endif()
+
+  # Download and unpack googlebench at configure time
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ExternalProjects/CMakeLists.txt.in.gbench googlebench-download/CMakeLists.txt)
+  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googlebench-download )
+  if(result)
+	message(FATAL_ERROR "CMake step for googlebench failed: ${result}")
+  endif()
+  execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	RESULT_VARIABLE result
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googlebench-download )
+  if(result)
+	message(FATAL_ERROR "Build step for googlebench failed: ${result}")
+  endif()
+
+  # Add googlebench directly to our build. This defines
+  # the gtest and gtest_main targets.
+  string(REGEX MATCH "${CMAKE_CURRENT_SOURCE_DIR}" result "${CMAKE_SOURCE_DIR}")
+  if(${result} MATCHES "${CMAKE_CURRENT_SOURCE_DIR}")
+   	add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googlebench-src
+					 ${CMAKE_CURRENT_BINARY_DIR}/googlebench-build
+				     EXCLUDE_FROM_ALL
+					)
+  endif()
+  add_subdirectory(benchmarks)
+endif()
 
 message(STATUS "")
 message(STATUS "BUILD SUMMARY")
@@ -121,7 +195,12 @@ message(STATUS "  CMAKE_GENERATOR       : ${CMAKE_GENERATOR}")
 message(STATUS "  Compiler ID           : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "  Build type            : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Library type          : ${LIB_TYPE}")
-message(STATUS "  Build tests           : ${BuildTest}")
+if(BuildUnitTest)
+message(STATUS " Build Tests			  : ${BuildUnitTest}")
+endif()
+if(BuildBenchmarks)
+message(STATUS " Build Benchmarks			  : ${BuildBenchmarks}")
+endif()
 message(STATUS "  Sanitize flags        : ${Sanitize}")
 if(BuildCuda)
   message(STATUS " Found CUDA			  : ${CUDA_FOUND}")

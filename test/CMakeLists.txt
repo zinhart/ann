@@ -1,11 +1,11 @@
 # includes
-include_directories(.)
+#include_directories(.)
 
 # add google test library
-add_library(gtest_ann ./gtest/gtest-all.cc)
+#add_library(gtest_ann ./gtest/gtest-all.cc)
 
 # link google test library
-target_link_libraries(gtest_ann ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(gtest_ann ${CMAKE_THREAD_LIBS_INIT})
 
 # cpu & gpu unit tests
 if(BuildCuda)
@@ -22,7 +22,7 @@ if(BuildCuda)
 add_executable(ann_tests ${test_lib})
 
 target_link_libraries(ann_tests
-  gtest_ann
+  gtest_main
   ann
   ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBS}
@@ -40,7 +40,7 @@ else()
   add_executable(ann_unit_tests ${test_lib})
   
   target_link_libraries(ann_unit_tests
-						gtest_ann
+						gtest_main
 						ann
 				   	    ${MKL_LIBRARIES}
 						${CMAKE_THREAD_LIBS_INIT}
