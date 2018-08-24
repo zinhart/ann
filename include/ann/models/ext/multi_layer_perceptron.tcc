@@ -10,7 +10,7 @@ namespace zinhart
 																						  const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 																						  const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
 																						  precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
-																						  const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																						  precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 																						  const precision_type * total_bias, 
 																						  precision_type * numerically_approx_gradient, 
 																						  const precision_type limit_epsilon, 
@@ -32,17 +32,18 @@ namespace zinhart
 		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
 		
 		// variables for the thread calling this method, to determine it's workspace
-		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0};
+		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
 		precision_type * current_threads_gradient_ptr{nullptr};
 		precision_type * current_threads_output_layer_ptr{nullptr};
 
 		// Assumes the numerically_approx_gradient vector is partitioned into equally size chucks, 1 for each thread
 		thread_gradient_stride = total_hidden_weights_length;
 		thread_activation_stride = total_activations_length / n_threads; 
+		thread_output_layer_stride = (thread_id * thread_activation_stride) + output_layer_index;
 
 		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
 		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
-		current_threads_output_layer_ptr = thread_id * thread_gradient_stride + output_layer_index;
+		current_threads_output_layer_ptr = total_activations + thread_output_layer_stride;
 
 		// and finally the beginning of gradient for the current thread
 		current_threads_gradient_ptr = numerically_approx_gradient + current_threads_gradient_workspace_index;
@@ -55,10 +56,11 @@ namespace zinhart
 
 		// to set the parameter back to its original value
 		precision_type original{0};
-
+		precision_type outputs[total_layers[output_layer].second];
 		// gradient_check loop
 		for(i = 0; i < total_hidden_weights_length; ++i)
 		{
+		  
 		  // save original
 		  original = total_hidden_weights[i];
 		  
@@ -71,7 +73,15 @@ namespace zinhart
 							total_bias,
 							n_threads, thread_id
 						  );
-		  right = loss(name, zinhart::function_space::OBJECTIVE(), total_layers[output_layer].second, current_threads_output_layer_ptr, total_targets, n_threads * 2);
+/*
+		zinhart::serial::print_matrix_row_major(current_threads_output_layer_ptr, 1, total_layers[output_layer].second, "output_layer"); 
+		precision_type temp[total_layers[output_layer].second];
+		get_outputs(total_layers, total_activations, total_activations_length, temp, n_threads, thread_id);
+		zinhart::serial::print_matrix_row_major(temp, 1, total_layers[output_layer].second, "output_layer1"); */
+
+   		  get_outputs(total_layers, total_activations, total_activations_length, outputs, n_threads, thread_id);
+		  right = loss(name, zinhart::function_space::OBJECTIVE(), /*current_threads_output_layer_ptr*/outputs, total_targets, total_layers[output_layer].second, 2);
+	//	  std::cout<<"right: "<<right<<"\n";
 
 		  // set back
 		  total_hidden_weights[i] = original; 
@@ -85,13 +95,16 @@ namespace zinhart
 							total_bias,
 							n_threads, thread_id
 						  );
-		  left = loss(name, zinhart::function_space::OBJECTIVE(), total_layers[output_layer].second, current_threads_output_layer_ptr, total_targets, n_threads * 2);
+
+   		  get_outputs(total_layers, total_activations, total_activations_length, outputs, n_threads, thread_id);
+		  left = loss(name, zinhart::function_space::OBJECTIVE(), /*current_threads_output_layer_ptr*/outputs, total_targets, total_layers[output_layer].second, 2);
+	//	  std::cout<<"left: "<<left<<"\n";
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
-		  *current_threads_gradient_ptr++ = (right - left) / (2 * limit_epsilon);
+		  *(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
 
 		  // set back
-		  total_hidden_weights[i] = original; 
+		  total_hidden_weights[i] = original;/**/
 		}
 	  }
 
@@ -312,7 +325,6 @@ namespace zinhart
 						current_training_case, n, beta, 
 						current_threads_hidden_input_ptr, n
 				       );
-			
 
 			// add in bias, calc output of this layer
 			for(i = current_threads_workspace_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
@@ -395,7 +407,7 @@ namespace zinhart
 		  output_layer_index += total_layers[i].second;
 		
 		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
-		  model_outputs[j] = total_hidden_outputs[i];
+		  *(model_outputs + j) = *(total_hidden_outputs + i);
 	  }
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 

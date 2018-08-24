@@ -1,3 +1,4 @@
+#include <concurrent_routines/concurrent_routines.hh>
 namespace zinhart
 {
   namespace function_space
@@ -5,7 +6,7 @@ namespace zinhart
 	namespace error_metrics
 	{
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, const precision_type * outputs, const precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
 
 			if(name == LOSS_FUNCTION_NAME::MSE) 
