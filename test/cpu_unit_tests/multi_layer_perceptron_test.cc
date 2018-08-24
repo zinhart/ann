@@ -1421,7 +1421,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   double right{0}, left{0}, original{0};
 
  // for each thread perform a gradient check on the same values, ideally each thread would come to the same conclusion (return the same values)
- for(thread_id = 0; thread_id < /*n_threads*/1; ++thread_id)
+ for(thread_id = 0; thread_id < n_threads; ++thread_id)
  {
    //zinhart::serial::print_matrix_row_major(numerically_approx_gradients_serial,1,total_gradient_length,"num approx");
    current_threads_gradient_ptr = numerically_approx_gradients_serial + (thread_id * total_hidden_weights_length);

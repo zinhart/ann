@@ -23,7 +23,7 @@ namespace zinhart
 
 		std::uint32_t output_layer_index{0};
 		// start at 1 to skip the input layer
-		for(i = 1; i < total_layers.size(); ++i)
+		for(i = 1; i < total_layers.size() - 1; ++i)
 		  output_layer_index += total_layers[i].second;
 
 		// a ptr to the current training case, 
@@ -73,15 +73,8 @@ namespace zinhart
 							total_bias,
 							n_threads, thread_id
 						  );
-/*
-		zinhart::serial::print_matrix_row_major(current_threads_output_layer_ptr, 1, total_layers[output_layer].second, "output_layer"); 
-		precision_type temp[total_layers[output_layer].second];
-		get_outputs(total_layers, total_activations, total_activations_length, temp, n_threads, thread_id);
-		zinhart::serial::print_matrix_row_major(temp, 1, total_layers[output_layer].second, "output_layer1"); */
 
-   		  get_outputs(total_layers, total_activations, total_activations_length, outputs, n_threads, thread_id);
-		  right = loss(name, zinhart::function_space::OBJECTIVE(), /*current_threads_output_layer_ptr*/outputs, total_targets, total_layers[output_layer].second, 2);
-	//	  std::cout<<"right: "<<right<<"\n";
+		  right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_layers[output_layer].second, 2);
 
 		  // set back
 		  total_hidden_weights[i] = original; 
@@ -96,15 +89,13 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-   		  get_outputs(total_layers, total_activations, total_activations_length, outputs, n_threads, thread_id);
-		  left = loss(name, zinhart::function_space::OBJECTIVE(), /*current_threads_output_layer_ptr*/outputs, total_targets, total_layers[output_layer].second, 2);
-	//	  std::cout<<"left: "<<left<<"\n";
+		  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_layers[output_layer].second, 2);
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		  *(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
 
 		  // set back
-		  total_hidden_weights[i] = original;/**/
+		  total_hidden_weights[i] = original;
 		}
 	  }
 
