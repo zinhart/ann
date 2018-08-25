@@ -393,9 +393,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
-//	  std::string s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
-//	  zinhart::serial::print_matrix_row_major(total_hidden_weights_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-//	  zinhart::serial::print_matrix_row_major(current_training_case, total_layers[input_layer].second, 1, "Inputs");
 	  current_layer_index = 0;
 	  previous_layer_index = 0;
 	  weight_index = 0;
@@ -412,7 +409,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 				  current_training_case, n, beta, 
 				  current_threads_hidden_input_ptr, n
 				 );
-//	  zinhart::serial::print_matrix_row_major(current_threads_hidden_input_ptr, 1, total_layers[current_layer].second, "pre bias and activation vector");
 
 	  // add in bias
 	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
@@ -425,9 +421,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 		  outputs_ptr_test[j] = total_activations_ptr_test[i];
 	  }
 		
-	 // std::cout<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
-
-	//  zinhart::serial::print_matrix_row_major(current_threads_activation_ptr, 1, total_layers[current_layer].second, "activation vector");
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
 
@@ -448,9 +441,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
 		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
-//		s = "Weight matrix between layers: " + std::to_string(current_layer) + " " + std::to_string(previous_layer) + " dimensions: " + std::to_string(total_layers[current_layer].second) + " " + std::to_string(total_layers[previous_layer].second);
-//	  	zinhart::serial::print_matrix_row_major(current_weight_matrix, total_layers[current_layer].second, total_layers[previous_layer].second, s);
-//	    zinhart::serial::print_matrix_row_major(prior_layer_ptr, total_layers[previous_layer].second, 1, "Inputs");
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[previous_layer].second;
@@ -461,8 +451,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 					current_layer_Wx, n
 				   );
   
-	//	zinhart::serial::print_matrix_row_major(current_layer_Wx, 1, total_layers[current_layer].second, "pre bias and activation vector");
-
 		// add in bias
 		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 		{
@@ -474,11 +462,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 			outputs_ptr_test[j] = total_activations_ptr_test[i];
 
 		}
-		//zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "pre activation vector");
-  	//	std::cout<<"ACTIVATION: "<<zinhart::activation::get_activation_name(total_layers[current_layer].first)<<"\n"; 
-
-	//	zinhart::serial::print_matrix_row_major(current_layer_ptr, 1, total_layers[current_layer].second, "activation vector");
-	
 		// update weight matrix index	
 		weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
 
@@ -489,7 +472,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 		// increment layer counters 
 		++current_layer; 
 		++previous_layer;
-// 		std::cout<<"\n";
 	   }
 
 	  // synchronize w.r.t the current thread 
@@ -510,11 +492,6 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 					 );
 	  for(i = 0; i < output_layer_nodes; ++i)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
-
-//	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr_test, 1, total_activations_length, "serial hidden inputs vector");
-//	  zinhart::serial::print_matrix_row_major(total_hidden_input_ptr, 1, total_activations_length, "parallel hidden inputs vector");
-//	  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length, "serial activation vector");
-//	  zinhart::serial::print_matrix_row_major(total_activations_ptr, 1, total_activations_length, "parallel activation vector");
 	}
 	results.clear();
   }
