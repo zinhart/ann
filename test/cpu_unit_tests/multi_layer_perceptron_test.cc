@@ -1315,11 +1315,11 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types() - 1);// does not include input layer
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
-  const std::uint32_t n_threads{/*thread_dist(mt)*/2};
+  const std::uint32_t n_threads{thread_dist(mt)};
   const std::uint32_t input_layer{0};
   std::uint32_t output_layer{0};
   const std::uint32_t alignment = 64;
-  std::uint32_t i{0}, j{0}, k{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
+  std::uint32_t i{0}, j{0}, k{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
   const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
   
   double * total_cases_ptr{nullptr};
@@ -1448,78 +1448,71 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 												  n_threads_p, thread_id_p
 												  );
 							  };
-
-  // for each thread perform a gradient check on the same values, ideally each thread would come to the same conclusion (return the same values)
-  for(thread_id = 0; thread_id < n_threads; ++thread_id)
+  for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
-    current_threads_gradient_ptr = numerically_approx_gradients_serial + (thread_id * total_hidden_weights_length);
-    for(i = 0; i < total_hidden_weights_length ; ++i)
-    {
-	  original = total_hidden_weights_copy[i];
-	  // right side
-	  total_hidden_weights_copy[i] += limit_epsilon;
-	  mlp.forward_propagate(total_layers, 
-	    				total_cases_ptr, 0, 
-	    				total_hidden_inputs, total_activations, total_activations_length,
-	   	    			total_hidden_weights_copy, total_hidden_weights_length, 
-	   		    		bias,
-	   			    	n_threads, thread_id
-	   			       );
-	  mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
-	  right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_targets_length, 2);
+	// for each thread perform a gradient check on the same values, ideally each thread would come to the same conclusion (return the same values)
+	for(thread_id = 0; thread_id < n_threads; ++thread_id)
+	{
+	  current_threads_gradient_ptr = numerically_approx_gradients_serial + (thread_id * total_hidden_weights_length);
+	  for(i = 0; i < total_hidden_weights_length ; ++i)
+	  {
+		original = total_hidden_weights_copy[i];
+		// right side
+		total_hidden_weights_copy[i] += limit_epsilon;
+		mlp.forward_propagate(total_layers, 
+						  total_cases_ptr, ith_case, 
+						  total_hidden_inputs, total_activations, total_activations_length,
+						  total_hidden_weights_copy, total_hidden_weights_length, 
+						  bias,
+						  n_threads, thread_id
+						 );
+		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
+		right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_targets_length, 2);
 
-	  // set back
-	  total_hidden_weights_copy[i] = original; 
+		// set back
+		total_hidden_weights_copy[i] = original; 
 
-	  // left side
-	  total_hidden_weights_copy[i] -= limit_epsilon;
-	  mlp.forward_propagate(total_layers, 
-	   				total_cases_ptr, 0, 
-	   				total_hidden_inputs, total_activations, total_activations_length,
-	   				total_hidden_weights_copy, total_hidden_weights_length, 
-	   				bias,
-	   				n_threads, thread_id
-	   			  );
-	  mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
-	  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_targets_length, 2);
-	  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
-	  *(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
-	  // set back
-	  total_hidden_weights_copy[i] = original; 
-    }
-    // forward prop
-    mlp.forward_propagate(std::ref(total_layers), total_cases_ptr, 0, total_hidden_inputs, total_activations, total_activations_length, total_hidden_weights, total_hidden_weights_length, bias, n_threads, thread_id);
-    // error derivative
-    mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
-	
-	results.push_back(pool.add_task(gradient_check_lamda,
-		                            name, 
-					                total_layers,
-					                total_cases_ptr, total_targets, 0,
-					                total_hidden_inputs, total_activations, total_activations_length,
-					                total_hidden_weights, total_hidden_weights_length,
-					                bias,
-					                numerically_approx_gradients_parallel,
-					                limit_epsilon,
-					                n_threads, thread_id )
-		             );
-	results[thread_id].get();
-    /*
-	mlp.gradient_check(name, 
-					  total_layers,
-					  total_cases_ptr, total_targets, 0,
+		// left side
+		total_hidden_weights_copy[i] -= limit_epsilon;
+		mlp.forward_propagate(total_layers, 
+					  total_cases_ptr, ith_case, 
 					  total_hidden_inputs, total_activations, total_activations_length,
-					  total_hidden_weights, total_hidden_weights_length,
+					  total_hidden_weights_copy, total_hidden_weights_length, 
 					  bias,
-					  numerically_approx_gradients_parallel,
-					  limit_epsilon,
 					  n_threads, thread_id
-					  );*/
+					);
+		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
+		left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_targets_length, 2);
+		// calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
+		*(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
+		// set back
+		total_hidden_weights_copy[i] = original; 
+	  }
+	  // forward prop
+	  mlp.forward_propagate(std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_inputs, total_activations, total_activations_length, total_hidden_weights, total_hidden_weights_length, bias, n_threads, thread_id);
+	  // error derivative
+	  mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
+	  
+	  results.push_back(pool.add_task(gradient_check_lamda,
+									  name, 
+									  total_layers,
+									  total_cases_ptr, total_targets, ith_case,
+									  total_hidden_inputs, total_activations, total_activations_length,
+									  total_hidden_weights, total_hidden_weights_length,
+									  bias,
+									  numerically_approx_gradients_parallel,
+									  limit_epsilon,
+									  n_threads, thread_id )
+					   );
+	  results[thread_id].get();
 
-    // compare gradients
-    for(i = 0; i < total_gradient_length; ++i)
-	  EXPECT_NEAR(numerically_approx_gradients_parallel[i], numerically_approx_gradients_serial[i], limit_epsilon)<<"i: "<<i<<"\n";/**/
-  }   
+	  // compare gradients
+	  for(i = 0; i < total_gradient_length; ++i)
+		EXPECT_NEAR(numerically_approx_gradients_parallel[i], numerically_approx_gradients_serial[i], limit_epsilon)<<"i: "<<i<<"\n";/**/
+	}
+	results.clear();
+  }
+     
   
   mkl_free(total_cases_ptr);
   mkl_free(total_hidden_inputs);
