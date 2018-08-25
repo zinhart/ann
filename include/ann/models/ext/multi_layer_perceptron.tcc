@@ -471,7 +471,7 @@ namespace zinhart
 
 	//	std::cout<<"--\n";
 		// calc output layer deltas
-		for(i = current_threads_activation_workspace_index + current_layer_index, j = error_stride, k = 0; j < total_layers[output_layer].second; ++i, ++j, ++k)
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = thread_id * error_stride, k = 0; k < total_layers[output_layer].second; ++i, ++j, ++k)
 		{
 	//	  std::cout<< current_error_matrix[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i])<<"\n";
 		  total_deltas[i] = current_error_matrix[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
