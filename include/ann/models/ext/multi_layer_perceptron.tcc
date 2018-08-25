@@ -379,11 +379,11 @@ namespace zinhart
 
 	template <class precision_type>
   	  void multi_layer_perceptron<connection::dense, precision_type>::get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
-															   const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
-															   precision_type * model_outputs, 
-															   const std::uint32_t n_threads, 
-															   const std::uint32_t thread_id
-															  )
+																				  const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+																				  precision_type * model_outputs, 
+																				  const std::uint32_t n_threads, 
+																				  const std::uint32_t thread_id
+																				 )
   	  {
 		std::uint32_t i{0}, j{0}, output_layer{total_layers.size()-1}, output_layer_index{0};
 		std::uint32_t thread_stride{0}, current_threads_workspace_index{0}; 
@@ -402,13 +402,13 @@ namespace zinhart
 	  }
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
-									const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-									const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
-									const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
-									const precision_type * const total_bias,
-									const std::uint32_t n_threads,
-									const std::uint32_t thread_id
-									)
+																			const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+																			const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+																			const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+																			const precision_type * const total_bias,
+																			const std::uint32_t n_threads,
+																			const std::uint32_t thread_id
+																			)
 	  {
 		std::uint32_t i{0}, j{0};
 
