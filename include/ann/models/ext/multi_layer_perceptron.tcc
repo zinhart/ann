@@ -469,43 +469,34 @@ namespace zinhart
 		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
-	//	std::cout<<"--\n";
 		// calc output layer deltas
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = thread_id * error_stride, k = 0; k < total_layers[output_layer].second; ++i, ++j, ++k)
 		{
-	//	  std::cout<< current_error_matrix[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i])<<"\n";
 		  total_deltas[i] = current_error_matrix[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
 		}
-	//	zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, 1, total_layers[current_layer].second, "deltas ptr");
-	//	zinhart::serial::print_matrix_row_major(prior_activation_ptr, 1, total_layers[previous_layer].second, "previous_layer activation");
-	//	std::cout<<"--\n";
 
 		// for gemm
 		m = total_layers[current_layer].second;
 		n = total_layers[previous_layer].second;
 	   	k = 1;
 
-    //    zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
 		// calc output layer gradient
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_layer_deltas_ptr, k,
 					prior_activation_ptr, n, beta, 
 					current_gradient_ptr, n
-				   );/**/
+				   );
 
-  //      zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
 	  // set up for hidden layer gradients
 	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};
 	  std::uint32_t next_layer_index{current_layer_index};
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
-//	  std::cout<<"A: "<<current_layer<<" B: "<<previous_layer<<"\n";
 	  
 	  while(current_layer > 0)
 	  {
-//		std::cout<<"Here\n";
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;
 		current_layer_index = previous_layer_index;
 		previous_layer_index -= total_layers[previous_layer].second;
@@ -528,34 +519,20 @@ namespace zinhart
 				  current_layer_deltas_ptr, n
 				 );
 		
-//		zinhart::serial::print_matrix_row_major(next_layer_delta_ptr, k, n, "next layer delta ptr");
-
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 		{
-		  //std::cout<< af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i])<<"\n";
 		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
 		}
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
-/*
-		zinhart::serial::print_matrix_row_major(current_layer_deltas_ptr, m, k, "current delta ptr");
-		zinhart::serial::print_matrix_row_major(previous_layer_activation_ptr, k, n, "previous layer actvation ptr");
-		std::cout<<"current layer index: "<<current_layer_index<<"\n";
-		std::cout<<"current gradient index: "<<current_gradient_index<<"\n";
-		std::cout<<"m: "<<m<<" n: "<<total_layers[previous_layer].second<<" k: "<<k<<"\n";
-*/
-//		
- //       zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
 
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
 				  alpha, current_layer_deltas_ptr, k,
 				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
-				 );/**/
-//		zinhart::serial::serial_matrix_product(current_layer_deltas_ptr, previous_layer_activation_ptr, current_gradient_ptr, m,n,k);
-//		zinhart::serial::print_matrix_row_major(current_gradient_ptr, total_layers[current_layer].second, total_layers[previous_layer].second, "gradient ptr");
+				 );
 
 		next_layer_index = current_layer_index;
 		--next_layer;
