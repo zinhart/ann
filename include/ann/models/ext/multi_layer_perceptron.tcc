@@ -30,7 +30,8 @@ namespace zinhart
 		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
 		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
 		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer].second)};
-		
+		const precision_type * current_target{total_targets + (case_index * total_layers[output_layer].second)};
+
 		// variables for the thread calling this method, to determine it's workspace
 		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
 		precision_type * current_threads_gradient_ptr{nullptr};
@@ -74,7 +75,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_layers[output_layer].second, 2);
+		  right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		  // set back
 		  total_hidden_weights[i] = original; 
@@ -89,7 +90,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, total_targets, total_layers[output_layer].second, 2);
+		  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		  *(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
@@ -501,7 +502,7 @@ namespace zinhart
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
-	  
+	 /* 
 	  while(current_layer > 0)
 	  {
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;
@@ -548,6 +549,7 @@ namespace zinhart
 		--current_layer;
 		--previous_layer;
 	  }
+	  */
 	}	  
 #endif
   }
