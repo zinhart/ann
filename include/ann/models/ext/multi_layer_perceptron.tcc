@@ -474,12 +474,12 @@ namespace zinhart
 		  total_deltas[i] = d_error[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
 		 // if(thread_id > 0)
 		 // {
-			std::cout<<total_deltas[i]<<" "<<d_error[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]) <<"\n";
+	//		std::cout<<total_deltas[i]<<" "<<d_error[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]) <<"\n";
 		 // }
 		}
 		  if(thread_id > 0)
 		  {
-			std::cout<<"next\n";
+	//		std::cout<<"next\n";
 		  }
 
 		// for gemm
@@ -531,7 +531,7 @@ namespace zinhart
 		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
 		  //std::cout<<total_deltas[i]<<"\n";
 		}
-		std::cout<<"\n";
+	//	std::cout<<"\n";
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
