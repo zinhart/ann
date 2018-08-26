@@ -93,7 +93,7 @@ namespace zinhart
 		  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
-		  *(current_threads_gradient_ptr + i) = (right - left) / (2 * limit_epsilon);
+		  *(current_threads_gradient_ptr + i) = (right - left) / (precision_type{2.0} * limit_epsilon);
 
 		  // set back
 		  total_hidden_weights[i] = original;
