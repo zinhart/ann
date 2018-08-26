@@ -435,10 +435,9 @@ namespace zinhart
 		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
 		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
 		std::uint32_t input_stride{case_index * total_layers[input_layer].second};
-	    std::uint32_t target_stride{case_index * total_layers[output_layer].second}; 
-		std::uint32_t error_stride{case_index * total_layers[output_layer].second};
+		std::uint32_t error_stride{thread_id * total_layers[output_layer].second};
 		const precision_type * const current_training_case{total_training_cases + input_stride};
-		const precision_type * const current_error_matrix{d_error + error_stride};
+	//	const precision_type * const current_error_matrix{d_error + error_stride};
 		
 		// variables for the thread calling this method, to determine it's workspace
 		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, current_threads_output_workspace_index{0};
@@ -470,10 +469,18 @@ namespace zinhart
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
 		// calc output layer deltas
-		for(i = current_threads_activation_workspace_index + current_layer_index, j = thread_id * error_stride, k = 0; k < total_layers[output_layer].second; ++i, ++j, ++k)
+		for(i = current_threads_activation_workspace_index + current_layer_index, j = error_stride, k = 0; k < total_layers[output_layer].second; ++i, ++j, ++k)
 		{
-		  total_deltas[i] = current_error_matrix[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
+		  total_deltas[i] = d_error[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
+		 // if(thread_id > 0)
+		 // {
+			std::cout<<total_deltas[i]<<" "<<d_error[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]) <<"\n";
+		 // }
 		}
+		  if(thread_id > 0)
+		  {
+			std::cout<<"next\n";
+		  }
 
 		// for gemm
 		m = total_layers[current_layer].second;
@@ -522,7 +529,9 @@ namespace zinhart
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 		{
 		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
+		  //std::cout<<total_deltas[i]<<"\n";
 		}
+		std::cout<<"\n";
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
