@@ -699,11 +699,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 		// set back
 		total_hidden_weights_copy[i] = original; 
 	  }
-	  // forward prop
-	  mlp.forward_propagate(std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_inputs, total_activations, total_activations_length, total_hidden_weights, total_hidden_weights_length, bias, n_threads, thread_id);
-	  // error derivative
-	  mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
-	  
+	  // gradient check
 	  results.push_back(pool.add_task(gradient_check_lamda,
 									  name, 
 									  total_layers,
@@ -760,12 +756,13 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // declarations for pointers
   double * total_activations_ptr{nullptr};
   double * total_activations_ptr_test{nullptr};
+  double * total_activations_ptr_check{nullptr};
   double * total_deltas_ptr{nullptr};
   double * total_deltas_ptr_test{nullptr};
   double * total_hidden_input_ptr{nullptr};
   double * total_hidden_input_ptr_test{nullptr};
+  double * total_hidden_input_ptr_check{nullptr};
   double * total_hidden_weights_ptr{nullptr};
-  double * total_hidden_weights_ptr_temp{nullptr};
   double * total_gradient_ptr{nullptr};
   double * total_gradient_ptr_test{nullptr};
   double * total_bias_ptr{nullptr};
@@ -854,14 +851,15 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // allocate vectors
   total_activations_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_activations_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_activations_ptr_check = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_deltas_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_deltas_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_input_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_input_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_hidden_input_ptr_check = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   outputs_ptr = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   outputs_ptr_test = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
-  total_hidden_weights_ptr_temp = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
   total_gradient_ptr = (double*) mkl_malloc( total_gradient_length * sizeof( double ), alignment );
   total_gradient_ptr_test = (double*) mkl_malloc( total_gradient_length * sizeof( double ), alignment );
   total_bias_ptr = (double*) mkl_malloc( total_bias_length * sizeof( double ), alignment );
@@ -880,15 +878,16 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   {
 	total_activations_ptr[i] = 0.0;
 	total_activations_ptr_test[i] = 0.0;
+	total_activations_ptr_check[i] = 0.0;
 	total_hidden_input_ptr[i] = 0.0;
 	total_hidden_input_ptr_test[i] = 0.0;
+	total_hidden_input_ptr_check[i] = 0.0;
 	total_deltas_ptr[i] = 0.0;
 	total_deltas_ptr_test[i] = 0.0;
   }
   for(i = 0; i < total_hidden_weights_length; ++i)
   {
 	total_hidden_weights_ptr[i] = real_dist(mt);
-	total_hidden_weights_ptr_temp[i] = 	total_hidden_weights_ptr[i];
 	total_gradient_ptr[i] = 0.0;
 	total_gradient_ptr_test[i] = 0.0;
   }
@@ -1065,11 +1064,11 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  results[thread_id].get();
 
 	  // validate forward prop outputs
-/*	  for(i = 0; i < total_activations_length; ++i)
+	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<<"i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<<"i: "<<i<<"\n";
-*/
+/**/
 	  multi_layer_perceptron<connection::dense, double> mlp;
 	  mlp.get_outputs(total_layers,
 					  total_activations_ptr, total_activations_length,
@@ -1205,54 +1204,34 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  results[thread_id].get();
 
 	  // validate bprop outputs
-/*	  for(i = 0; i < total_activations_length; ++i)
+	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";*/
+		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";/**/
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_deltas_ptr[i], total_deltas_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_gradient_length/*total_hidden_weights_length*/; ++i)
 		EXPECT_NEAR(total_gradient_ptr[i], total_gradient_ptr_test[i], std::numeric_limits<double>::epsilon())<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  
-	  for(i = 0; i < total_activations_length; ++i)
-	  {
-	/*	
-		total_hidden_input_ptr[i] = 0.0;
-		total_hidden_input_ptr_test[i] = 0.0;
-		total_activations_ptr[i] = 0.0;
-		total_activations_ptr_test[i] = 0.0;
-		total_deltas_ptr[i] = 0.0;
-		total_deltas_ptr_test[i] = 0.0;*/
-	  }
-/*
-	  results[thread_id] = pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr_temp, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id);
-	  results[thread_id].get();
-	  mlp.get_outputs(total_layers,
-					  total_activations_ptr, total_activations_length,
-					  outputs_ptr,
-					  n_threads,
-					  thread_id
-					 );*/
-
-
 	  // gradient check
 	  results[thread_id] = pool.add_task(gradient_check_lamda,
 									  name, 
 									  total_layers,
 									  total_cases_ptr, total_targets_ptr, ith_case,
-									  total_hidden_input_ptr_test, total_activations_ptr_test, total_activations_length,
-									  total_hidden_weights_ptr_temp, total_hidden_weights_length,
+									  total_hidden_input_ptr_check, total_activations_ptr_check, total_activations_length,
+									  total_hidden_weights_ptr, total_hidden_weights_length,
 									  total_bias_ptr,
 									  gradient_approx,
 									  limit_epsilon,
 									  n_threads, thread_id );
 	  results[thread_id].get();
+	  // output layer gradient
 	  for(i = current_threads_gradient_index + current_gradient_index; i < total_layers[current_layer].second * total_layers[previous_layer].second ; ++i)
 	  {
 		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }
-	/*
-	  for(i = 0; i < total_gradient_length; ++i)
+	
+	  /*for(i = 0; i < total_gradient_length; ++i)
 	  {
 		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }*/
@@ -1275,14 +1254,15 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // release memory
   mkl_free(total_activations_ptr);
   mkl_free(total_activations_ptr_test);
+  mkl_free(total_activations_ptr_check);
   mkl_free(total_deltas_ptr);
   mkl_free(total_deltas_ptr_test);
   mkl_free(total_hidden_input_ptr);
   mkl_free(total_hidden_input_ptr_test);
+  mkl_free(total_hidden_input_ptr_check);
   mkl_free(outputs_ptr);
   mkl_free(outputs_ptr_test);
   mkl_free(total_hidden_weights_ptr);
-  mkl_free(total_hidden_weights_ptr_temp);
   mkl_free(total_gradient_ptr);
   mkl_free(total_gradient_ptr_test);
   mkl_free(total_bias_ptr);

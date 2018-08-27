@@ -57,7 +57,7 @@ namespace zinhart
 
 		// to set the parameter back to its original value
 		precision_type original{0};
-		precision_type outputs[total_layers[output_layer].second];
+	//	precision_type outputs[total_layers[output_layer].second];
 		// gradient_check loop
 		for(i = 0; i < total_hidden_weights_length; ++i)
 		{
