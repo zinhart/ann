@@ -27,9 +27,9 @@ namespace zinhart
 			HOST layer & operator = (layer&&) = default;
 			HOST layer(layer_name name);
 			HOST layer(layer_name name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
-			void init(layer_name name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
-			std::uint32_t get_start_index()const;
-			std::uint32_t get_stop_index()const;
+			HOST void init(layer_name name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
+			CUDA_CALLABLE_MEMBER std::uint32_t get_start_index()const;
+			CUDA_CALLABLE_MEMBER std::uint32_t get_end_index()const;
 		};
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS
