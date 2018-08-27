@@ -30,6 +30,7 @@ namespace zinhart
 			HOST void init(layer_name name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
 			CUDA_CALLABLE_MEMBER std::uint32_t get_start_index()const;
 			CUDA_CALLABLE_MEMBER std::uint32_t get_end_index()const;
+			CUDA_CALLABLE_MEMBER std::uint32_t get_total_nodes()const;
 		};
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS

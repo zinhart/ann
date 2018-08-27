@@ -32,6 +32,10 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER std::uint32_t layer<precision_type>::get_end_index()const
 		{ return end_index; }
 
+	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER std::uint32_t layer<precision_type>::get_total_nodes()const
+		{ return end_index - start_index; }
+
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS
 }//END NAMESPACE ZINHART
