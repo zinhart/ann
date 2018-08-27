@@ -1109,7 +1109,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 				  prior_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
 				 );
-/*
 	  std::uint32_t next_weight_matrix_index{total_hidden_weights_length};
 	  std::uint32_t next_layer_index{current_layer_index};
 	  std::uint32_t next_layer{current_layer};
@@ -1122,6 +1121,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
 		current_layer_index = previous_layer_index;
 		previous_layer_index -= total_layers[previous_layer].second; 
+		/*
 		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;
 		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
 
@@ -1155,12 +1155,12 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
 				 );
+				 */
 		next_layer_index = current_layer_index;
 		--next_layer;
 		--current_layer;
 		--previous_layer;
 	  }	  
-*/	
 	  // serial backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
 	  results[thread_id].get();
@@ -1188,7 +1188,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 									  n_threads, thread_id );
 	  results[thread_id].get();
 	  // output layer gradient
-	  for(i = current_threads_gradient_index + current_gradient_index; i < total_layers[current_layer].second * total_layers[previous_layer].second ; ++i)
+	  for(i = current_threads_gradient_index + current_gradient_index; i < total_layers[output_layer].second * total_layers[output_layer - 1].second ; ++i)
 	  {
 		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }

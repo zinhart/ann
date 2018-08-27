@@ -502,7 +502,6 @@ namespace zinhart
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
-	 /* 
 	  while(current_layer > 0)
 	  {
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;
@@ -515,7 +514,7 @@ namespace zinhart
 		precision_type * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
 		const precision_type * previous_layer_activation_ptr{ (current_layer > 1) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
-
+/*
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[next_layer].second;
@@ -543,13 +542,12 @@ namespace zinhart
 				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
 				 );
-
+*/
 		next_layer_index = current_layer_index;
 		--next_layer;
 		--current_layer;
 		--previous_layer;
 	  }
-	  */
 	}	  
 #endif
   }
