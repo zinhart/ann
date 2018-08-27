@@ -1,5 +1,5 @@
-#ifndef ACTIVATION_H
-#define ACTIVATION_H
+#ifndef ACTIVATION_HH
+#define ACTIVATION_HH
 #include "concurrent_routines/concurrent_routines_error.hh"
 #include <cstdint>
 #include <utility>
@@ -190,5 +190,5 @@ namespace zinhart
 	#endif
   }// END NAMESPACE ACTIVATION
 }// END NAMESPACE ZINHART
-#include "ext/activation.tcc"
+#include <ann/ext/activation.tcc>
 #endif

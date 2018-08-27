@@ -19,7 +19,7 @@ namespace zinhart
 		  precision_type * global_device_total_deltas;
 #endif
 		protected:
-		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
+		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(input relu sigmoid etc) and the number of inputs of the respective layer 
 
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length in the case of one thread, for multiple it is total_activations_lengths/n_threads
@@ -32,6 +32,7 @@ namespace zinhart
 		  precision_type * total_hidden_weights{nullptr};// the number of hidden weights for a layer and the weights themselves
 		  precision_type * total_gradient{nullptr};// same as the total number of hidden weights
 		  precision_type * total_bias{nullptr};// equal to total_layers - 1
+		  precision_type * loss_derivatives{nullptr};
 		public:
 		  ann() = default;
 		  ann(const ann<architecture::mlp_dense, precision_type> &) = delete;
