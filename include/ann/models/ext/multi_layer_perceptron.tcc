@@ -473,15 +473,7 @@ namespace zinhart
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = error_stride, k = 0; k < total_layers[output_layer].second; ++i, ++j, ++k)
 		{
 		  total_deltas[i] = d_error[j] * af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
-		 // if(thread_id > 0)
-		 // {
-	//		std::cout<<total_deltas[i]<<" "<<d_error[j]<<" "<<af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]) <<"\n";
-		 // }
 		}
-		  if(thread_id > 0)
-		  {
-	//		std::cout<<"next\n";
-		  }
 
 		// for gemm
 		m = total_layers[current_layer].second;
@@ -510,11 +502,11 @@ namespace zinhart
 		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;
 		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
 		// the weight matrix one layer in front of the current gradient matrix
-		const precision_type * weight_ptr{total_hidden_weights + current_threads_gradient_workspace_index + next_weight_matrix_index};
+		const precision_type * weight_ptr{total_hidden_weights + next_weight_matrix_index};
 		precision_type * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index;
 		const precision_type * previous_layer_activation_ptr{ (current_layer > 1) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
-/*
+
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[next_layer].second;
@@ -525,13 +517,10 @@ namespace zinhart
 				  next_layer_delta_ptr, n, beta, 
 				  current_layer_deltas_ptr, n
 				 );
-		
 		for(i = current_threads_activation_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 		{
 		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
-		  //std::cout<<total_deltas[i]<<"\n";
 		}
-	//	std::cout<<"\n";
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
@@ -542,7 +531,7 @@ namespace zinhart
 				  previous_layer_activation_ptr, n, beta, 
 				  current_gradient_ptr, n
 				 );
-*/
+
 		next_layer_index = current_layer_index;
 		--next_layer;
 		--current_layer;
