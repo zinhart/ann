@@ -521,6 +521,7 @@ namespace zinhart
 		{
 		  total_deltas[i] *= af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::DERIVATIVE, total_activations[i]);
 		}
+	
 		m = total_layers[current_layer].second;
    		n = total_layers[previous_layer].second;
    		k = 1;
