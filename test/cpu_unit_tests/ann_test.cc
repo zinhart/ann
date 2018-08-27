@@ -5,7 +5,6 @@
 #include <random>
 #include <memory>
 #include <algorithm>
-/*
 using namespace zinhart::models;
 using namespace zinhart::activation;
 
@@ -38,7 +37,7 @@ TEST(ann_test, get_layer_add_layer_clear_layers)
   total_layers_copy = model.get_total_layers();
   ASSERT_EQ(total_layers_copy.size(), 0);
 }
-
+/*
 TEST(ann_test, initialize_model_cleanup_model)
 {
   std::random_device rd;
