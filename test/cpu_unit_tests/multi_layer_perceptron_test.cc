@@ -1114,17 +1114,19 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  std::uint32_t next_layer{current_layer};
 	  --current_layer;
 	  --previous_layer;
-
+	  std::uint32_t output_layer_gradient_index{current_gradient_index};
+		std::cout<<"\n"<<output_layer_gradient_index<<"\n";
 	  // calc hidden layer gradients
 	  while(current_layer > 0)
 	  {
 		next_weight_matrix_index -= total_layers[next_layer].second * total_layers[current_layer].second;	
 		current_layer_index = previous_layer_index;
 		previous_layer_index -= total_layers[previous_layer].second; 
-		/*
+
 		current_gradient_index -= total_layers[current_layer].second * total_layers[previous_layer].second;
 		current_gradient_ptr = current_threads_gradient_ptr + current_gradient_index;
-
+		std::cout<<"s: "<<current_gradient_index<<"\n";
+/*
    		double * weight_ptr{total_hidden_weights_ptr + current_threads_gradient_index + next_weight_matrix_index};
 		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
@@ -1169,10 +1171,10 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";/**/
+		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_deltas_ptr[i], total_deltas_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
-	  for(i = 0; i < total_gradient_length/*total_hidden_weights_length*/; ++i)
+	  for(i = 0; i < total_gradient_length; ++i)
 		EXPECT_NEAR(total_gradient_ptr[i], total_gradient_ptr_test[i], std::numeric_limits<double>::epsilon())<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  
 	  // gradient check
@@ -1188,9 +1190,9 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 									  n_threads, thread_id );
 	  results[thread_id].get();
 	  // output layer gradient
-	  for(i = current_threads_gradient_index + current_gradient_index; i < total_layers[output_layer].second * total_layers[output_layer - 1].second ; ++i)
+	  for(i = output_layer_gradient_index; i < total_hidden_weights_length; ++i)
 	  {
-		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
+		EXPECT_NEAR( *(gradient_approx + current_threads_gradient_index + i), *(total_gradient_ptr + current_threads_gradient_index + i), limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }
 	
 	  /*for(i = 0; i < total_gradient_length; ++i)
@@ -1205,10 +1207,10 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // END FORWARD & BACKPROP PROP
 /*  zinhart::serial::print_matrix_row_major(total_activations_ptr_test, 1, total_activations_length,  "total_activations");
   zinhart::serial::print_matrix_row_major(d_error, 1, total_error_length,  "d_error");
-  zinhart::serial::print_matrix_row_major(total_deltas_ptr_test, 1, total_activations_length,  "total_deltas");
-  zinhart::serial::print_matrix_row_major(total_gradient_ptr_test, 1, total_gradient_length,  "total_gradient");*/
-  std::cout<<total_hidden_weights_length<<"\n"; 
-  std::cout<<n_threads<<"\n";
+  zinhart::serial::print_matrix_row_major(total_deltas_ptr_test, 1, total_activations_length,  "total_deltas");*/
+  zinhart::serial::print_matrix_row_major(total_gradient_ptr_test, 1, total_gradient_length,  "total_gradient");
+  std::cout<<"total_hidden_weights: "<<total_hidden_weights_length<<"\n"; 
+  std::cout<<"n_threads: "<<n_threads<<"\n";
   for(i = 0; i < total_layers.size(); ++i)
   {
 	std::cout<<"Layer: "<<i<<" "<<total_layers[i].second<<"\n";
