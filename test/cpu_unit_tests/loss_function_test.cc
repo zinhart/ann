@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
-#include "ann/loss_function.hh"
+#include <gmock/gmock.h>
+#include <ann/loss_function.hh>
 #include <random>
 #include <limits>
 
