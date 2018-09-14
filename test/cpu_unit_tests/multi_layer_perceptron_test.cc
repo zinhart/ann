@@ -550,6 +550,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   std::uint32_t i{0}, j{0}, k{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
   const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
   
+ // const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS};
   double * total_cases_ptr{nullptr};
   double * total_targets{nullptr};
   double * total_hidden_inputs{nullptr};
@@ -797,6 +798,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   double alpha{1.0}, beta{0.0}, error{0.0};
   const double limit_epsilon = 1.e-4;
   const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
+//  const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS};// causes zero derivative
+//  because of different function calls
 
 
   // the thread pool & futures
@@ -817,7 +820,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers.push_back(a_layer);
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	a_layer.first = zinhart::activation::ACTIVATION_NAME::SIGMOID;//ACTIVATION_NAME(layer_dist(mt));
+	a_layer.first = zinhart::activation::ACTIVATION_NAME::TANH;//ACTIVATION_NAME(layer_dist(mt));
 	a_layer.second = neuron_dist(mt);  
 	total_layers.push_back(a_layer);
   }
@@ -1103,7 +1106,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
    		double * weight_ptr{total_hidden_weights_ptr +  next_weight_matrix_index};
 		double * next_layer_delta_ptr{current_threads_delta_ptr + next_layer_index};
 		current_layer_deltas_ptr = current_threads_delta_ptr + current_layer_index ;
-		const double * previous_layer_activation_ptr{ (current_layer > 1) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case};//= current_threads_activation_ptr + previous_layer_index;
+		const double * previous_layer_activation_ptr{ (current_layer > 1) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case};
 
 		m = total_layers[current_layer].second;
 	    n = 1;

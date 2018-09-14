@@ -5,6 +5,7 @@ namespace zinhart
 {
   namespace models
   {
+	// note that because the loss function inteface has been modified this only works with mse ass a loss function
 	template <class precision_type>
   	  HOST void multi_layer_perceptron<connection::dense, precision_type>::gradient_check(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name,
 																						  const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
