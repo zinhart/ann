@@ -14,8 +14,8 @@ addons:
       - "cmake-data"
       - "cmake"
       - "lcov"
-#git:
-#submodules: false 
+git:
+  submodules: false 
 
 before_script:
   #- "sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules"
