@@ -149,7 +149,7 @@ if(BuildUnitTest)
   				     EXCLUDE_FROM_ALL 
 				    )
   endif()
-  add_subdirectory(test)
+  add_subdirectory(unit_tests)
 
 endif()
 

@@ -51,6 +51,6 @@ endif()
 
 
 add_test(
-  NAME tests
+  NAME ann_unit_tests
   COMMAND ann_unit_tests
 )
