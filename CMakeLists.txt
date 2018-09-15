@@ -193,9 +193,9 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX)
     include(CodeCoverage)
 	# ignore extraneous files
-	set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*')
+	set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*' '${PROJECT_BINARY_DIR}/concurrent_routines/*')
 	SETUP_TARGET_FOR_COVERAGE_LCOV(NAME         ${PROJECT_NAME}_coverage 
-								   EXECUTABLE   ./tests/ann_unit_tests 
+								   EXECUTABLE   ./unit_tests/ann_unit_tests 
 								   DEPENDENCIES ${PROJECT_NAME})
 endif()
 
