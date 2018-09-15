@@ -3,7 +3,7 @@ sudo: true
 language: cpp
 branches: 
   only:
-    - testing
+    - inprogress
 addons:
   apt:
     sources:
