@@ -1,9 +1,0 @@
-echo -e "Building ann in release mode"
-truncate -s 0 release-build-output.txt
-mkdir -p release && cd $_
-printf "\nProceding with cmake\n"
-cmake .. >> ../release-build-output.txt 2>&1
-printf "Finished with cmake\n"
-printf "Proceding with make\n"
-make -j 12 >> ../release-build-output.txt 2>&1
-printf "Finished make\n"

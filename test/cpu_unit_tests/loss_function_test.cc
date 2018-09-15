@@ -12,7 +12,7 @@ TEST(loss_function_test, cross_entropy_multi_class_objective)
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  std::uint32_t n_elements{uint_dist(mt)}, i{0};
   double kth_target{0.0}, kth_output{0.0}, serial_error{0.0}, parallel_error{0.0};
   double * outputs{nullptr}, * targets{nullptr}, * outputs_test{nullptr}, * targets_test{nullptr};
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
@@ -53,7 +53,7 @@ TEST(loss_function_test, cross_entropy_multi_class_derivative)
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
+  std::uint32_t n_elements{uint_dist(mt)}, i{0};
   double kth_target{0.0}, kth_output{0.0}, serial_error{0.0}, parallel_error{0.0};
   double * outputs{nullptr}, * targets{nullptr}, * error{nullptr}, * outputs_test{nullptr}, * targets_test{nullptr}, * error_test{nullptr};
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
@@ -98,7 +98,7 @@ TEST(loss_function_test, mean_square_error_objective)
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0}, batch_size{uint_dist(mt)};
+  std::uint32_t n_elements{uint_dist(mt)}, i{0}, batch_size{uint_dist(mt)};
   double kth_target{0.0}, kth_output{0.0}, serial_error{0.0}, parallel_error{0.0};
   double * outputs{nullptr}, * targets{nullptr}, * outputs_test{nullptr}, * targets_test{nullptr};
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
@@ -137,8 +137,8 @@ TEST(loss_function_test, mean_square_error_derivative)
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
   std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
-  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
-  double kth_target{0.0}, kth_output{0.0}, serial_error{0.0}, parallel_error{0.0}, batch_size{uint_dist(mt)};
+  std::uint32_t n_elements{uint_dist(mt)}, i{0};
+  double kth_target{0.0}, kth_output{0.0}, parallel_error{0.0}, batch_size{uint_dist(mt)};
   double * outputs{nullptr}, * targets{nullptr}, * error{nullptr}, * outputs_test{nullptr}, * targets_test{nullptr}, * error_test{nullptr};
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
   outputs = new double[n_elements];

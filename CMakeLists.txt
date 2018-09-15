@@ -98,7 +98,7 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
 # set cxx release flags
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fPIC")
 # set cxx debug flags
-set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC --coverage")
 
 # sanitize flags
 if (Sanitize)
@@ -187,6 +187,16 @@ if(BuildBenchmarks)
 					)
   endif()
   add_subdirectory(benchmarks)
+endif()
+
+# code coverage
+if(CMAKE_COMPILER_IS_GNUCXX)
+    include(CodeCoverage)
+	# ignore extraneous files
+	set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*')
+	SETUP_TARGET_FOR_COVERAGE_LCOV(NAME         ${PROJECT_NAME}_coverage 
+								   EXECUTABLE   ./tests/ann_unit_tests 
+								   DEPENDENCIES ${PROJECT_NAME})
 endif()
 
 message(STATUS "")
