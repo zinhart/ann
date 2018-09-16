@@ -14,8 +14,6 @@ addons:
       - "cmake-data"
       - "cmake"
       - "lcov"
-      - "sed"
-      - "git"
 git:
   submodules: false 
 
