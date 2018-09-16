@@ -9,7 +9,6 @@ CMakeCache.txt
 # Build files:
 Debug
 Release
-build*
 release*
 debug*
 *.a

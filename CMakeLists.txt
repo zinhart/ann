@@ -15,6 +15,9 @@ option(BuildBenchmarks "BuildBenchmarks" OFF)
 option(BuildCuda "BuildCuda" ON)
 # library type
 option(BuildShared "BuildShared" OFF)
+# nesting protection
+option(AnnUseCodeCoverage "AnnUseCodeCoverage" ON)
+#set(ConcurrentRoutinesUseCodeCoverage OFF CACHE BOOL "Ignore concurrent_routines in local CodeCoverage" FORCE)
 # sanitizer support
 option(Sanitize "Sanitize" OFF)
 
@@ -98,7 +101,11 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11 ${CMAKE_CXX_FLAGS}")
 # set cxx release flags
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fPIC")
 # set cxx debug flags
-set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC --coverage")
+if(AnnUseCodeCoverage)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC --coverage")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -pedantic -fno-omit-frame-pointer -fno-inline-functions -fPIC")
+endif()
 
 # sanitize flags
 if (Sanitize)
@@ -110,12 +117,6 @@ add_subdirectory(concurrent_routines)
 
 # add src directory
 add_subdirectory(src)
-
-##enable testing and add test directory
-#if (BuildUnitTest)
-#  enable_testing()
-#  add_subdirectory(test)
-#endif ()
 
 #enable testing and add test directory
 if(BuildUnitTest)
@@ -190,13 +191,15 @@ if(BuildBenchmarks)
 endif()
 
 # code coverage
-if(CMAKE_COMPILER_IS_GNUCXX)
-    include(CodeCoverage)
-	# ignore extraneous files
-	set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*' '${PROJECT_BINARY_DIR}/concurrent_routines/*')
-	SETUP_TARGET_FOR_COVERAGE_LCOV(NAME         ${PROJECT_NAME}_coverage 
-								   EXECUTABLE   ./unit_tests/ann_unit_tests 
-								   DEPENDENCIES ${PROJECT_NAME})
+if(AnnUseCodeCoverage)
+  if(CMAKE_COMPILER_IS_GNUCXX)
+	  include(CodeCoverage)
+	  # ignore extraneous files
+	  set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*' '${PROJECT_BINARY_DIR}/concurrent_routines/*')
+	  SETUP_TARGET_FOR_COVERAGE_LCOV(NAME         ${PROJECT_NAME}_coverage 
+									 EXECUTABLE   ./unit_tests/ann_unit_tests 
+									 DEPENDENCIES ${PROJECT_NAME})
+  endif()
 endif()
 
 message(STATUS "")

@@ -1,0 +1,81 @@
+# To do
+# 1. Add control for how many threads during make
+# 2. Add control for what OS build and thus which threading library (pthread/windows)
+
+LIBRARY="ann"
+DEBUG_FOLDER="debug-ann-cpu"
+RELEASE_FOLDER="release-ann-cpu"
+MAX_THREADS=$(nproc) # to speed up make
+
+if [ "$#" == "0" ]
+then
+echo "USAGE: $0 <some sequence of options listed below>\n"
+echo "(--c/--clean)                                         :     Erase ${DEBUG_FOLDER} and ${RELEASE_FOLDER}\n"
+echo "(--cd/--clean-debug)                                  :     Erase ${DEBUG_FOLDER}\n"
+echo "(--cr/--clean-release)                                :     Erase${RELEASE_FOLDER}\n"
+echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static):     Build ${LIBRARY} as static or shared library\n"
+echo "(--br/--build-release) (--sh/--shared) (--st/--static):     Build ${LIBRARY} as static or shared library\n"
+#possible future options here
+fi
+
+if [[ "$#" == "1" && ("$1" == "--c" || "$1" == "--clean") ]] ; then
+  echo "Removing ${DEBUG_FOLDER} and ${RELEASE_FOLDER}\n"
+  rm -rf ${DEBUG_FOLDER} ${RELEASE_FOLDER}
+fi
+
+if [[ "$#" == "1" && ("$1" == "--cd" || "$1" == "--clean-debug") ]] ; then
+  echo "Removing ${DEBUG_FOLDER}\n"
+  rm -rf ${DEBUG_FOLDER}
+fi
+
+if [[ "$#" == "1" && ("$1" == "--cr" || "$1" == "--clean-release") ]] ; then
+  echo "Removing ${RELEASE_FOLDER}\n"
+  rm -rf ${RELEASE_FOLDER}
+fi
+
+if [[ "$#" == "2" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
+  if [[ "$2" == "--sh" || "$2" == "--shared" ]] 
+  then
+    mkdir -p ${DEBUG_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+	make -j $MAX_THREADS ann_coverage
+	# strip extraneous files
+	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
+	printf "Finished make\n"
+  elif [[ "$2" == "--st" || "$2" == "--static" ]]
+  then
+    mkdir -p ${DEBUG_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+	make -j $MAX_THREADS ann_coverage
+	# strip extraneous files
+	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
+	printf "Finished make\n"
+  else
+	echo "Found an invalid build option: $2"
+  fi
+fi
+
+
+if [[ "$#" == "2" && ("$1" == "--br" || "$1" == "--build-release") ]] ; then
+  if [[ "$2" == "--sh" || "$2" == "--shared" ]] 
+  then
+    mkdir -p ${RELEASE_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=ON -DAnnUseCodeCoverage -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+	printf "Finished make\n"
+  elif [[ "$2" == "--st" || "$2" == "--static" ]]
+  then
+    mkdir -p ${RELEASE_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=OFF -DAnnUseCodeCoverage -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+	printf "Finished make\n"
+  else
+	echo "Found an invalid build option: $2"
+  fi
+fi

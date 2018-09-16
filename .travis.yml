@@ -28,7 +28,7 @@ before_script:
   - "sudo apt-get -y update"
   - "sudo apt-get install -y intel-mkl-2019.0-045"
 script:
-  - "./build-cpu 2"
+  - "./build-cpu --bd --st"
 
 after_script:
 
