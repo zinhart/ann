@@ -15,7 +15,7 @@ if(BuildCuda)
 					  )
   if(BuildShared)
 	#install  libconcurrent_routines.so to <cmake output dir>/${CMAKE_CURRENT_DIR}/
-	install(TARGETS ann LIBRARY DESTINATION lib LIBRARY DESTINATION lib)
+	install(TARGETS ann LIBRARY DESTINATION lib  DESTINATION lib)
   else()
 	# install  libconcurrent_routines.a to <cmake output dir>/${CMAKE_CURRENT_DIR}/
 	install(TARGETS ann LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
@@ -29,7 +29,7 @@ else()
 	  cpu/activation.cc
 	 )
 
-   add_library(ann ${ann_lib})
+   add_library(ann ${LIB_TYPE} ${ann_lib})
 
    target_link_libraries(ann
 						concurrent_routines
@@ -38,8 +38,9 @@ else()
 						${MATH_LIBS}
 					  )
   if(BuildShared)
+	message (STATUS ${LIB_TYPE})
 	#install  libconcurrent_routines.so to <cmake output dir>/${CMAKE_CURRENT_DIR}/
-	install(TARGETS ann LIBRARY DESTINATION lib LIBRARY DESTINATION lib)
+	install(TARGETS ann LIBRARY DESTINATION lib DESTINATION lib)
   else()
 	# install  libconcurrent_routines.a to <cmake output dir>/${CMAKE_CURRENT_DIR}/
 	install(TARGETS ann LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
