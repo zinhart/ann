@@ -1,24 +1,21 @@
+#include <concurrent_routines/serial/serial.hh>
 namespace zinhart
 {
   namespace models
   {
 	namespace layers
 	{
-  //	  static const layer_name activation_map[] = {layer_name::INPUT, layer_name::IDENTITY, layer_name::SIGMOID, layer_name::SOFTPLUS, layer_name::TANH, layer_name::RELU, layer_name::LEAKY_RELU, layer_name::EXP_LEAKY_RELU, layer_name::SOFTMAX, layer_name::BATCH_NORMALIZATION};
-	//template <class precision_type>
-  	  //const layer_name * layer<precision_type>::activation_table = activation_map;
 	  template <class precision_type>
-  		HOST layer<precision_type>::layer(layer_name name)
+  		HOST layer<precision_type>::layer(LAYER_NAME name)
 		{ init(name, 0, 0, nullptr, nullptr); }
 
 	  template <class precision_type>
-		HOST layer<precision_type>::layer(layer_name name, std::uint32_t start_index, std::uint32_t end_index, precision_type * total_activations, precision_type * total_deltas)
+		HOST layer<precision_type>::layer(LAYER_NAME name, std::uint32_t start_index, std::uint32_t end_index, precision_type * total_activations, precision_type * total_deltas)
 		{ init(name, start_index, end_index, total_activations, total_deltas); }
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::init(layer_name name, std::uint32_t start_index, std::uint32_t stop_index, precision_type * total_activations, precision_type * total_deltas)
+		HOST void layer<precision_type>::init(LAYER_NAME name, std::uint32_t start_index, std::uint32_t stop_index, precision_type * total_activations, precision_type * total_deltas)
 		{
-		  this->name = name;
 		  this->start_index = start_index;
 		  this->end_index = end_index;
 		  this->start_activations = total_activations + start_index;
@@ -27,12 +24,16 @@ namespace zinhart
 		  this->end_deltas = total_deltas + end_index;
 		}
 
-	  template <class ... Args>
-		HOST void activate(Args && ... args)
+	  template <class precision_type>
+  		template <class ... Args>
+		HOST void layer<precision_type>::objective(LAYER_NAME Name, std::uint32_t thread_id, std::uint32_t n_threads, Args && ... args)
 		{
-		  // get the specific activation from the hash_table using layer_name which is determined when a layer object is created
-		  
-		  
+		  std::uint32_t start{0}, stop{0}, i{0};
+		  zinhart::serial::map(thread_id, n_threads, get_total_nodes(), start, stop);
+		  for(i = start; i != stop; ++i)
+			// get the specific activation from the hash_table using layer_name which is determined when a layer object is created
+			activation_map[std::uint32_t{Name}](*(start_activations + i), args...);
+
 		}
 
 	  template <class precision_type>
