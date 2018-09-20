@@ -57,8 +57,18 @@ namespace zinhart
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER precision_type operator ()( ACTIVATION_TYPE at, precision_type x, const precision_type coefficient);
 	  };
-
-	class identity : public activation_interface<identity>
+	// a placeholder class used simulate all the different activations as 1 type
+	class activation_test
+	{
+	  public:
+		CUDA_CALLABLE_MEMBER activation_test() = default;
+		CUDA_CALLABLE_MEMBER activation_test(const activation_test&) = default;
+		CUDA_CALLABLE_MEMBER activation_test(activation_test&&) = default;
+		CUDA_CALLABLE_MEMBER activation_test & operator = (const activation_test&) = default;
+		CUDA_CALLABLE_MEMBER activation_test & operator = (activation_test&&) = default;
+		CUDA_CALLABLE_MEMBER ~activation_test() = default;
+	};
+	class identity : public activation_interface<identity>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER identity() = default;
@@ -72,7 +82,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class sigmoid : public activation_interface<sigmoid>
+	class sigmoid : public activation_interface<sigmoid>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER sigmoid() = default;
@@ -86,7 +96,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class softplus : public activation_interface<softplus>
+	class softplus : public activation_interface<softplus>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER softplus() = default;
@@ -101,7 +111,7 @@ namespace zinhart
 
 	};
 
-	class hyperbolic_tangent : public activation_interface<hyperbolic_tangent>
+	class hyperbolic_tangent : public activation_interface<hyperbolic_tangent>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER hyperbolic_tangent() = default;
@@ -115,7 +125,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
 	};
 
-	class relu : public activation_interface<relu>
+	class relu : public activation_interface<relu>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER relu() = default;
@@ -131,7 +141,7 @@ namespace zinhart
 
 
 
-	class leaky_relu : public activation_interface<leaky_relu>
+	class leaky_relu : public activation_interface<leaky_relu>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER leaky_relu() = default;
@@ -147,7 +157,7 @@ namespace zinhart
 
 
 
-	class exp_leaky_relu : public activation_interface<exp_leaky_relu>
+	class exp_leaky_relu : public activation_interface<exp_leaky_relu>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER exp_leaky_relu() = default;
@@ -161,7 +171,7 @@ namespace zinhart
 		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x, precision_type leakage_coefficient = 0.1);
 	};
 
-	class softmax : public activation_interface<softmax>
+	class softmax : public activation_interface<softmax>, public activation_test
 	{
 	  public:
 		 CUDA_CALLABLE_MEMBER softmax() = default;
