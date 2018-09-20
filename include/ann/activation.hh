@@ -68,6 +68,20 @@ namespace zinhart
 		CUDA_CALLABLE_MEMBER activation_test & operator = (activation_test&&) = default;
 		CUDA_CALLABLE_MEMBER ~activation_test() = default;
 	};
+
+	class input : public activation_test
+	{
+	  public:
+		 CUDA_CALLABLE_MEMBER input() = default;
+		 CUDA_CALLABLE_MEMBER input(const input&) = default;
+		 CUDA_CALLABLE_MEMBER input(input&&) = default;
+		 CUDA_CALLABLE_MEMBER input & operator = (const input&) = default;
+		 CUDA_CALLABLE_MEMBER input & operator = (input&&) = default;
+		 template <class precision_type>
+		   CUDA_CALLABLE_MEMBER precision_type objective(const precision_type & x);
+		 template <class precision_type>
+		   CUDA_CALLABLE_MEMBER precision_type derivative(const precision_type & x);
+	};
 	class identity : public activation_interface<identity>, public activation_test
 	{
 	  public:

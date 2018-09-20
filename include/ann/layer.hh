@@ -8,18 +8,7 @@ namespace zinhart
 	namespace layers
 	{
 	  enum class layer_name : std::uint32_t {INPUT = std::uint32_t{0}, IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX, BATCH_NORMALIZATION};
-	  struct activation_map
-	  {
-		// layer name will be used to as hashes to return the proper activation object
-		zinhart::activation::activation_test map[8] = {/*zinhart::activation::input,*/ zinhart::activation::identity(), 
-		                    zinhart::activation::sigmoid(), 
-		                    zinhart::activation::softplus(), zinhart::activation::hyperbolic_tangent(), zinhart::activation::relu(), 
-							zinhart::activation::leaky_relu(), zinhart::activation::exp_leaky_relu(), 
-							zinhart::activation::softmax()/*, zinhart::activation::batch_normalization()*/
-		                   };
-
-	  };	
-	  template <class precision_type>
+	  	  template <class precision_type>
 		class layer
 		{
 		  private:
@@ -30,6 +19,17 @@ namespace zinhart
 			precision_type * start_deltas;
 			precision_type * end_deltas;
 			layer_name name;
+#if CUDA_ENABLED == 1
+#else
+
+			// layer name will be used to as hashes to return the proper activation object
+			zinhart::activation::activation_test activation_map[9] = {zinhart::activation::input(), zinhart::activation::identity(), 
+						  zinhart::activation::sigmoid(), 
+						  zinhart::activation::softplus(), zinhart::activation::hyperbolic_tangent(), zinhart::activation::relu(), 
+						  zinhart::activation::leaky_relu(), zinhart::activation::exp_leaky_relu(), 
+						  zinhart::activation::softmax()/*, zinhart::activation::batch_normalization()*/
+						 };
+#endif
 			// activation_function f; //to do later
 		  public:
 			HOST layer() = delete;
