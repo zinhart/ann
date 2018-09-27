@@ -9,7 +9,7 @@ namespace zinhart
 	namespace layers
 	{
 	  enum class LAYER_NAME : std::uint32_t {INPUT = std::uint32_t{0}, IDENTITY, SIGMOID, SOFTPLUS, TANH, RELU, LEAKY_RELU, EXP_LEAKY_RELU, SOFTMAX, BATCH_NORMALIZATION};
-	  	  template <class precision_type>
+	  template <class precision_type>
 		class layer
 		{
 		  private:
@@ -25,19 +25,15 @@ namespace zinhart
 			// layer name will be used to as hashes to return the proper activation object
 			// would be nice to elimnate this from every layer object by making it global but,
 			// as of now making global within layer namespace causes a multiple inclusion .....
-			zinhart::activation::activation_test activation_map[9] = {zinhart::activation::input(), zinhart::activation::identity(), 
-						  zinhart::activation::sigmoid(), 
-						  zinhart::activation::softplus(), zinhart::activation::hyperbolic_tangent(), zinhart::activation::relu(), 
-						  zinhart::activation::leaky_relu(), zinhart::activation::exp_leaky_relu(), 
-						  zinhart::activation::softmax()/*, zinhart::activation::batch_normalization()*/
-						 };
+			zinhart::activation::activation_test * activation_map;
+			zinhart::activation::activation_test ** activation_map1;
 #endif
 		  public:
-			HOST layer() = delete;
-			HOST layer(const layer&) = default;
-			HOST layer(layer&&) = default;
-			HOST layer & operator = (const layer&) = default;
-			HOST layer & operator = (layer&&) = default;
+			HOST layer();
+			HOST layer(const layer&) = delete;
+			HOST layer(layer&&) = delete;
+			HOST layer & operator = (const layer&) = delete;
+			HOST layer & operator = (layer&&) = delete;
 			HOST layer(LAYER_NAME Name);
 			HOST layer(LAYER_NAME Name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
 			HOST void init(LAYER_NAME name, std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas);
