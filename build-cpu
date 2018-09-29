@@ -10,11 +10,12 @@ MAX_THREADS=$(nproc) # to speed up make
 if [ "$#" == "0" ]
 then
 echo "USAGE: $0 <some sequence of options listed below>\n"
-echo "(--c/--clean)                                         :     Erase ${DEBUG_FOLDER} and ${RELEASE_FOLDER}\n"
-echo "(--cd/--clean-debug)                                  :     Erase ${DEBUG_FOLDER}\n"
-echo "(--cr/--clean-release)                                :     Erase${RELEASE_FOLDER}\n"
-echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static):     Build ${LIBRARY} as static or shared library\n"
-echo "(--br/--build-release) (--sh/--shared) (--st/--static):     Build ${LIBRARY} as static or shared library\n"
+echo "(--c/--clean)																	 :     Erase ${DEBUG_FOLDER} and ${RELEASE_FOLDER}\n"
+echo "(--cd/--clean-debug)															 :     Erase ${DEBUG_FOLDER}\n"
+echo "(--cr/--clean-release)														 :     Erase${RELEASE_FOLDER}\n"
+echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library\n"
+echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static) (--cc/--code-coverage)	 :     Build ${LIBRARY} as static or shared library\n"
+echo "(--br/--build-release) (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library\n"
 #possible future options here
 fi
 
@@ -38,13 +39,39 @@ if [[ "$#" == "2" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+#	make -j $MAX_THREADS ann_coverage
+#	# strip extraneous files
+#	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
+	printf "Finished make\n"
+  elif [[ "$2" == "--st" || "$2" == "--static" ]]
+  then
+    mkdir -p ${DEBUG_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
+	make -j $MAX_THREADS
+#	make -j $MAX_THREADS ann_coverage
+	# strip extraneous files
+#	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
+	printf "Finished make\n"
+  else
+	echo "Found an invalid build option: $2"
+  fi
+fi
+
+if [[ "$#" == "3" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
+  if [[ ("$2" == "--sh" || "$2" == "--shared") && ("$3" == "--cc" || "$3" == "--code-coverage") ]] 
+  then
+    mkdir -p ${DEBUG_FOLDER} && cd $_
+    printf "Proceding with cmake in debug mode\n"
 	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	make -j $MAX_THREADS ann_coverage
 	# strip extraneous files
 	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
 	printf "Finished make\n"
-  elif [[ "$2" == "--st" || "$2" == "--static" ]]
+  elif [[ ("$2" == "--st" || "$2" == "--static") && ("$3" == "--cc" || "$3" == "--code-coverage") ]]
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
