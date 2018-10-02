@@ -9,13 +9,13 @@ MAX_THREADS=$(nproc) # to speed up make
 
 if [ "$#" == "0" ]
 then
-echo "USAGE: $0 <some sequence of options listed below>\n"
-echo "(--c/--clean)																	 :     Erase ${DEBUG_FOLDER} and ${RELEASE_FOLDER}\n"
-echo "(--cd/--clean-debug)															 :     Erase ${DEBUG_FOLDER}\n"
-echo "(--cr/--clean-release)														 :     Erase${RELEASE_FOLDER}\n"
-echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library\n"
-echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static) (--cc/--code-coverage)	 :     Build ${LIBRARY} as static or shared library\n"
-echo "(--br/--build-release) (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library\n"
+echo "USAGE: $0 <some sequence of options listed below>"
+echo "(--c/--clean)																	 :     Erase ${DEBUG_FOLDER} and ${RELEASE_FOLDER}"
+echo "(--cd/--clean-debug)															 :     Erase ${DEBUG_FOLDER}"
+echo "(--cr/--clean-release)														 :     Erase${RELEASE_FOLDER}"
+echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library"
+echo "(--bd/--build-debug)   (--sh/--shared) (--st/--static) (--cc/--code-coverage)	 :     Build ${LIBRARY} as static or shared library"
+echo "(--br/--build-release) (--sh/--shared) (--st/--static)						 :     Build ${LIBRARY} as static or shared library"
 #possible future options here
 fi
 
