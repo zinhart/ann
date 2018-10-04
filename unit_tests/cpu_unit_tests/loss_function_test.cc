@@ -31,7 +31,7 @@ TEST(loss_function_test, cross_entropy_multi_class_objective)
   }	
   auto ce = [](double kth_output, double kth_target, double epsilon = 1.e-30){return kth_target * log(kth_output + epsilon);};
   loss_function loss;
-  parallel_error = loss(LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS, OBJECTIVE(), outputs, targets, n_elements);
+  parallel_error = loss(LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS, objective(), outputs, targets, n_elements);
   serial_error = zinhart::serial::neumaier_sum(outputs_test, targets_test, n_elements, ce);
   
   
@@ -117,7 +117,7 @@ TEST(loss_function_test, mean_square_error_objective)
   }	
   auto mse = [batch_size](double kth_output, double kth_target){return double{1} / double{batch_size}  * (kth_output - kth_target) * (kth_output - kth_target);};
   loss_function loss;
-  parallel_error = loss(LOSS_FUNCTION_NAME::MSE, OBJECTIVE(), outputs, targets, n_elements, batch_size);
+  parallel_error = loss(LOSS_FUNCTION_NAME::MSE, objective(), outputs, targets, n_elements, batch_size);
   serial_error = zinhart::serial::neumaier_sum(outputs_test, targets_test, n_elements, mse);
   
   
@@ -160,7 +160,7 @@ TEST(loss_function_test, mean_square_error_derivative)
   }	
   auto mse_derivative = [batch_size](double kth_output, double kth_target){return double{2.0} / double{batch_size} * (kth_output - kth_target);};
   loss_function loss;
-  loss(LOSS_FUNCTION_NAME::MSE, DERIVATIVE(), outputs, targets, error, n_elements, batch_size);
+  loss(LOSS_FUNCTION_NAME::MSE, derivative(), outputs, targets, error, n_elements, batch_size);
   for(i = 0; i < n_elements; ++i)
 	*(error_test + i ) = mse_derivative( *(outputs + i), *(targets + i) );
   

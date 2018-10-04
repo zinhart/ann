@@ -76,7 +76,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+		  right = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		  // set back
 		  total_hidden_weights[i] = original; 
@@ -91,7 +91,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+		  left = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		  *(current_threads_gradient_ptr + i) = (right - left) / (precision_type{2.0} * limit_epsilon);
@@ -162,7 +162,7 @@ namespace zinhart
 			  return 1;		
 
 			// call activation
-			call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, d_act, total_layers[current_layer].second);
+			call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::objective, d_act, total_layers[current_layer].second);
 			// f(Wx + b) complete for first hidden layer and input layer
 			
 			// update layer counters
@@ -216,7 +216,7 @@ namespace zinhart
 				return 1;		
 
 			  // call activation
-			  if(call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::OBJECTIVE, (d_act + current_activation_offset), total_layers[current_layer].second) != 0)
+			  if(call_activation(total_layers[current_layer].first, ACTIVATION_TYPE::objective, (d_act + current_activation_offset), total_layers[current_layer].second) != 0)
 				return 1;
 
 		  }

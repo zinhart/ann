@@ -5,8 +5,8 @@ namespace zinhart
 {
   namespace function_space
   {
-	enum OBJECTIVE : std::uint32_t;
-	enum DERIVATIVE : std::uint32_t;
+	enum objective : std::uint32_t;
+	enum derivative : std::uint32_t;
   }
 }
 #endif

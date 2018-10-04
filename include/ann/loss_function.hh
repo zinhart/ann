@@ -28,16 +28,16 @@ namespace zinhart
 
 		  // for parallelizing the entire loop
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, const precision_type * outputs, const precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size);
+			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::objective label, const precision_type * outputs, const precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size);
+			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::derivative label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon = 1.e-30);
+			CUDA_CALLABLE_MEMBER precision_type operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::objective label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon = 1.e-30);
 
 		  template <class precision_type>
-			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths);
+			CUDA_CALLABLE_MEMBER void operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::derivative label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths);
 
 	  };
 	  template <class LOSS_FUNCTION>
@@ -52,14 +52,14 @@ namespace zinhart
 			CUDA_CALLABLE_MEMBER ~loss_function_interface() = default;
 			
 			template <class precision_type>
-			  CUDA_CALLABLE_MEMBER precision_type operator()( OBJECTIVE label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size);
+			  CUDA_CALLABLE_MEMBER precision_type operator()( zinhart::function_space::objective label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size);
 			template <class precision_type>
-			  CUDA_CALLABLE_MEMBER precision_type operator()( DERIVATIVE label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size);
+			  CUDA_CALLABLE_MEMBER precision_type operator()( zinhart::function_space::derivative label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size);
 
 			template <class precision_type>
-			  CUDA_CALLABLE_MEMBER precision_type operator()( OBJECTIVE label, precision_type kth_output, precision_type kth_target, precision_type epsilon);
+			  CUDA_CALLABLE_MEMBER precision_type operator()( zinhart::function_space::objective label, precision_type kth_output, precision_type kth_target, precision_type epsilon);
 			template <class precision_type>
-			  CUDA_CALLABLE_MEMBER precision_type operator()( DERIVATIVE label, precision_type kth_output, precision_type kth_target);
+			  CUDA_CALLABLE_MEMBER precision_type operator()( zinhart::function_space::derivative label, precision_type kth_output, precision_type kth_target);
 		};
 
 	  class mean_squared_error : public loss_function_interface<mean_squared_error>

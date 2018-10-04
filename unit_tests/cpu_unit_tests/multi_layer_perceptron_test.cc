@@ -1,5 +1,6 @@
 #include <ann/ann.hh>
 #include <concurrent_routines/concurrent_routines.hh>
+#include <ann/function_space.hh>
 #include <gmock/gmock.h>
 #include <limits>
 #include <random>
@@ -679,7 +680,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
 
-		right = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+		right = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 
 		// set back
 		total_hidden_weights_copy[i] = original; 
@@ -695,7 +696,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 					);
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
-		left = loss(name, zinhart::function_space::OBJECTIVE(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+		left = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
 		// calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		*(current_threads_gradient_ptr + i) = (right - left) / (double{2} * limit_epsilon);
 		// set back
@@ -1025,7 +1026,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
 
 	  // calculate error 
-	  error = loss(name, zinhart::function_space::OBJECTIVE(), outputs_ptr, current_target, output_layer_nodes, 2);
+	  error = loss(name, zinhart::function_space::objective(), outputs_ptr, current_target, output_layer_nodes, 2);
 	
 	 current_layer_index = 0; 
 	 for(i = 1; i < total_layers.size() - 1; ++i)
@@ -1057,7 +1058,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 
 	 double * current_error_matrix = d_error + (thread_id * error_stride);
 	 // calculate error derivative
-	 loss(name, zinhart::function_space::DERIVATIVE(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes, 2);
+	 loss(name, zinhart::function_space::derivative(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes, 2);
 	 // begin backprop 
 	 results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
 										 total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 

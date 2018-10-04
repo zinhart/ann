@@ -6,7 +6,7 @@ namespace zinhart
 	namespace error_metrics
 	{
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, const precision_type * outputs, const precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::objective label, const precision_type * outputs, const precision_type * targets, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
 
 			if(name == LOSS_FUNCTION_NAME::MSE) 
@@ -21,7 +21,7 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::derivative label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths, std::uint32_t batch_size)
 		{
 
 			if(name == LOSS_FUNCTION_NAME::MSE) 
@@ -33,7 +33,7 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, OBJECTIVE label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon)
+		CUDA_CALLABLE_MEMBER precision_type loss_function::operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::objective label, precision_type * outputs, precision_type * targets, std::uint32_t vector_lengths, precision_type epsilon)
 		{
 		  if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS)
 		  {
@@ -47,7 +47,7 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, DERIVATIVE label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths)
+		CUDA_CALLABLE_MEMBER void loss_function::operator()(LOSS_FUNCTION_NAME name, zinhart::function_space::derivative label, precision_type * outputs, precision_type * targets, precision_type * results, std::uint32_t vector_lengths)
 		{
 		  if(name == LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS)
 		  {
@@ -62,24 +62,24 @@ namespace zinhart
 
 	  template <class LOSS_FUNCTION>
 		template <class precision_type>// mse
-		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( OBJECTIVE label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( zinhart::function_space::objective label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size)
 		{ return static_cast<LOSS_FUNCTION*>(this)->objective(kth_output, kth_target, batch_size);}
 
 
 	  template <class LOSS_FUNCTION>
 		template <class precision_type>// mse
-		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( DERIVATIVE label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size)
+		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( zinhart::function_space::derivative label, precision_type kth_output, precision_type kth_target, std::uint32_t batch_size)
 		{ return static_cast<LOSS_FUNCTION*>(this)->derivative(kth_output, kth_target, batch_size);}
 
 	  template <class LOSS_FUNCTION>
 		template <class precision_type>// ce
-		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( OBJECTIVE label, precision_type kth_output, precision_type kth_target, precision_type epsilon)
+		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( zinhart::function_space::objective label, precision_type kth_output, precision_type kth_target, precision_type epsilon)
 		{ return static_cast<LOSS_FUNCTION*>(this)->objective(kth_output, kth_target, epsilon);}
 
 
 	  template <class LOSS_FUNCTION>
 		template <class precision_type>// ce
-		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( DERIVATIVE label, precision_type kth_output, precision_type kth_target)
+		CUDA_CALLABLE_MEMBER precision_type loss_function_interface<LOSS_FUNCTION>::operator()( zinhart::function_space::derivative label, precision_type kth_output, precision_type kth_target)
 		{ return static_cast<LOSS_FUNCTION*>(this)->derivative(kth_output, kth_target);}
 
 
