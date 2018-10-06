@@ -138,10 +138,10 @@ namespace zinhart
 		/*  for(precision_type * i = start_activations; i != stop_activations; ++i)
 			*i = objective(current_layer.batch_norm_layer, *i);*/
 		}
+
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::input_layer input, zinhart::function_space::derivative d)
-		{ }
-		
+		{ }	
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d)
 		{
