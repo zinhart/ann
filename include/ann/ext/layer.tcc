@@ -6,7 +6,7 @@ namespace zinhart
   {
 	namespace layers
 	{
-
+/*
 	  template <class precision_type>
 		HOST layer<precision_type>::layer()
 		{ init(0, 0, nullptr, nullptr, 1); }
@@ -82,7 +82,7 @@ namespace zinhart
 	  template <class precision_type>
 		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::get_coefficient()const
 		{ return coefficient; }
-
+*/
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::input_layer input, zinhart::function_space::objective o)
 		{ }
@@ -94,21 +94,21 @@ namespace zinhart
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::objective o)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(identity, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(identity, *i);
 		}
 	  // add total_deltas_ptr, total_activations_ptr, total_activations_length, thread_id, n_threads
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(identity, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(identity, *i);
 		}
 
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o)
 		{
-		  std::cout<<"start index: "<<get_start_index()<<" stop_index: "<<get_stop_index()<<"\n";
+/*		  std::cout<<"start index: "<<get_start_index()<<" stop_index: "<<get_stop_index()<<"\n";
 		  for(precision_type * i = start_activations; i != stop_activations; ++i)
 		  {
 			std::cout<<"start: "<<*start_activations<<"\n";
@@ -117,78 +117,79 @@ namespace zinhart
 			std::cout<<"After i: "<<*i<<"\n";
 		  }
 		  std::cout<<"\n";
+		  */
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(sigmoid, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(sigmoid, *i);
 		}
 
 
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(softplus, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(softplus, *i);
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(softplus, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(softplus, *i);
 		}
 
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(hyperbolic_tangent, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(hyperbolic_tangent, *i);
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(hyperbolic_tangent, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(hyperbolic_tangent, *i);
 		}
 
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::objective o)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(relu, *i);
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(relu, *i);
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(leaky_relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(leaky_relu, *i);
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(leaky_relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(leaky_relu, *i);
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(exp_leaky_relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = objective(exp_leaky_relu, *i);
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient)
 		{
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(exp_leaky_relu, *i);
+//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
+//			*i = derivative(exp_leaky_relu, *i);
 		}
 
 	  template <class precision_type>
@@ -220,12 +221,12 @@ namespace zinhart
 
 	  template <class precision_type>
 		template<class Callable, class ... Args>
-		HOST void layer<precision_type>::activate(layer_info::generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args)
+		HOST void layer<precision_type>::activate(layer_info::generic_layer generic, zinhart::function_space::objective o, Callable && c, Args&& ...args)
 		{
 		}
 	  template <class precision_type>
 		template<class Callable, class ... Args>
-		HOST void layer<precision_type>::activate(layer_info::generic_layer, zinhart::function_space::derivative d, Callable && c, Args&& ...args)
+		HOST void layer<precision_type>::activate(layer_info::generic_layer generic, zinhart::function_space::derivative d, Callable && c, Args&& ...args)
 		{
 		}
 
@@ -290,33 +291,33 @@ namespace zinhart
 		{ return (x >= precision_type{0.0} ) ? precision_type{1.0} : precision_type{0.0};}
 
 	  template <class precision_type>
-  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::objective(layer_info::leaky_relu_layer leaky_relu, const precision_type & x)
-		{ return (x >= precision_type{0.0} ) ? x : get_coefficient() * x; }
+  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::objective(layer_info::leaky_relu_layer leaky_relu, const precision_type & x, const precision_type & coefficient)
+		{ return (x >= precision_type{0.0} ) ? x : coefficient * x; }
 	  template <class precision_type>
-  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::derivative(layer_info::leaky_relu_layer leaky_relu, const precision_type & x)
-		{ return (x >= precision_type{0.0} ) ? precision_type{1.0} : get_coefficient();  }
+  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::derivative(layer_info::leaky_relu_layer leaky_relu, const precision_type & x, const precision_type & coefficient )
+		{ return (x >= precision_type{0.0} ) ? precision_type{1.0} : coefficient;  }
 
 	  template <class precision_type>
-  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::objective(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x)
+  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::objective(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x, const precision_type & coefficient)
 		{
 #if CUDA_ENABLED == 1
-  		  return (x >= precision_type{0.0} ) ? x : get_coefficient() * (exp(x) - precision_type{1.0})
+  		  return (x >= precision_type{0.0} ) ? x : coefficient * (exp(x) - precision_type{1.0})
 #else
-		  return (x >= precision_type{0.0} ) ? x : get_coefficient() * (std::exp(x) - precision_type{1.0});
+		  return (x >= precision_type{0.0} ) ? x : coefficient * (std::exp(x) - precision_type{1.0});
 #endif
 		}
 	  template <class precision_type>
-  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::derivative(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x)
+  		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::derivative(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x, const precision_type & coefficient)
 		{ 
 #if CUDA_ENABLED == 1
-  		  return (x >= precision_type{0.0} ) ? x : get_coefficient() * (exp(x) - precision_type{1.0});
+  		  return (x >= precision_type{0.0} ) ? x : coefficient * (exp(x) - precision_type{1.0});
 #else
-  		  return (x >= precision_type{0.0} ) ? x : get_coefficient() * (std::exp(x) - precision_type{1.0});
+  		  return (x >= precision_type{0.0} ) ? x : coefficient * (std::exp(x) - precision_type{1.0});
 #endif
 		}
 	  template <class precision_type>
 		template<class Callable, class ... Args>
-		CUDA_CALLABLE_MEMBER precision_type objective(layer_info::generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args)
+		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::objective(layer_info::generic_layer generic, zinhart::function_space::objective o, Callable && c, Args&& ...args)
 		{
 #if CUDA_ENABLED == 1
 
@@ -326,7 +327,7 @@ namespace zinhart
 		}
 	  template <class precision_type>
 		template<class Callable, class ... Args>
-		CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::generic_layer, zinhart::function_space::derivative d, Callable && c, Args&& ...args)
+		CUDA_CALLABLE_MEMBER precision_type layer<precision_type>::derivative(layer_info::generic_layer generic, zinhart::function_space::derivative d, Callable && c, Args&& ...args)
 		{
 #if CUDA_ENABLED == 1
 

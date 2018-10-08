@@ -5,6 +5,7 @@
 #include <random>
 using namespace zinhart::models::layers;
 using namespace zinhart::function_space;
+/*
 TEST(layer_test, init_test)
 {
   // declarations for random numbers
@@ -34,7 +35,7 @@ TEST(layer_test, init_test)
   }
 
   // initialize layers
-  for(thread_id = 0, start = 0, stop = thread_activation_length; /*stop != total_activations_length*/ thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
+  for(thread_id = 0, start = 0, stop = thread_activation_length;  thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
   {	total_layers.push_back(layer<double>(start, stop, total_activations_ptr, total_deltas_ptr)); }
   
   // validate thread offsets
@@ -48,7 +49,7 @@ TEST(layer_test, init_test)
   mkl_free(total_activations_ptr);
   mkl_free(total_deltas_ptr);
 }
-
+*/
 TEST(layer_test, sigmoid_activation)
 {
   // declarations for random numbers
@@ -82,9 +83,9 @@ TEST(layer_test, sigmoid_activation)
 	total_deltas_ptr[i] = real_dist(mt);
 	total_deltas_ptr_test[i] = total_deltas_ptr[i];
   }
-
+/*
   // initialize layers
-  for(thread_id = 0, start = 0, stop = thread_activation_length; /*stop != total_activations_length*/thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
+  for(thread_id = 0, start = 0, stop = thread_activation_length; /thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
   {	total_layers.push_back(layer<double>(start, stop, total_activations_ptr, total_deltas_ptr)); }
   
   // validate thread_offsets
@@ -96,7 +97,7 @@ TEST(layer_test, sigmoid_activation)
   std::cout<<"total layers size"<<total_layers.size()<<"\n";
 
   // perform activation on a per thread basis
-  for(thread_id = 0; thread_id < /*total_layers.size()*/1; ++thread_id)
+  for(thread_id = 0; thread_id < total_layers.size(); ++thread_id)
   {
 	for(i = total_layers[thread_id].get_start_index(); i < total_layers[thread_id].get_stop_index(); ++i)
 	{
@@ -121,7 +122,7 @@ TEST(layer_test, sigmoid_activation)
 	  ASSERT_DOUBLE_EQ(*(total_activations_ptr + i),*(total_activations_ptr_test + i))<<"validate sigmoid objective activation, failure in thread "<<thread_id<<" element "<<i <<"\n";
 	}
   }
-/*
+
   // perform activation derivative on a per thread basis
   for(thread_id = 0; thread_id < total_layers.size(); ++thread_id)
   {
