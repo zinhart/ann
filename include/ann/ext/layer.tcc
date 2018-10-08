@@ -92,35 +92,34 @@ namespace zinhart
 
 	  // add total_activations_ptr, total_activations_length, thread_id, n_threads
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads, std::uint32_t thread_id)
 		{
 //		  for(precision_type * i = start_activations; i != stop_activations; ++i)
 //			*i = objective(identity, *i);
 		}
 	  // add total_deltas_ptr, total_activations_ptr, total_activations_length, thread_id, n_threads
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads, std::uint32_t thread_id)
 		{
 //		  for(precision_type * i = start_activations; i != stop_activations; ++i)
 //			*i = derivative(identity, *i);
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads, std::uint32_t thread_id)
 		{
-/*		  std::cout<<"start index: "<<get_start_index()<<" stop_index: "<<get_stop_index()<<"\n";
-		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-		  {
-			std::cout<<"start: "<<*start_activations<<"\n";
-			std::cout<<"Before i: "<<*i<<"\n";
-		//	*i = objective(sigmoid, *i);
-			std::cout<<"After i: "<<*i<<"\n";
-		  }
-		  std::cout<<"\n";
-		  */
+		  // thread safety variables
+		  const std::uint32_t thread_activation_stride{total_activations_length / n_threads};
+		  const std::uint32_t current_threads_workspace_index{thread_id * thread_activation_stride};
+		  precision_type * current_threads_activation_ptr{total_activations + current_threads_workspace_index};
+		  // counters
+		  std::uint32_t i{0}, j{0};
+		  //activation loop
+//		  for(i = current_threads_workspace_index, j = 0; j < ; ++j)
+
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads, std::uint32_t thread_id)
 		{
 //		  for(precision_type * i = start_activations; i != stop_activations; ++i)
 //			*i = derivative(sigmoid, *i);

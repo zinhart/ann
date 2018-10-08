@@ -75,11 +75,11 @@ namespace zinhart
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::objective o);
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
 
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o);
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
+			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
 
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o);
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
 
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o);
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d);
