@@ -34,7 +34,7 @@ TEST(layer_test, init_test)
   }
 
   // initialize layers
-  for(thread_id = 0, start = 0, stop = thread_activation_length; stop != total_activations_length; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
+  for(thread_id = 0, start = 0, stop = thread_activation_length; /*stop != total_activations_length*/ thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
   {	total_layers.push_back(layer<double>(start, stop, total_activations_ptr, total_deltas_ptr)); }
   
   // validate thread offsets
@@ -84,7 +84,7 @@ TEST(layer_test, sigmoid_activation)
   }
 
   // initialize layers
-  for(thread_id = 0, start = 0, stop = thread_activation_length; stop != total_activations_length; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
+  for(thread_id = 0, start = 0, stop = thread_activation_length; /*stop != total_activations_length*/thread_id < n_threads; ++thread_id, start += thread_activation_length, stop += thread_activation_length)
   {	total_layers.push_back(layer<double>(start, stop, total_activations_ptr, total_deltas_ptr)); }
   
   // validate thread_offsets
@@ -93,14 +93,23 @@ TEST(layer_test, sigmoid_activation)
 	ASSERT_EQ(total_layers[thread_id].get_start_index(), thread_id * thread_activation_length )<<"Asserts that the start index is at thread boundary"<<thread_id<<"\n";
 	ASSERT_EQ(total_layers[thread_id].get_stop_index(), (thread_id + 1) * thread_activation_length )<<"Asserts that the stop index is at thread boundary "<<thread_id<<"\n";
   }
+  std::cout<<"total layers size"<<total_layers.size()<<"\n";
 
   // perform activation on a per thread basis
-  for(thread_id = 0; thread_id < total_layers.size(); ++thread_id)
+  for(thread_id = 0; thread_id < /*total_layers.size()*/1; ++thread_id)
   {
+	for(i = total_layers[thread_id].get_start_index(); i < total_layers[thread_id].get_stop_index(); ++i)
+	{
+	  std::cout<<"i: "<<i<<"\n";
+	  std::cout<< "BEFORE" <<*(total_activations_ptr + i) <<" "<< *(total_activations_ptr_test + i) <<" "<<"\n";
+//	  *(total_activations_ptr_test + i) = total_layers[thread_id].objective( type.sigmoid, *(total_activations_ptr_test + i) );
+	}
 	total_layers[thread_id].activate(type.sigmoid, objective());
 	for(i = total_layers[thread_id].get_start_index(); i < total_layers[thread_id].get_stop_index(); ++i)
 	{
-	  *(total_activations_ptr_test + i) = total_layers[thread_id].objective( type.sigmoid, *(total_activations_ptr_test + i) );
+	  std::cout<<"i: "<<i<<"\n";
+	  std::cout<< "AFTER" <<*(total_activations_ptr + i) <<" "<< *(total_activations_ptr_test + i) <<" "<<"\n";
+//	  *(total_activations_ptr_test + i) = total_layers[thread_id].objective( type.sigmoid, *(total_activations_ptr_test + i) );
 	}
   }
 

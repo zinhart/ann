@@ -21,6 +21,7 @@ namespace zinhart
 		enum exp_leaky_relu_layer : std::uint32_t;
 		enum softmax_layer : std::uint32_t;
 		enum batch_normalization_layer : std::uint32_t;
+		enum universal_layer : std::uint32_t;
 		// grouped into one type for conveniece
 		union layer_type
 		{
@@ -34,6 +35,7 @@ namespace zinhart
 		  exp_leaky_relu_layer exp_leaky_relu;
 		  softmax_layer softmax;
 		  batch_normalization_layer batch_normalization;
+		  universal_layer generic_layer;
 		};
 	  }
 	  // thread safe layer class
@@ -68,44 +70,66 @@ namespace zinhart
 			CUDA_CALLABLE_MEMBER precision_type get_coefficient()const;
   			
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::objective o);
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o);
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o);
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o);
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o);
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::objective o);
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o);
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o);
-			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o);
-			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o);
-
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o);
 			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o);
 			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o);
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o);
 			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::objective o);
 			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o);
 			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o);
 			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d);
-			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o);
+  			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d);
+
+			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o);
 			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d);
 
-			
+			template<class Callable, class ... Args>
+			  HOST void activate(layer_info::generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args);
+			template<class Callable, class ... Args>
+			  HOST void activate(layer_info::generic_layer, zinhart::function_space::derivative d, Callable && c, Args&& ...args);
+
+			// vectorized functions and their first order derivatives
   			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::identity_layer identity, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::sigmoid_layer sigmoid, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::softplus_layer sigmoid, const precision_type & x);
-	        CUDA_CALLABLE_MEMBER precision_type objective(layer_info::tanh_layer hyperbolic_tangent, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::relu_layer relu, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::leaky_relu_layer leaky_relu, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x);
-
-
   			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::identity_layer identity, const precision_type & x);
+
+  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::sigmoid_layer sigmoid, const precision_type & x);
   			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::sigmoid_layer sigmoid, const precision_type & x);
+
+  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::softplus_layer sigmoid, const precision_type & x);
   			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::softplus_layer softplus, const precision_type & x);
+
+	        CUDA_CALLABLE_MEMBER precision_type objective(layer_info::tanh_layer hyperbolic_tangent, const precision_type & x);
 	        CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::tanh_layer hyperbolic_tangent, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::relu_layer relu, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::leaky_relu_layer leaky_relu, const precision_type & x);
-  			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x);
+
+  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::relu_layer relu, const precision_type & x);
+			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::relu_layer relu, const precision_type & x);
+
+  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::leaky_relu_layer leaky_relu, const precision_type & x);
+ 			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::leaky_relu_layer leaky_relu, const precision_type & x);
+
+  			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x);
+			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::exp_leaky_relu_layer exp_leaky_relu, const precision_type & x);
+
+			template<class Callable, class ... Args>
+			  CUDA_CALLABLE_MEMBER precision_type objective(layer_info::generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args);
+			template<class Callable, class ... Args>
+			  CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::generic_layer, zinhart::function_space::derivative d, Callable && c, Args&& ...args);
 		};
 
 	}//END NAMESPACE LAYERS
