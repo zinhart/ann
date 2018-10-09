@@ -2,7 +2,7 @@
 #define LAYER_HH
 #include <ann/function_space.hh>
 #include <cassert>
-//#include <utility> // for std::forward
+#include <utility>
 namespace zinhart
 {
   namespace models
@@ -38,48 +38,26 @@ namespace zinhart
 		  generic_layer universal_layer;
 		};
 	  }
-	  // thread safe layer class
+
 	  template <class precision_type>
 		class layer
 		{
-		  private:
-			/*
-			std::uint32_t start_index;
-			std::uint32_t stop_index;
-			precision_type * start_activations;
-			precision_type * stop_activations;
-			precision_type * start_deltas;
-			precision_type * stop_deltas;
-			precision_type coefficient;
-			CUDA_CALLABLE_MEMBER  precision_type * get_start_activations()const;
-			CUDA_CALLABLE_MEMBER  precision_type * get_stop_activations()const;
-			CUDA_CALLABLE_MEMBER  precision_type * get_start_deltas()const;
-			CUDA_CALLABLE_MEMBER  precision_type * get_stop_deltas()const;
-			*/
 		  public:
-			enum class activation : std::uint32_t {input = std::uint32_t{0}, identity, sigmoid, softplus, tanh, relu, leaky_relu, exp_leaky_relu, softmax, batch_norm};
+			enum class activation : std::uint32_t {input = std::uint32_t{0}, identity, sigmoid, softplus, tanh, relu, leaky_relu, exp_leaky_relu, softmax, batch_norm, universal};
+			typedef std::pair<std::uint32_t, activation> attributes;
 			HOST layer() = default;
 			HOST layer(const layer&) = default;
 			HOST layer(layer&&) = default;
 			HOST layer & operator = (const layer&) = delete;
 			HOST layer & operator = (layer&&) = delete;
-			//HOST layer(std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas, const precision_type & coefficient = 1);
-			/*
-			HOST void init(std::uint32_t start, std::uint32_t stop, precision_type * total_activations, precision_type * total_deltas, const precision_type & coefficient = 1);
-			CUDA_CALLABLE_MEMBER std::uint32_t get_start_index()const;
-			CUDA_CALLABLE_MEMBER std::uint32_t get_stop_index()const;
-			CUDA_CALLABLE_MEMBER std::uint32_t get_total_nodes()const;
-			CUDA_CALLABLE_MEMBER void set_coefficient(const precision_type & coefficient);
-			CUDA_CALLABLE_MEMBER precision_type get_coefficient()const;
-  			*/
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::objective o);
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
 
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
+			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * total_activations, std::uint32_t total_activations_length, std::uint32_t n_threads = 1, std::uint32_t thread_id = 0);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o);
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d);
