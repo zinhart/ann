@@ -59,33 +59,33 @@ namespace zinhart
 			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
 			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o);
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o);
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::objective o);
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient = 0.1);
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length, const precision_type & coefficient = 0.1);
 
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient = 0.1);
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length, const precision_type & coefficient = 0.1);
 
-			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o);
-  			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+  			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o);
-			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d);
+			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
 			template<class Callable, class ... Args>
 			  HOST void activate(layer_info::generic_layer generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args);
 			template<class Callable, class ... Args>
 			  HOST void activate(layer_info::generic_layer generic_layer, zinhart::function_space::derivative d, Callable && c, Args&& ...args);
 
-			// vectorized functions and their first order derivatives
+			// vectorized activation functions and their first order derivatives
   			CUDA_CALLABLE_MEMBER precision_type objective(layer_info::identity_layer identity, const precision_type & x);
   			CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::identity_layer identity, const precision_type & x);
 

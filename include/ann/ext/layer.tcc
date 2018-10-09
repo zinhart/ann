@@ -17,13 +17,13 @@ namespace zinhart
 		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
 		  for(std::uint32_t i = 0; i < length; ++i)
-			objective( identity, *(start + i) );
+			*(start + i) = objective( identity, *(start + i) );
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
 		  for(std::uint32_t i = 0; i < length; ++i)
-			derivative( identity, *(start + i) );
+			*(start + i) = derivative( identity, *(start + i) );
 		}
 
 	  template <class precision_type>
@@ -41,92 +41,93 @@ namespace zinhart
 
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = objective(softplus, *i);
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = objective( softplus, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = derivative(softplus, *i);
-		}
-
-	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o)
-		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = objective(hyperbolic_tangent, *i);
-		}
-	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d)
-		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = derivative(hyperbolic_tangent, *i);
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) =	derivative( softplus, *(start + i) );
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = objective(relu, *i);
+
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = objective( hyperbolic_tangent, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = derivative(relu, *i);
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) =	derivative( hyperbolic_tangent, *(start + i) );
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient)
+		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = objective(leaky_relu, *i);
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = objective( relu, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient)
+		HOST void layer<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = derivative(leaky_relu, *i);
-		}
-
-	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, const precision_type & coefficient)
-		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = objective(exp_leaky_relu, *i);
-		}
-	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, const precision_type & coefficient)
-		{
-//		  for(precision_type * i = start_activations; i != stop_activations; ++i)
-//			*i = derivative(exp_leaky_relu, *i);
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) =	derivative( relu, *(start + i) );
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length, const precision_type & coefficient)
+		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = objective( leaky_relu, *(start + i), coefficient );
+		}
+	  template <class precision_type>
+		HOST void layer<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length, const precision_type & coefficient)
+		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) =	derivative( leaky_relu, *(start + i), coefficient );
+		}
+
+	  template <class precision_type>
+		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length, const precision_type & coefficient)
+		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = objective( exp_leaky_relu, *(start + i), coefficient );
+		}
+	  template <class precision_type>
+		HOST void layer<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length, const precision_type & coefficient)
+		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) =	derivative( exp_leaky_relu, *(start + i), coefficient );
+		}
+
+	  template <class precision_type>
+		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
 		/*  for(precision_type * i = start_activations; i != stop_activations; ++i)
 			*i = objective(current_layer.softmax_layer, *i);
 		*/
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
 	/*	  for(precision_type * i = start_activations; i != stop_activations; ++i)
 			*i = derivative(name, *i);*/
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o)
+		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
 		/*  for(precision_type * i = start_activations; i != stop_activations; ++i)
 			*i = objective(current_layer.batch_norm_layer, *i);*/
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d)
+		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
 	/*	  for(precision_type * i = start_activations; i != stop_activations; ++i)
 			*i = derivative(name, *i);*/
