@@ -41,9 +41,6 @@ if [[ "$#" == "2" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
     printf "Proceding with cmake in debug mode\n"
 	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
-#	make -j $MAX_THREADS ann_coverage
-#	# strip extraneous files
-#	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
 	printf "Finished make\n"
   elif [[ "$2" == "--st" || "$2" == "--static" ]]
   then
@@ -51,9 +48,6 @@ if [[ "$#" == "2" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
     printf "Proceding with cmake in debug mode\n"
 	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
-#	make -j $MAX_THREADS ann_coverage
-	# strip extraneous files
-#	lcov --remove ann_coverage.info "/usr/include/*" "$PWD/googlebench-src/*" "$PWD/googletest-src/*" "$PWD/concurrent_routines/*" -o ann_coverage.info
 	printf "Finished make\n"
   else
 	echo "Found an invalid build option: $2"
