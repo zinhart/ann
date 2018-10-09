@@ -41,7 +41,8 @@ else()
   add_executable(ann_unit_tests ${test_lib})
   
   target_link_libraries(ann_unit_tests
-						gmock_main
+						gtest
+	#	gmock_main
 						ann
 				   	    ${MKL_LIBRARIES}
 						${CMAKE_THREAD_LIBS_INIT}

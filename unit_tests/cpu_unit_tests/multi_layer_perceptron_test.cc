@@ -1,7 +1,7 @@
 #include <ann/ann.hh>
 #include <concurrent_routines/concurrent_routines.hh>
 #include <ann/function_space.hh>
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <limits>
 #include <random>
 #include <memory>

@@ -1,6 +1,6 @@
 #include <ann/ann.hh>
 #include <ann/activation.hh>
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <limits>
 #include <random>
 #include <memory>

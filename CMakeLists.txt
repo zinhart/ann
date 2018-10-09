@@ -121,35 +121,42 @@ add_subdirectory(src)
 #enable testing and add test directory
 if(BuildUnitTest)
   enable_testing()
+  find_package(GTest)
 
-  # Download and unpack googletest at configure time
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ExternalProjects/CMakeLists.txt.in.gtest googletest-download/CMakeLists.txt)
-  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-  if(result)
-	message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-  endif()
-  execute_process(COMMAND ${CMAKE_COMMAND} --build .
-	RESULT_VARIABLE result
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-  if(result)
-	message(FATAL_ERROR "Build step for googletest failed: ${result}")
-  endif()
+  if(GTEST_FOUND)
+	# add include directories
+	include_directories(${GTEST_INCLUDE_DIRS})
+  else()
+  	# Download and unpack googletest at configure time
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ExternalProjects/CMakeLists.txt.in.gtest googletest-download/CMakeLists.txt)
+	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+	  RESULT_VARIABLE result
+	  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+	if(result)
+	  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+	endif()
+	execute_process(COMMAND ${CMAKE_COMMAND} --build .
+	  RESULT_VARIABLE result
+	  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+	if(result)
+	  message(FATAL_ERROR "Build step for googletest failed: ${result}")
+	endif()
 
-  # Prevent overriding the parent project's compiler/linker
-  # settings on Windows
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	# Prevent overriding the parent project's compiler/linker
+	# settings on Windows
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-  # Conditionally Add googletest directly to our build, if this is not a sub project. This defines
-  # the gtest and gtest_main targets.
-  string(REGEX MATCH "${CMAKE_CURRENT_SOURCE_DIR}" result "${CMAKE_SOURCE_DIR}")
-  if(${result} MATCHES "${CMAKE_CURRENT_SOURCE_DIR}")
-	add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+	# Conditionally Add googletest directly to our build, if this is not a sub project. This defines
+	# the gtest and gtest_main targets.
+	string(REGEX MATCH "${CMAKE_CURRENT_SOURCE_DIR}" result "${CMAKE_SOURCE_DIR}")
+	if(${result} MATCHES "${CMAKE_CURRENT_SOURCE_DIR}")
+	  add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
   				     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
   				     EXCLUDE_FROM_ALL 
 				    )
+	endif()
   endif()
+
   add_subdirectory(unit_tests)
 
 endif()

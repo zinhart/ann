@@ -28,7 +28,7 @@ before_script:
   - sudo apt-get -y update
   - sudo apt-get install -y intel-mkl-2019.0-045
 script:
-  - ./build-cpu --build-cpu --shared --code-coverage
+  - ./build-cpu --build-debug --shared --code-coverage
 
 after_script:
 

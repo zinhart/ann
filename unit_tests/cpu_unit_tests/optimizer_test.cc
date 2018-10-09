@@ -1,5 +1,5 @@
 #include <ann/optimizer.hh>
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <random>
 #include <limits>
 

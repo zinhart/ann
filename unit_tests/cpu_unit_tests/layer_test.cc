@@ -1,7 +1,7 @@
 #include <ann/ann.hh>
 #include <ann/layer.hh>
 #include <vector>
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <random>
 using namespace zinhart::models::layers;
 using namespace zinhart::function_space;

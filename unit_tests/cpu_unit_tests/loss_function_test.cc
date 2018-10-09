@@ -1,4 +1,4 @@
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <ann/loss_function.hh>
 #include <random>
 #include <limits>
