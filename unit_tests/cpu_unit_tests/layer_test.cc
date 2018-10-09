@@ -43,32 +43,25 @@ TEST(layer_test, sigmoid_activation)
 
   // perform activation
   l.activate(layer_info::sigmoid_layer(), objective(), layer_activations_ptr, layer_length);
+
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-  {
 	*(layer_activations_ptr_test + i) = l.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
-  }
 
-  // check activation
+  // validate activation
   for(i = 0; i < layer_length; ++i)
-  {
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
-  }
 
-  // perform activation
+  // perform activation derivative
   l.activate(layer_info::sigmoid_layer(), derivative(), layer_deltas_ptr, layer_length);
+
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-  {
 	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
-  }
 
-  // check activation
+  // validate activation derivative
   for(i = 0; i < layer_length; ++i)
-  {
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
-  }
-
 
   // cleanup
   mkl_free(layer_activations_ptr);
