@@ -59,6 +59,33 @@ namespace zinhart
 		HOST virtual void error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) = 0;
 		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) = 0;
 	};
+  template <class precision_type>
+	class mean_squared_error : public loss_function<precision_type>
+	{
+	  public:
+		mean_squared_error() = default;
+		mean_squared_error(const mean_squared_error &) = default;
+		mean_squared_error(mean_squared_error &&) = default;
+		mean_squared_error & operator = (const mean_squared_error &) = default;
+		mean_squared_error & operator = (mean_squared_error &&) = default;
+		~mean_squared_error() = default;
+		HOST virtual void error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) override;
+		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) override;
+	};
+
+  template <class precision_type>
+	class cross_entropy_multi_class : public loss_function<precision_type>
+	{
+	  public:
+		cross_entropy_multi_class() = default;
+		cross_entropy_multi_class(const cross_entropy_multi_class &) = default;
+		cross_entropy_multi_class(cross_entropy_multi_class &&) = default;
+		cross_entropy_multi_class & operator = (const cross_entropy_multi_class &) = default;
+		cross_entropy_multi_class & operator = (cross_entropy_multi_class &&) = default;
+		~cross_entropy_multi_class() = default;
+		HOST virtual void error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) override;
+		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, std::uint32_t batch_size) override;
+	};
   }// END NAMESPACE LOSS_FUNCTIONS
 
   namespace function_space
