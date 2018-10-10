@@ -48,8 +48,8 @@ namespace zinhart
 			HOST activation() = default;
 			HOST activation(const activation&) = default;
 			HOST activation(activation&&) = default;
-			HOST activation & operator = (const activation&) = delete;
-			HOST activation & operator = (activation&&) = delete;
+			HOST activation & operator = (const activation&) = default;
+			HOST activation & operator = (activation&&) = default;
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::objective o);
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
 
