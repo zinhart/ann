@@ -447,7 +447,7 @@ TEST(layer_test, exp_leaky_relu_activation)
   mkl_free(layer_deltas_ptr);
   mkl_free(layer_deltas_ptr_test);
 }
-/*
+
 TEST(layer_test, softmax_activation)
 {
   // declarations for random numbers
@@ -459,6 +459,7 @@ TEST(layer_test, softmax_activation)
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
   std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  double sum{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -483,22 +484,28 @@ TEST(layer_test, softmax_activation)
   }
 
   // perform activation
-  l.activate(layer_info::sigmoid_layer(), objective(), layer_activations_ptr, layer_length);
+  l.activate(layer_info::softmax_layer(), objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
+	sum += std::exp( *(layer_activations_ptr_test + i) );
+
+  for(i = 0; i < layer_length; ++i)
+	*(layer_activations_ptr_test + i) = std::exp(*(layer_activations_ptr_test + i)) / sum; 
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
+
+
   // perform activation derivative
-  l.activate(layer_info::sigmoid_layer(), derivative(), layer_deltas_ptr, layer_length);
+  l.activate(layer_info::softmax_layer(), derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
+  	for(j = 0; j < layer_length; ++j)
+	  *(layer_deltas_ptr_test + j) = (j == i) ? *(layer_deltas_ptr_test + i) * (double{1.0} - *(layer_deltas_ptr_test + i)) : -*(layer_deltas_ptr_test + j) * *(layer_deltas_ptr_test + i);
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
@@ -510,7 +517,7 @@ TEST(layer_test, softmax_activation)
   mkl_free(layer_deltas_ptr);
   mkl_free(layer_deltas_ptr_test);
 }
-
+/*
 TEST(layer_test, batch_norm_activation)
 {
   // declarations for random numbers

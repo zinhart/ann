@@ -109,28 +109,47 @@ namespace zinhart
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{
-		/*  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(current_layer.softmax_layer, *i);
-		*/
+		  precision_type sum{0.0};
+
+		  // denominator
+		  for(std::uint32_t i = 0; i < length; ++i)
+			sum += std::exp( *(start + i) );
+
+		  // calculate each activation
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(start + i) = std::exp( *(start + i) ) / sum;
 		}
 	  template <class precision_type>
 		HOST void layer<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
 		{
-	/*	  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(name, *i);*/
+		  for(std::uint32_t i = 0; i < length; ++i)
+			for(std::uint32_t j = 0; j < length; ++j)
+			  *(start + j) = (j == i) ? *(start + i) * (precision_type{1.0} - *(start + i)) : -*(start + j) * *(start + i);
 		}
 
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
+		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length, precision_type & scale, precision_type & shift, precision_type epsilon)
 		{
-		/*  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = objective(current_layer.batch_norm_layer, *i);*/
+		  std::uint32_t i;
+		  precision_type batch_mean{0}, batch_variance{0};
+
+		  for(i = 0; i < length; ++i)
+			batch_mean += *(start + i);
+		  batch_mean /= length;
+		  for(i = 0; i < length; ++i)
+			batch_variance += ( *(start + i) - batch_mean ) * ( *(start + i) - batch_mean );
+		  batch_variance /= length;
+
+		  for(i = 0; i < length; ++i) 
+  			*(start + i) = ( *(start + i) - batch_mean ) / std::sqrt(batch_variance + epsilon);
+		  
+		  *(start + i) = scale * *(start + i) + shift;
+
 		}
 	  template <class precision_type>
-		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
+		HOST void layer<precision_type>::activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length, precision_type & scale, precision_type & shift, precision_type epsilon)
 		{
-	/*	  for(precision_type * i = start_activations; i != stop_activations; ++i)
-			*i = derivative(name, *i);*/
+		  // to do
 		}
 
 	  template <class precision_type>

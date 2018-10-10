@@ -77,8 +77,9 @@ namespace zinhart
 			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
   			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
 
-			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length);
-			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length);
+			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length,                                precision_type & scale = 1, precision_type & shift = 0, precision_type epsilon = 1.e-6);
+			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length,
+				               precision_type & scale, precision_type & shift, precision_type epsilon = 1.e-6);
 
 			template<class Callable, class ... Args>
 			  HOST void activate(layer_info::generic_layer generic_layer, zinhart::function_space::objective o, Callable && c, Args&& ...args);
