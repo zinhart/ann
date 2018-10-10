@@ -40,16 +40,16 @@ namespace zinhart
 	  }
 
 	  template <class precision_type>
-		class layer
+		class activation
 		{
 		  public:
-			enum class activation : std::uint32_t {input = std::uint32_t{0}, identity, sigmoid, softplus, tanh, relu, leaky_relu, exp_leaky_relu, softmax, batch_norm, universal};
-			typedef std::pair<std::uint32_t, activation> attributes;
-			HOST layer() = default;
-			HOST layer(const layer&) = default;
-			HOST layer(layer&&) = default;
-			HOST layer & operator = (const layer&) = delete;
-			HOST layer & operator = (layer&&) = delete;
+//			enum class activation : std::uint32_t {input = std::uint32_t{0}, identity, sigmoid, softplus, tanh, relu, leaky_relu, exp_leaky_relu, softmax, batch_norm, universal};
+//			typedef std::pair<std::uint32_t, activation> attributes;
+			HOST activation() = default;
+			HOST activation(const activation&) = default;
+			HOST activation(activation&&) = default;
+			HOST activation & operator = (const activation&) = delete;
+			HOST activation & operator = (activation&&) = delete;
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::objective o);
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
 
@@ -114,6 +114,139 @@ namespace zinhart
 			  CUDA_CALLABLE_MEMBER precision_type derivative(layer_info::generic_layer generic, zinhart::function_space::derivative d, Callable && c, Args&& ...args);
 		};
 
+	  template<class precision_type>
+		class layer
+		{
+		  public:
+			HOST virtual ~layer() = default;
+			activation<precision_type> a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) = 0;	
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)= 0;
+		};
+
+	  template<class precision_type>
+  		class identity_layer : public layer<precision_type>
+		{
+		  public:
+			HOST identity_layer() = default;
+			HOST identity_layer(const identity_layer&) = default;
+			HOST identity_layer(identity_layer&&) = default;
+			HOST identity_layer & operator = (const identity_layer&) = default;
+			HOST identity_layer & operator = (identity_layer&&) = default;
+			HOST ~identity_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+	  template<class precision_type>
+  		class sigmoid_layer : public layer<precision_type>
+		{
+		  public:
+			HOST sigmoid_layer() = default;
+			HOST sigmoid_layer(const sigmoid_layer&) = default;
+			HOST sigmoid_layer(sigmoid_layer&&) = default;
+			HOST sigmoid_layer & operator = (const sigmoid_layer&) = default;
+			HOST sigmoid_layer & operator = (sigmoid_layer&&) = default;
+			HOST ~sigmoid_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+
+	  template<class precision_type>
+  		class softplus_layer : public layer<precision_type>
+		{
+		  public:
+			HOST softplus_layer() = default;
+			HOST softplus_layer(const softplus_layer&) = default;
+			HOST softplus_layer(softplus_layer&&) = default;
+			HOST softplus_layer & operator = (const softplus_layer&) = default;
+			HOST softplus_layer & operator = (softplus_layer&&) = default;
+			HOST ~softplus_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+	  template<class precision_type>
+  		class tanh_layer : public layer<precision_type>
+		{
+		  public:
+			HOST tanh_layer() = default;
+			HOST tanh_layer(const tanh_layer&) = default;
+			HOST tanh_layer(tanh_layer&&) = default;
+			HOST tanh_layer & operator = (const tanh_layer&) = default;
+			HOST tanh_layer & operator = (tanh_layer&&) = default;
+			HOST ~tanh_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+	  template<class precision_type>
+  		class relu_layer : public layer<precision_type>
+		{
+		  public:
+			HOST relu_layer() = default;
+			HOST relu_layer(const relu_layer&) = default;
+			HOST relu_layer(relu_layer&&) = default;
+			HOST relu_layer & operator = (const relu_layer&) = default;
+			HOST relu_layer & operator = (relu_layer&&) = default;
+			HOST ~relu_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+	  template<class precision_type>
+  		class leaky_relu_layer : public layer<precision_type>
+		{
+		  public:
+			HOST leaky_relu_layer() = default;
+			HOST leaky_relu_layer(const leaky_relu_layer&) = default;
+			HOST leaky_relu_layer(leaky_relu_layer&&) = default;
+			HOST leaky_relu_layer & operator = (const leaky_relu_layer&) = default;
+			HOST leaky_relu_layer & operator = (leaky_relu_layer&&) = default;
+			HOST ~leaky_relu_layer() = default; 
+			using layer<precision_type>::a;
+			precision_type coefficient{0.1};
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+	  template<class precision_type>
+  		class exp_leaky_relu_layer : public layer<precision_type>
+		{
+		  public:
+			HOST exp_leaky_relu_layer() = default;
+			HOST exp_leaky_relu_layer(const exp_leaky_relu_layer&) = default;
+			HOST exp_leaky_relu_layer(exp_leaky_relu_layer&&) = default;
+			HOST exp_leaky_relu_layer & operator = (const exp_leaky_relu_layer&) = default;
+			HOST exp_leaky_relu_layer & operator = (exp_leaky_relu_layer&&) = default;
+			HOST ~exp_leaky_relu_layer() = default; 
+			using layer<precision_type>::a;
+			precision_type coefficient{0.1};
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
+
+
+	  template<class precision_type>
+  		class softmax_layer : public layer<precision_type>
+		{
+		  public:
+			HOST softmax_layer() = default;
+			HOST softmax_layer(const softmax_layer&) = default;
+			HOST softmax_layer(softmax_layer&&) = default;
+			HOST softmax_layer & operator = (const softmax_layer&) = default;
+			HOST softmax_layer & operator = (softmax_layer&&) = default;
+			HOST ~softmax_layer() = default; 
+			using layer<precision_type>::a;
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+		};
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS
 }//END NAMESPACE ZINHART

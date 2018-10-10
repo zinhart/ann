@@ -7,7 +7,7 @@
 using namespace zinhart::models::layers;
 using namespace zinhart::function_space;
 
-TEST(layer_test, identity_activation)
+TEST(layer_test, identity_layer)
 {
   // declarations for random numbers
   std::random_device rd;
@@ -23,8 +23,10 @@ TEST(layer_test, identity_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // an identity layer
+  layer<double> * identity = new identity_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -42,35 +44,36 @@ TEST(layer_test, identity_activation)
   }
 
   // perform activation
-  l.activate(layer_info::identity_layer(), objective(), layer_activations_ptr, layer_length);
+  identity->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::identity_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::identity_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::identity_layer(), derivative(), layer_deltas_ptr, layer_length);
+  identity->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::identity_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::identity_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete identity;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
   mkl_free(layer_deltas_ptr_test);
 }
 
-TEST(layer_test, sigmoid_activation)
+TEST(layer_test, sigmoid_layer)
 {
   // declarations for random numbers
   std::random_device rd;
@@ -86,8 +89,10 @@ TEST(layer_test, sigmoid_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // a sigmoid layer
+  layer<double> * sigmoid = new sigmoid_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -105,35 +110,36 @@ TEST(layer_test, sigmoid_activation)
   }
 
   // perform activation
-  l.activate(layer_info::sigmoid_layer(), objective(), layer_activations_ptr, layer_length);
+  sigmoid->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::sigmoid_layer(), derivative(), layer_deltas_ptr, layer_length);
+  sigmoid->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete sigmoid;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
   mkl_free(layer_deltas_ptr_test);
 }
 
-TEST(layer_test, softplus_activation)
+TEST(layer_test, softplus_layer)
 {
   // declarations for random numbers
   std::random_device rd;
@@ -149,8 +155,10 @@ TEST(layer_test, softplus_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // a softplus layer
+  layer<double> * softplus = new softplus_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -168,28 +176,29 @@ TEST(layer_test, softplus_activation)
   }
 
   // perform activation
-  l.activate(layer_info::softplus_layer(), objective(), layer_activations_ptr, layer_length);
+  softplus->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::softplus_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::softplus_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::softplus_layer(), derivative(), layer_deltas_ptr, layer_length);
+  softplus->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::softplus_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::softplus_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete softplus;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -211,9 +220,11 @@ TEST(layer_test, tanh_activation)
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
-
-  // a layer object
-  layer<double> l;
+ 
+  // a tanh layer
+  layer<double> * tanh = new tanh_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -231,28 +242,29 @@ TEST(layer_test, tanh_activation)
   }
 
   // perform activation
-  l.activate(layer_info::tanh_layer(), objective(), layer_activations_ptr, layer_length);
+  tanh->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::tanh_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::tanh_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::tanh_layer(), derivative(), layer_deltas_ptr, layer_length);
+  tanh->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::tanh_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::tanh_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete tanh;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -275,8 +287,10 @@ TEST(layer_test, relu_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // a relu layer
+  layer<double> * relu = new relu_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -294,28 +308,29 @@ TEST(layer_test, relu_activation)
   }
 
   // perform activation
-  l.activate(layer_info::relu_layer(), objective(), layer_activations_ptr, layer_length);
+  relu->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::relu_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::relu_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::relu_layer(), derivative(), layer_deltas_ptr, layer_length);
+  relu->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::relu_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::relu_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -338,8 +353,10 @@ TEST(layer_test, leaky_relu_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // a leaky_relu layer
+  layer<double> * leaky_relu = new leaky_relu_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -357,28 +374,29 @@ TEST(layer_test, leaky_relu_activation)
   }
 
   // perform activation
-  l.activate(layer_info::leaky_relu_layer(), objective(), layer_activations_ptr, layer_length);
+  leaky_relu->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::leaky_relu_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::leaky_relu_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::leaky_relu_layer(), derivative(), layer_deltas_ptr, layer_length);
+  leaky_relu->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::leaky_relu_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::leaky_relu_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete leaky_relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -401,8 +419,10 @@ TEST(layer_test, exp_leaky_relu_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // an exp_leaky_relu layer
+  layer<double> * exp_leaky_relu = new exp_leaky_relu_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -420,28 +440,29 @@ TEST(layer_test, exp_leaky_relu_activation)
   }
 
   // perform activation
-  l.activate(layer_info::exp_leaky_relu_layer(), objective(), layer_activations_ptr, layer_length);
+  exp_leaky_relu->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::exp_leaky_relu_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::exp_leaky_relu_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::exp_leaky_relu_layer(), derivative(), layer_deltas_ptr, layer_length);
+  exp_leaky_relu->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::exp_leaky_relu_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::exp_leaky_relu_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete exp_leaky_relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -465,8 +486,10 @@ TEST(layer_test, softmax_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // a softmax layer
+  layer<double> * softmax = new softmax_layer<double>();
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -484,7 +507,7 @@ TEST(layer_test, softmax_activation)
   }
 
   // perform activation
-  l.activate(layer_info::softmax_layer(), objective(), layer_activations_ptr, layer_length);
+  softmax->activate(objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
@@ -497,10 +520,8 @@ TEST(layer_test, softmax_activation)
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
-
-
   // perform activation derivative
-  l.activate(layer_info::softmax_layer(), derivative(), layer_deltas_ptr, layer_length);
+  softmax->activate(derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
@@ -512,6 +533,7 @@ TEST(layer_test, softmax_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
+  delete softmax;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -534,8 +556,8 @@ TEST(layer_test, batch_norm_activation)
   double * layer_deltas_ptr{nullptr};
   double * layer_deltas_ptr_test{nullptr};
 
-  // a layer object
-  layer<double> l;
+  // an activation object
+  activation<double> a;
 
   // allocate vectors
   layer_activations_ptr = (double*) mkl_malloc( layer_length * sizeof( double ), alignment );
@@ -553,22 +575,22 @@ TEST(layer_test, batch_norm_activation)
   }
 
   // perform activation
-  l.activate(layer_info::sigmoid_layer(), objective(), layer_activations_ptr, layer_length);
+  a.activate(layer_info::sigmoid_layer(), objective(), layer_activations_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_activations_ptr_test + i) = l.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
+	*(layer_activations_ptr_test + i) = a.objective(layer_info::sigmoid_layer(), *(layer_activations_ptr_test + i));
 
   // validate activation
   for(i = 0; i < layer_length; ++i)
 	ASSERT_DOUBLE_EQ(*(layer_activations_ptr + i), *(layer_activations_ptr_test + i) );
 
   // perform activation derivative
-  l.activate(layer_info::sigmoid_layer(), derivative(), layer_deltas_ptr, layer_length);
+  a.activate(layer_info::sigmoid_layer(), derivative(), layer_deltas_ptr, layer_length);
 
   // perform activation test
   for(i = 0; i < layer_length; ++i)
-	*(layer_deltas_ptr_test + i) = l.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
+	*(layer_deltas_ptr_test + i) = a.derivative(layer_info::sigmoid_layer(), *(layer_deltas_ptr_test + i));
 
   // validate activation derivative
   for(i = 0; i < layer_length; ++i)
