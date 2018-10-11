@@ -52,7 +52,7 @@ using namespace zinhart::activation;
 					};
 
 
-  auto gradient_check_lamda = [](zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name_p,
+  auto gradient_check_lamda = [](zinhart::loss_functions::loss_function<double> * loss,
 								 const std::vector<zinhart::activation::LAYER_INFO> & total_layers_p,
 								 const double * total_training_cases_p, const double * total_targets_p, const std::uint32_t case_index_p,
 								 double * total_hidden_inputs_p, double * total_activations_p, const std::uint32_t total_activations_length_p,
@@ -63,7 +63,7 @@ using namespace zinhart::activation;
 								 const std::uint32_t n_threads_p, const std::uint32_t thread_id_p)
                               {
 							  	multi_layer_perceptron<connection::dense, double> mlp_p;
-								mlp_p.gradient_check(name_p, 
+								mlp_p.gradient_check(loss, 
 												  total_layers_p,
 												  total_training_cases_p, total_targets_p, case_index_p,
 												  total_hidden_inputs_p, total_activations_p, total_activations_length_p,
@@ -550,8 +550,10 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   const std::uint32_t alignment = 64;
   std::uint32_t i{0}, j{0}, k{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
   const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
+
+  //zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
+  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
   
- // const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS};
   double * total_cases_ptr{nullptr};
   double * total_targets{nullptr};
   double * total_hidden_inputs{nullptr};
@@ -646,11 +648,10 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 
   
   multi_layer_perceptron<connection::dense, double> mlp;
-  zinhart::function_space::error_metrics::loss_function loss;
 
   std::cout.precision(10);
   // for gradient checking
-  const double limit_epsilon = 1.e-4;
+  const double limit_epsilon = 1.e-6;
   double right{0}, left{0}, original{0};
 
 
@@ -679,9 +680,8 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 						 );
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
-
-		right = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
-
+		// here change to new loss_function
+		right = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
 		// set back
 		total_hidden_weights_copy[i] = original; 
 
@@ -696,7 +696,9 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 					);
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
-		left = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+		// here change to new loss_function
+		left = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
+
 		// calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		*(current_threads_gradient_ptr + i) = (right - left) / (double{2} * limit_epsilon);
 		// set back
@@ -704,7 +706,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 	  }
 	  // gradient check
 	  results.push_back(pool.add_task(gradient_check_lamda,
-									  name, 
+									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets, ith_case,
 									  total_hidden_inputs, total_activations, total_activations_length,
@@ -726,7 +728,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 	results.clear();
   }
      
-  
+  delete loss;
   mkl_free(total_cases_ptr);
   mkl_free(total_hidden_inputs);
   mkl_free(total_deltas);
@@ -741,7 +743,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 }
 
 
-
+/*
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
 
@@ -1013,7 +1015,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<<"i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<<"i: "<<i<<"\n";
-/**/
+
 	  multi_layer_perceptron<connection::dense, double> mlp;
 	  mlp.get_outputs(total_layers,
 					  total_activations_ptr, total_activations_length,
@@ -1200,4 +1202,4 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-
+*/

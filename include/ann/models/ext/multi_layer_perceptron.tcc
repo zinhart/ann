@@ -5,9 +5,8 @@ namespace zinhart
 {
   namespace models
   {
-	// note that because the loss function inteface has been modified this only works with mse ass a loss function
 	template <class precision_type>
-  	  HOST void multi_layer_perceptron<connection::dense, precision_type>::gradient_check(zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name,
+  	  HOST void multi_layer_perceptron<connection::dense, precision_type>::gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
 																						  const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
 																						  const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
 																						  precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
@@ -50,8 +49,6 @@ namespace zinhart
 		// and finally the beginning of gradient for the current thread
 		current_threads_gradient_ptr = numerically_approx_gradient + current_threads_gradient_workspace_index;
 
-		zinhart::function_space::error_metrics::loss_function loss;
-
 		// As in the left and right side derivatives of the error function
 		precision_type right{0};
 		precision_type left{0};
@@ -76,7 +73,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  right = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+	      right = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
 
 		  // set back
 		  total_hidden_weights[i] = original; 
@@ -91,7 +88,7 @@ namespace zinhart
 							n_threads, thread_id
 						  );
 
-		  left = loss(name, zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second, 2);
+	      left = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
 
 		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
 		  *(current_threads_gradient_ptr + i) = (right - left) / (precision_type{2.0} * limit_epsilon);
