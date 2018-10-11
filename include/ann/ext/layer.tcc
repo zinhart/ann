@@ -25,13 +25,13 @@ namespace zinhart
 #endif
 		}
 
-/*	  template<class precision_type>
+	  template<class precision_type>
 		HOST void identity_layer<precision_type>::set_size(std::uint32_t size)
 		{ this->size = size; }
 
 	  template<class precision_type>
 		HOST std::uint32_t identity_layer<precision_type>::get_size()const
-		{ return this->size; }*/
+		{ return this->size; }
 
 	  template<class precision_type>
 		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -53,6 +53,14 @@ namespace zinhart
 		}
 
 	  template<class precision_type>
+		HOST void sigmoid_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t sigmoid_layer<precision_type>::get_size()const
+		{ return this->size; }
+
+	  template<class precision_type>
 		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -70,6 +78,14 @@ namespace zinhart
 		  a.activate(layer_info::softplus_layer(), d, start, length); 
 #endif
 		}
+
+	  template<class precision_type>
+		HOST void softplus_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t softplus_layer<precision_type>::get_size()const
+		{ return this->size; }
 
 	  template<class precision_type>
 		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -91,6 +107,14 @@ namespace zinhart
 		}
 
 	  template<class precision_type>
+		HOST void tanh_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t tanh_layer<precision_type>::get_size()const
+		{ return this->size; }
+
+	  template<class precision_type>
 		HOST void relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -109,6 +133,13 @@ namespace zinhart
 #endif
 		}
 
+	  template<class precision_type>
+		HOST void relu_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t relu_layer<precision_type>::get_size()const
+		{ return this->size; }
 
 	  template<class precision_type>
 		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -130,6 +161,14 @@ namespace zinhart
 		}
 
 	  template<class precision_type>
+		HOST void leaky_relu_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t leaky_relu_layer<precision_type>::get_size()const
+		{ return this->size; }
+
+	  template<class precision_type>
 		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -149,6 +188,14 @@ namespace zinhart
 		}
 
 	  template<class precision_type>
+		HOST void exp_leaky_relu_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t exp_leaky_relu_layer<precision_type>::get_size()const
+		{ return this->size; }
+
+	  template<class precision_type>
 		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -166,6 +213,14 @@ namespace zinhart
 		  a.activate(layer_info::softmax_layer(), d, start, length); 
 #endif
 		}
+
+	  template<class precision_type>
+		HOST void softmax_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t softmax_layer<precision_type>::get_size()const
+		{ return this->size; }
 
 	  template <class precision_type>
 		HOST void activation<precision_type>::activate(layer_info::input_layer input, zinhart::function_space::objective o)
