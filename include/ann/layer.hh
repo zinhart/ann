@@ -117,17 +117,24 @@ namespace zinhart
 	  template<class precision_type>
 		class layer
 		{
+		  protected:
+			std::uint32_t size;
 		  public:
 			HOST virtual ~layer() = default;
 			activation<precision_type> a;
-			std::uint32_t node;
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) = 0;	
 			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)= 0;
+/*			HOST virtual std::uint32_t set_set(std::uint32_t size) = 0;
+			HOST virtual std::uint32_t get_size()const = 0;
+*/
 		};
 
 	  template<class precision_type>
   		class identity_layer : public layer<precision_type>
 		{
+		  private:
+			using layer<precision_type>::a;
+			using layer<precision_type>::size;
 		  public:
 			HOST identity_layer() = default;
 			HOST identity_layer(const identity_layer&) = default;
@@ -135,9 +142,10 @@ namespace zinhart
 			HOST identity_layer & operator = (const identity_layer&) = default;
 			HOST identity_layer & operator = (identity_layer&&) = default;
 			HOST ~identity_layer() = default; 
-			using layer<precision_type>::a;
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
 			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+/*			HOST virtual std::uint32_t set_set(std::uint32_t size) override;
+			HOST virtual std::uint32_t get_size()const override;*/
 		};
 
 	  template<class precision_type>

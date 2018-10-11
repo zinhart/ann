@@ -74,6 +74,44 @@ using namespace zinhart::activation;
 												  n_threads_p, thread_id_p
 												  );
 							  };
+void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, std::uint32_t layer_id)
+{
+  if(layer_id == 1)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::identity_layer<double>>());
+  } 
+  else if(layer_id == 2)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::sigmoid_layer<double>>());
+  }
+  else if(layer_id == 3)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::softplus_layer<double>>());
+  }
+  else if(layer_id == 4)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::tanh_layer<double>>());
+  }
+  else if(layer_id == 5)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::relu_layer<double>>());
+  }
+  else if(layer_id == 6)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::leaky_relu_layer<double>>());
+  }
+  else if(layer_id == 7)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::exp_leaky_relu_layer<double>>());
+  }
+  else if(layer_id == 8)
+  {
+	total_layers.push_back(std::make_shared<zinhart::models::layers::softmax_layer<double>>());
+  }
+ /* else if(layer_id == 9)
+  {
+  }*/
+}
 
 TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 {
@@ -181,7 +219,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   for(i = 0; i < total_bias_length; ++i)
 	total_bias_ptr[i] = real_dist(mt);
 
-
+/*
   // BEGIN FORWARD PROP
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
@@ -278,6 +316,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 	}
 	results.clear();
   }
+*/
   // END FORWARD PROP
   // release memory
   mkl_free(total_activations_ptr);
@@ -288,7 +327,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
-
+/*
 TEST(multi_layer_perceptron, get_results_thread_safety)
 {
   // declarations for random numbers
@@ -817,7 +856,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers.push_back(a_layer);
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	a_layer.first = zinhart::activation::ACTIVATION_NAME::TANH;//ACTIVATION_NAME(layer_dist(mt));
+	a_layer.first = zinhart::activation::ACTIVATION_NAME::SIGMOID;//ACTIVATION_NAME(layer_dist(mt));
 	a_layer.second = neuron_dist(mt);  
 	total_layers.push_back(a_layer);
   }
@@ -1197,3 +1236,4 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
+*/
