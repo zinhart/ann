@@ -120,6 +120,7 @@ namespace zinhart
 		  public:
 			HOST virtual ~layer() = default;
 			activation<precision_type> a;
+			std::uint32_t node;
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) = 0;	
 			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)= 0;
 		};

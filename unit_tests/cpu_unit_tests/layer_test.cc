@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
-
+#include <memory>
 using namespace zinhart::models::layers;
 using namespace zinhart::function_space;
 
@@ -24,7 +24,7 @@ TEST(layer_test, identity_layer)
   double * layer_deltas_ptr_test{nullptr};
 
   // an identity layer
-  layer<double> * identity = new identity_layer<double>();
+  std::shared_ptr<layer<double>> identity = std::make_shared<identity_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -66,7 +66,6 @@ TEST(layer_test, identity_layer)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete identity;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -90,7 +89,7 @@ TEST(layer_test, sigmoid_layer)
   double * layer_deltas_ptr_test{nullptr};
 
   // a sigmoid layer
-  layer<double> * sigmoid = new sigmoid_layer<double>();
+  std::shared_ptr<layer<double>> sigmoid = std::make_shared<sigmoid_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -132,7 +131,6 @@ TEST(layer_test, sigmoid_layer)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete sigmoid;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -156,7 +154,7 @@ TEST(layer_test, softplus_layer)
   double * layer_deltas_ptr_test{nullptr};
 
   // a softplus layer
-  layer<double> * softplus = new softplus_layer<double>();
+  std::shared_ptr<layer<double>> softplus = std::make_shared<softplus_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -198,7 +196,6 @@ TEST(layer_test, softplus_layer)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete softplus;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -222,7 +219,7 @@ TEST(layer_test, tanh_activation)
   double * layer_deltas_ptr_test{nullptr};
  
   // a tanh layer
-  layer<double> * tanh = new tanh_layer<double>();
+  std::shared_ptr<layer<double>> tanh = std::make_shared<tanh_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -264,7 +261,6 @@ TEST(layer_test, tanh_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete tanh;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -288,7 +284,7 @@ TEST(layer_test, relu_activation)
   double * layer_deltas_ptr_test{nullptr};
 
   // a relu layer
-  layer<double> * relu = new relu_layer<double>();
+  std::shared_ptr<layer<double>> relu = std::make_shared<relu_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -330,7 +326,6 @@ TEST(layer_test, relu_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -354,7 +349,7 @@ TEST(layer_test, leaky_relu_activation)
   double * layer_deltas_ptr_test{nullptr};
 
   // a leaky_relu layer
-  layer<double> * leaky_relu = new leaky_relu_layer<double>();
+  std::shared_ptr<layer<double>> leaky_relu = std::make_shared<leaky_relu_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -396,7 +391,6 @@ TEST(layer_test, leaky_relu_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete leaky_relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -420,7 +414,7 @@ TEST(layer_test, exp_leaky_relu_activation)
   double * layer_deltas_ptr_test{nullptr};
 
   // an exp_leaky_relu layer
-  layer<double> * exp_leaky_relu = new exp_leaky_relu_layer<double>();
+  std::shared_ptr<layer<double>> exp_leaky_relu = std::make_shared<exp_leaky_relu_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -462,7 +456,6 @@ TEST(layer_test, exp_leaky_relu_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete exp_leaky_relu;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
@@ -487,7 +480,7 @@ TEST(layer_test, softmax_activation)
   double * layer_deltas_ptr_test{nullptr};
 
   // a softmax layer
-  layer<double> * softmax = new softmax_layer<double>();
+  std::shared_ptr<layer<double>> softmax = std::make_shared<softmax_layer<double>>();
   // an activation object
   activation<double> a;
 
@@ -533,7 +526,6 @@ TEST(layer_test, softmax_activation)
 	ASSERT_DOUBLE_EQ(*(layer_deltas_ptr + i), *(layer_deltas_ptr_test + i) );
 
   // cleanup
-  delete softmax;
   mkl_free(layer_activations_ptr);
   mkl_free(layer_activations_ptr_test);
   mkl_free(layer_deltas_ptr);
