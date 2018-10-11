@@ -5,6 +5,23 @@
 
 using namespace zinhart::function_space;
 using namespace zinhart::function_space::error_metrics;
+
+TEST(loss_function_test, cross_entropy_multi_class_objective_v2)
+{
+}
+
+TEST(loss_function_test, cross_entropy_multi_class_derivative_v2)
+{
+}
+
+TEST(loss_function_test, mean_square_error_objective_v2)
+{
+}
+
+TEST(loss_function_test, mean_square_error_derivative_v2)
+{
+}
+
 TEST(loss_function_test, cross_entropy_multi_class_objective)
 {
 
