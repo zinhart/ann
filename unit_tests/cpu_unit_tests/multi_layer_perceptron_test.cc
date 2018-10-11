@@ -680,7 +680,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 						 );
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
-		// here change to new loss_function
 		right = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
 		// set back
 		total_hidden_weights_copy[i] = original; 
@@ -696,7 +695,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 					);
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
-		// here change to new loss_function
 		left = loss->error(zinhart::function_space::objective(), current_threads_output_layer_ptr, current_target, total_layers[output_layer].second);
 
 		// calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
@@ -743,10 +741,9 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 }
 
 
-/*
+
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
-
   // declarations for random numbers
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -800,10 +797,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   std::uint32_t m{0}, n{0}, k{0};
   double alpha{1.0}, beta{0.0}, error{0.0};
   const double limit_epsilon = 1.e-4;
-  const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
-//  const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::CROSS_ENTROPY_MULTI_CLASS};// causes zero derivative
-//  because of different function calls
-
 
   // the thread pool & futures
   zinhart::parallel::thread_pool pool(n_threads);
@@ -812,7 +805,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // the model
   multi_layer_perceptron<connection::dense, double> model;
   zinhart::activation::activation_function af;
-  zinhart::function_space::error_metrics::loss_function loss;
+  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
+//  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
 
 
   // set layers
@@ -1028,7 +1022,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
 
 	  // calculate error 
-	  error = loss(name, zinhart::function_space::objective(), outputs_ptr, current_target, output_layer_nodes, 2);
+	  error = loss->error(zinhart::function_space::objective(), outputs_ptr, current_target, output_layer_nodes);
 	
 	 current_layer_index = 0; 
 	 for(i = 1; i < total_layers.size() - 1; ++i)
@@ -1058,9 +1052,10 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	 double * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
 	 double * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
-	 double * current_error_matrix = d_error + (thread_id * error_stride);
 	 // calculate error derivative
-	 loss(name, zinhart::function_space::derivative(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes, 2);
+	 double * current_error_matrix = d_error + (thread_id * error_stride);
+     loss->error(zinhart::function_space::derivative(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes);
+	 
 	 // begin backprop 
 	 results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
 										 total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
@@ -1156,7 +1151,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  
 	  // gradient check
 	  results[thread_id] = pool.add_task(gradient_check_lamda,
-									  name, 
+									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets_ptr, ith_case,
 									  total_hidden_input_ptr_check, total_activations_ptr_check, total_activations_length,
@@ -1202,4 +1197,3 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-*/
