@@ -7,26 +7,30 @@ namespace zinhart
   template <class precision_type>
 	HOST precision_type error_function<precision_type>::error(loss_attributes::mean_squared_error mse, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const std::uint32_t & batch_size)
 	{
+	  precision_type sum{0};
 	  for(std::uint32_t i = 0; i < length; ++i)
-		objective(mse, o, *(outputs + i), *(targets + i), batch_size);
+		sum += objective(mse, *(outputs + i), *(targets + i), batch_size);
+	  return sum;
 	}
   template <class precision_type>
-	HOST precision_type error_function<precision_type>::error(loss_attributes::mean_squared_error mse, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const std::uint32_t & batch_size)
+	HOST precision_type error_function<precision_type>::error(loss_attributes::mean_squared_error mse, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length, const std::uint32_t & batch_size)
 	{
 	  for(std::uint32_t i = 0; i < length; ++i)
-		derivative(mse, d, *(outputs + i), *(targets + i), batch_size);
+		*(results + i) = derivative(mse, *(outputs + i), *(targets + i), batch_size);
 	}
   template <class precision_type>
 	HOST precision_type error_function<precision_type>::error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const precision_type & epsilon)
 	{
+	  precision_type sum{0};
 	  for(std::uint32_t i = 0; i < length; ++i)
-		objective(ce, o, *(outputs + i), *(targets + i), epsilon);
+		sum += objective(ce, *(outputs + i), *(targets + i), epsilon);
+	  return sum;
 	}
   template <class precision_type>
-	HOST precision_type error_function<precision_type>::error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::derivative d,const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
+	HOST precision_type error_function<precision_type>::error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length)
 	{
 	  for(std::uint32_t i = 0; i < length; ++i)
-		derivative(ce, d, *(outputs + i), *(targets + i));
+		*(results + i) = derivative(ce, *(outputs + i), *(targets + i));
 	}
 
 
@@ -49,7 +53,7 @@ namespace zinhart
 	{ return kth_output - kth_target; }
 
   template <class precision_type>
-	HOST void mean_squared_error<precision_type>::error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
+	HOST precision_type mean_squared_error<precision_type>::error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
 	{
 #if CUDA_ENABLED == 1
 
@@ -58,17 +62,17 @@ namespace zinhart
 #endif
    	}
   template <class precision_type>
-  	HOST void mean_squared_error<precision_type>::error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
+  	HOST void mean_squared_error<precision_type>::error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length)
 	{
 #if CUDA_ENABLED == 1
 
 #else
-	  e.error(loss_attributes::mean_squared_error(), d, outputs, targets, length, batch_size);
+	  e.error(loss_attributes::mean_squared_error(), d, outputs, targets, results, length, batch_size);
 #endif
 	}
 
   template <class precision_type>
-	HOST void cross_entropy_multi_class<precision_type>::error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
+	HOST precision_type cross_entropy_multi_class<precision_type>::error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
 	{
 #if CUDA_ENABLED == 1
 
@@ -77,12 +81,12 @@ namespace zinhart
 #endif
 	}
   template <class precision_type>
-	HOST void cross_entropy_multi_class<precision_type>::error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
+	HOST void cross_entropy_multi_class<precision_type>::error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length)
 	{
 #if CUDA_ENABLED == 1
 
 #else
-	  e.error(loss_attributes::cross_entropy_multi_class(), d, outputs, targets, length);
+	  e.error(loss_attributes::cross_entropy_multi_class(), d, outputs, targets, results, length);
 #endif
 	}
 
