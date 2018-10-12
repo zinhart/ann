@@ -264,13 +264,13 @@ namespace zinhart
 #else
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::forward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
-																	 const precision_type * total_training_cases, const std::uint32_t case_index,
-																	 precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
-																	 const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
-																	 const precision_type * total_bias,
-																	 const std::uint32_t n_threads,
-																	 const std::uint32_t thread_id
-								                                    )
+																						const precision_type * total_training_cases, const std::uint32_t case_index,
+																						precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+																						const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																						const precision_type * total_bias,
+																						const std::uint32_t n_threads,
+																						const std::uint32_t thread_id
+																					   )
 		  {
 			std::uint32_t i{0}, j{0};
 
@@ -375,6 +375,120 @@ namespace zinhart
 
 			// calculate the error for this case
 		  }
+	// new frop to replace one above
+	template <class precision_type>
+	  void multi_layer_perceptron<connection::dense, precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
+																						const precision_type * total_training_cases, const std::uint32_t  case_index,
+																						precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+																						const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																						const precision_type * total_bias,
+																						const std::uint32_t n_threads,
+																						const std::uint32_t thread_id
+																					  )
+	  {
+		std::uint32_t i{0}, j{0};
+
+		const std::uint32_t input_layer{0};
+		const std::uint32_t output_layer{total_layers.size() - 1};
+
+		// All layer counters
+		std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
+		
+		// The index of the beginning of the weight matrix between two layers 
+		std::uint32_t weight_index{0};
+
+		// a ptr to the current training case, 
+		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
+		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
+		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer]->get_size())};
+		
+		// variables for the thread calling this method, to determine it's workspace
+		std::uint32_t current_threads_workspace_index{0}, thread_stride{0};
+		precision_type * current_threads_hidden_input_ptr{nullptr};
+		precision_type * current_threads_output_ptr{nullptr};
+
+		// variables for gemm
+		precision_type alpha{1.0}, beta{0.0};
+		std::uint32_t m{ total_layers[current_layer]->get_size() }, n{1}, k{ total_layers[previous_layer]->get_size() };
+
+		// the activation function of each layer
+		zinhart::activation::activation_function af;
+
+		// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
+		thread_stride = total_activations_length / n_threads;
+
+		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
+		current_threads_workspace_index = thread_id * thread_stride;
+		current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_workspace_index;
+		current_threads_output_ptr = total_activations + current_threads_workspace_index;
+
+		// do input layer and the first hidden layer -> Wx
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+					m, n, k,
+					alpha, total_hidden_weights, k,
+					current_training_case, n, beta, 
+					current_threads_hidden_input_ptr, n
+				   );
+
+		// add in bias, calc output of this layer
+		for(i = current_threads_workspace_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
+		{
+//		  total_hidden_inputs[i] += total_bias[previous_layer];
+		  // apply activation functions
+//		  total_activations[i] = af(total_layers[current_layer]->get_size(), zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+		}
+		// f(Wx + b complete) for first hidden layer and input layer
+		
+
+		// update weight matrix index	
+		weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();
+
+		// update layer indices
+		previous_layer_index = current_layer_index;
+		current_layer_index = total_layers[current_layer]->get_size();
+
+		//increment layer counters
+		++current_layer;
+		++previous_layer;
+
+		while( current_layer < total_layers.size() )
+		{
+		  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
+		  precision_type * current_layer_inputs_ptr{total_hidden_inputs + current_threads_workspace_index + current_layer_index};
+		  precision_type * current_layer_outputs_ptr{total_activations + current_threads_workspace_index + current_layer_index};
+		  const precision_type * prior_layer_ptr{total_activations + current_threads_workspace_index + previous_layer_index}; 
+
+		  m = total_layers[current_layer]->get_size();
+		  n = 1;
+		  k = total_layers[previous_layer]->get_size();
+
+		  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+					  m, n, k,
+					  alpha, current_weight_matrix, k,
+					  prior_layer_ptr, n, beta, 
+					  current_layer_inputs_ptr, n
+					 );
+
+		  // add in bias, calc output of this layer
+		  for(i = current_threads_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
+		  {
+//			total_hidden_inputs[i] += total_bias[previous_layer];
+			// apply activation functions
+//			total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+		  }
+
+		  // update weight matrix index	
+		  weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();
+
+		  // update layer indices
+		  previous_layer_index = current_layer_index;
+		  current_layer_index += total_layers[current_layer]->get_size();
+		  
+		  // increment layer counters 
+		  ++current_layer; 
+		  ++previous_layer;
+		 }
+	  }
 
 	template <class precision_type>
   	  void multi_layer_perceptron<connection::dense, precision_type>::get_outputs(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 

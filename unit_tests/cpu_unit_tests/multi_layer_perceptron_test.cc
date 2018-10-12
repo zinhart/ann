@@ -219,7 +219,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   for(i = 0; i < total_bias_length; ++i)
 	total_bias_ptr[i] = real_dist(mt);
 
-/*
+
   // BEGIN FORWARD PROP
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
@@ -316,7 +316,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 	}
 	results.clear();
   }
-*/
+
   // END FORWARD PROP
   // release memory
   mkl_free(total_activations_ptr);
@@ -327,7 +327,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
-/*
+
 TEST(multi_layer_perceptron, get_results_thread_safety)
 {
   // declarations for random numbers
@@ -1236,4 +1236,4 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-*/
+
