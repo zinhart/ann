@@ -313,15 +313,16 @@ namespace zinhart
 				        m, n, k,
 						alpha, total_hidden_weights, k,
 						current_training_case, n, beta, 
-						current_threads_hidden_input_ptr, n
+						/*current_threads_hidden_input_ptr*/current_threads_output_ptr, n
 				       );
 
 			// add in bias, calc output of this layer
 			for(i = current_threads_workspace_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			{
-			  total_hidden_inputs[i] += total_bias[previous_layer];
+//			  total_hidden_inputs[i] += total_bias[previous_layer];
+			  total_activations[i] += total_bias[previous_layer];
   			  // apply activation functions
-			  total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+			  total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, /*total_hidden_inputs[i]*/total_activations[i]);
 			}
 			// f(Wx + b complete) for first hidden layer and input layer
 			
@@ -343,22 +344,25 @@ namespace zinhart
 			  precision_type * current_layer_inputs_ptr{total_hidden_inputs + current_threads_workspace_index + current_layer_index};
 			  precision_type * current_layer_outputs_ptr{total_activations + current_threads_workspace_index + current_layer_index};
 			  const precision_type * prior_layer_ptr{total_activations + current_threads_workspace_index + previous_layer_index}; 
+
 			  m = total_layers[current_layer].second;
 			  n = 1;
 			  k = total_layers[previous_layer].second;
+
 			  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 						  m, n, k,
 						  alpha, current_weight_matrix, k,
 						  prior_layer_ptr, n, beta, 
-						  current_layer_inputs_ptr, n
+						  /*current_layer_inputs_ptr*/ current_layer_outputs_ptr, n
 						 );
 
 			  // add in bias, calc output of this layer
 			  for(i = current_threads_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 			  {
-				total_hidden_inputs[i] += total_bias[previous_layer];
+//				total_hidden_inputs[i] += total_bias[previous_layer];
+				total_activations[i] += total_bias[previous_layer];
 				// apply activation functions
-				total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
+				total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, /*total_hidden_inputs[i]*/ total_activations[i]);
 			  }
 
 			  // update weight matrix index	
