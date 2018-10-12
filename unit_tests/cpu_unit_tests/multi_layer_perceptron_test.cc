@@ -578,7 +578,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
-/*
+
 TEST(multi_layer_perceptron, gradient_check_thread_safety)
 {
   // declarations for random numbers
@@ -786,7 +786,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 }
 
 
-
+/*
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
   // declarations for random numbers
