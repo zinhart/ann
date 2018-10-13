@@ -475,7 +475,7 @@ namespace zinhart
 					  m, n, k,
 					  alpha, current_weight_matrix, k,
 					  prior_layer_ptr, n, beta, 
-					  current_layer_inputs_ptr, n
+					  /*current_layer_inputs_ptr*/current_layer_outputs_ptr, n
 					 );
 
 		  // add in bias, calc output of this layer
@@ -499,6 +499,7 @@ namespace zinhart
 		  ++current_layer; 
 		  ++previous_layer;
 		 }
+		 
 	  }
 
 	template <class precision_type>

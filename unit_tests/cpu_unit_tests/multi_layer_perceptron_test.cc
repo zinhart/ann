@@ -77,39 +77,47 @@ using namespace zinhart::activation;
 
 
 
-void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, std::uint32_t layer_id)
+void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, std::uint32_t layer_id, std::uint32_t layer_size)
 {
   if(layer_id == 1)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::identity_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   } 
   else if(layer_id == 2)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::sigmoid_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 3)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::softplus_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 4)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::tanh_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 5)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::relu_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 6)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::leaky_relu_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 7)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::exp_leaky_relu_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
   else if(layer_id == 8)
   {
 	total_layers.push_back(std::make_shared<zinhart::models::layers::softmax_layer<double>>());
+	total_layers.back()->set_size(layer_size);
   }
  /* else if(layer_id == 9)
   {
@@ -186,40 +194,32 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety_v2)
   multi_layer_perceptron<connection::dense, double> model;
   zinhart::activation::activation_function af;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
+  zinhart::function_space::objective objective_function;
 
   // set layers
-/*
-  std::vector<LAYER_INFO> total_layers;
-  LAYER_INFO a_layer;
-  a_layer.first = ACTIVATION_NAME::INPUT;
-  a_layer.second = neuron_dist(mt);
-  total_layers.push_back(a_layer);
-*/
   total_layers.push_back(std::make_shared< zinhart::models::layers::input_layer<double> >());
+  total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	/*
-	a_layer.first = ACTIVATION_NAME(layer_dist(mt));
-	a_layer.second = neuron_dist(mt);  
-	total_layers.push_back(a_layer);*/
+	random_layer(total_layers, layer_dist(mt), neuron_dist(mt));
   }
-  /*
+  
   // To ensure their are atleast as many cases as threads 
   std::uniform_int_distribution<std::uint32_t> case_dist(n_threads, 50);
   // set total case length 
-  total_case_length = total_layers[input_layer].second * case_dist(mt);
-  total_cases = total_case_length / total_layers[input_layer].second;
+  total_case_length = total_layers[input_layer]->get_size() * case_dist(mt);
+  total_cases = total_case_length / total_layers[input_layer]->get_size();
  
   
   // calc number of activations
   for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
-	total_activations_length += total_layers[ith_layer].second;//accumulate neurons in the hidden layers and output layer
+	total_activations_length += total_layers[ith_layer]->get_size();//accumulate neurons in the hidden layers and output layer
   activation_stride = total_activations_length;// important!
   total_activations_length *= n_threads;
   
   // calc number of hidden weights
   for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
-	total_hidden_weights_length += total_layers[ith_layer + 1].second * total_layers[ith_layer].second; 
+	total_hidden_weights_length += total_layers[ith_layer + 1]->get_size() * total_layers[ith_layer]->get_size(); 
   total_bias_length = total_layers.size() - 1;
 
   std::uint32_t alignment = 64;
@@ -252,19 +252,22 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety_v2)
   // BEGIN FORWARD PROP
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
-	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer].second)};
+	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer]->get_size())};
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
-	  results.push_back(pool.add_task(fprop_model, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  
+	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  
 	  current_layer_index = 0;
 	  previous_layer_index = 0;
 	  weight_index = 0;
-	  m = total_layers[current_layer].second;
+
+	  m = total_layers[current_layer]->get_size();
 	  n = 1;
-	  k = total_layers[previous_layer].second;
+	  k = total_layers[previous_layer]->get_size();
+
 	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
 	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
@@ -277,36 +280,41 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety_v2)
 				 );
 
 	  // add in bias
-	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
 	  {
-        total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
+//        total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
+        *(current_threads_activation_ptr + j) += total_bias_ptr[previous_layer];
 		// apply activation functions
-		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
+//		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
 	  }
+	  total_layers[current_layer]->activate(objective_function, current_threads_activation_ptr, total_layers[current_layer]->get_size());
 		
 
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
 
 	  // update weight matrix index	
-	  weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
+	  weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();
 
 	  // update layer indices
 	  previous_layer_index = current_layer_index;
-	  current_layer_index = total_layers[current_layer].second;
+	  current_layer_index = total_layers[current_layer]->get_size();
 
 	  //increment layer counters
 	  ++current_layer;
 	  ++previous_layer;
+
 	  while( current_layer < total_layers.size() )
 	  {
 		const double * current_weight_matrix{total_hidden_weights_ptr + weight_index};
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
 		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
-		m = total_layers[current_layer].second;
+
+		m = total_layers[current_layer]->get_size();
 		n = 1;
-		k = total_layers[previous_layer].second;
+		k = total_layers[previous_layer]->get_size();
+
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_weight_matrix, k,
@@ -315,19 +323,21 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety_v2)
 				   );
   
 		// add in bias
-		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
+		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
 		{
-		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
+//		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
+          *(current_layer_ptr + j) += total_bias_ptr[previous_layer];
 		  // apply activation functions
-		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
+//		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
 		}
+		total_layers[current_layer]->activate(objective_function, current_layer_ptr, total_layers[current_layer]->get_size());
 		
 		// update weight matrix index	
-		weight_index += total_layers[current_layer].second * total_layers[previous_layer].second;
+		weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();
 
 		// update layer indices
 		previous_layer_index = current_layer_index;
-		current_layer_index += total_layers[current_layer].second;
+		current_layer_index += total_layers[current_layer]->get_size();
 		
 		// increment layer counters 
 		++current_layer; 
@@ -338,14 +348,15 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety_v2)
 	  results[thread_id].get();
 
 	  // validate
-	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
+//	  for(i = 0; i < total_activations_length; ++i)
+//		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i]);
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
+	  
 	}
 	results.clear();
   }
-*/
+
   // END FORWARD PROP
   // release memory
   mkl_free(total_activations_ptr);
