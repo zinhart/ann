@@ -76,6 +76,15 @@ namespace zinhart
 							 const std::uint32_t n_threads = 1, 
 							 const std::uint32_t thread_id = 0
 							);
+			
+			// Defaults to single-threaded
+			void get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
+							 const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length,
+							 precision_type * model_outputs, 
+							 const std::uint32_t n_threads = 1, 
+							 const std::uint32_t thread_id = 0
+							);
+
 			// Defaults to single threaded
 			void backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
 									const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,

@@ -525,6 +525,31 @@ namespace zinhart
 		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer].second; ++i, ++j)
 		  *(model_outputs + j) = *(total_hidden_outputs + i);
 	  }
+	// new one to replace one above
+	template <class precision_type>
+  	  void multi_layer_perceptron<connection::dense, precision_type>::get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
+																				  const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+																				  precision_type * model_outputs, 
+																				  const std::uint32_t n_threads, 
+																				  const std::uint32_t thread_id
+																				 )
+  	  {
+		std::uint32_t i{0}, j{0}, output_layer{total_layers.size()-1}, output_layer_index{0};
+		std::uint32_t thread_stride{0}, current_threads_workspace_index{0}; 
+
+		// Assumes the activation vector is partitioned into equally size chucks, 1 for each thread
+		thread_stride = total_hidden_outputs_length / n_threads;
+
+		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the activation vector
+		current_threads_workspace_index = thread_id * thread_stride;
+
+		for(i = 1; i < total_layers.size() - 1; ++i)
+		  output_layer_index += total_layers[i]->get_size();
+		
+		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer]->get_size(); ++i, ++j)
+		  *(model_outputs + j) = *(total_hidden_outputs + i);
+	  }
+
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector<zinhart::activation::LAYER_INFO> & total_layers, 
 																			const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
