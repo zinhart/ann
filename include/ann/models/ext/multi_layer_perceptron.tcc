@@ -390,6 +390,7 @@ namespace zinhart
 																						const std::uint32_t thread_id
 																					  )
 	  {
+		zinhart::function_space::objective objective_function{};
 		std::uint32_t i{0}, j{0};
 
 		const std::uint32_t input_layer{0};
@@ -437,10 +438,14 @@ namespace zinhart
 		// add in bias, calc output of this layer
 		for(i = current_threads_workspace_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
 		{
+		  *(current_threads_output_ptr + j) += total_bias[previous_layer];
 //		  total_hidden_inputs[i] += total_bias[previous_layer];
 		  // apply activation functions
 //		  total_activations[i] = af(total_layers[current_layer]->get_size(), zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
 		}
+		total_layers[current_layer]->activate(objective_function, current_threads_output_ptr, total_layers[current_layer]->get_size() );
+
+
 		// f(Wx + b complete) for first hidden layer and input layer
 		
 
@@ -476,10 +481,12 @@ namespace zinhart
 		  // add in bias, calc output of this layer
 		  for(i = current_threads_workspace_index + current_layer_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
 		  {
+			*(current_layer_outputs_ptr + j) +=  total_bias[previous_layer];
 //			total_hidden_inputs[i] += total_bias[previous_layer];
 			// apply activation functions
 //			total_activations[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_inputs[i]);
 		  }
+  		  total_layers[current_layer]->activate(objective_function, current_layer_outputs_ptr, total_layers[current_layer]->get_size() );
 
 		  // update weight matrix index	
 		  weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();

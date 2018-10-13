@@ -129,6 +129,25 @@ namespace zinhart
 		};
 
 	  template<class precision_type>
+  		class input_layer : public layer<precision_type>
+		{
+		  private:
+			using layer<precision_type>::a;
+			using layer<precision_type>::size;
+		  public:
+			HOST input_layer() = default;
+			HOST input_layer(const input_layer&) = default;
+			HOST input_layer(input_layer&&) = default;
+			HOST input_layer & operator = (const input_layer&) = default;
+			HOST input_layer & operator = (input_layer&&) = default;
+			HOST ~input_layer() = default; 
+			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
+			HOST virtual void set_size(std::uint32_t size) override;
+			HOST virtual std::uint32_t get_size()const override;
+		};
+
+	  template<class precision_type>
   		class identity_layer : public layer<precision_type>
 		{
 		  private:

@@ -6,6 +6,30 @@ namespace zinhart
   {
 	namespace layers
 	{
+
+	  template<class precision_type>
+		HOST void input_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
+		{  
+#if CUDA_ENABLED == 1 
+#else
+#endif
+		}
+	  template<class precision_type>
+		HOST void input_layer<precision_type>::activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
+		{ 
+#if CUDA_ENABLED == 1
+#else
+#endif
+		}
+
+	  template<class precision_type>
+		HOST void input_layer<precision_type>::set_size(std::uint32_t size)
+		{ this->size = size; }
+
+	  template<class precision_type>
+		HOST std::uint32_t input_layer<precision_type>::get_size()const
+		{ return this->size; }
+
 	  template<class precision_type>
 		HOST void identity_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
