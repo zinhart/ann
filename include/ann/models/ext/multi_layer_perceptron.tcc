@@ -431,7 +431,7 @@ namespace zinhart
 					m, n, k,
 					alpha, total_hidden_weights, k,
 					current_training_case, n, beta, 
-					current_threads_hidden_input_ptr, n
+					/*current_threads_hidden_input_ptr*/ current_threads_output_ptr, n
 				   );
 
 		// add in bias, calc output of this layer
@@ -579,7 +579,7 @@ namespace zinhart
 		precision_type * current_threads_delta_ptr{total_deltas + current_threads_activation_workspace_index};
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
 
-		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + current_layer_index};
+		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + current_layer_index};// unused variable
    		// if this is a 2 layer model then the prior activations are essentially the inputs to the model, i.e the while loop does not activate
 		const precision_type * prior_activation_ptr{ (total_layers.size() > 2) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
 		precision_type * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};

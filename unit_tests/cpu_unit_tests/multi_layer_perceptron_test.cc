@@ -786,7 +786,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 }
 
 
-/*
+
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
   // declarations for random numbers
@@ -981,15 +981,16 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 				  m, n, k,
 				  alpha, total_hidden_weights_ptr, k,
 				  current_training_case, n, beta, 
-				  current_threads_hidden_input_ptr, n
+				 /* current_threads_hidden_input_ptr*/ current_threads_activation_ptr, n
 				 );
 
 	  // add in bias
 	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 	  {
-		total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+//		total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+        total_activations_ptr_test[i] += total_bias_ptr[previous_layer]; 
 		// apply activation functions
-		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_input_ptr_test[i]);
+		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, /*total_hidden_input_ptr_test[i]*/ total_activations_ptr_test[i]);
 		// save outputs
 		if(current_layer == total_layers.size() - 1)
 		  outputs_ptr_test[j] = total_activations_ptr_test[i];
@@ -1013,22 +1014,27 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
 		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
+
 		m = total_layers[current_layer].second;
 		n = 1;
 		k = total_layers[previous_layer].second;
+
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,
 					alpha, current_weight_matrix, k,
 					prior_layer_ptr, n, beta, 
-					current_layer_Wx, n
+					/*current_layer_Wx*/ current_layer_ptr, n
 				   );
   
 		// add in bias
 		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer].second; ++i, ++j)
 		{
-		  total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+//		  total_hidden_input_ptr_test[i] += total_bias_ptr[previous_layer];
+  		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer]; 
 		  // apply activation functions
-		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_input_ptr_test[i]);
+//		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_hidden_input_ptr_test[i]);
+		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, /*total_hidden_input_ptr_test[i]*/ total_activations_ptr_test[i]);
+
 		  // save outputs
 		  if(current_layer == total_layers.size() - 1)
 			outputs_ptr_test[j] = total_activations_ptr_test[i];
@@ -1062,6 +1068,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 					  n_threads,
 					  thread_id
 					 );
+
 	  // validate output_layer
 	  for(i = 0; i < output_layer_nodes; ++i)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
@@ -1100,7 +1107,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	 // calculate error derivative
 	 double * current_error_matrix = d_error + (thread_id * error_stride);
      loss->error(zinhart::function_space::derivative(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes);
-	 
+ 
 	 // begin backprop 
 	 results[thread_id] = pool.add_task(bprop_model,std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
 										 total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
@@ -1216,6 +1223,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  {
 		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }
+	  
 	}
 	// clear futures
 	results.clear();
@@ -1242,4 +1250,4 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-*/
+/**/
