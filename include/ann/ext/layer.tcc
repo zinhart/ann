@@ -31,6 +31,14 @@ namespace zinhart
 		{ return this->size; }
 
 	  template<class precision_type>
+		HOST void input_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type input_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
+	  template<class precision_type>
 		HOST void identity_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -56,6 +64,14 @@ namespace zinhart
 	  template<class precision_type>
 		HOST std::uint32_t identity_layer<precision_type>::get_size()const
 		{ return this->size; }
+
+	  template<class precision_type>
+		HOST void identity_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type identity_layer<precision_type>::get_bias()const
+		{ return this->bias; }
 
 	  template<class precision_type>
 		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -85,6 +101,14 @@ namespace zinhart
 		{ return this->size; }
 
 	  template<class precision_type>
+		HOST void sigmoid_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type sigmoid_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
+	  template<class precision_type>
 		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -110,6 +134,14 @@ namespace zinhart
 	  template<class precision_type>
 		HOST std::uint32_t softplus_layer<precision_type>::get_size()const
 		{ return this->size; }
+
+	  template<class precision_type>
+		HOST void softplus_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type softplus_layer<precision_type>::get_bias()const
+		{ return this->bias; }
 
 	  template<class precision_type>
 		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -139,6 +171,14 @@ namespace zinhart
 		{ return this->size; }
 
 	  template<class precision_type>
+		HOST void tanh_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type tanh_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
+	  template<class precision_type>
 		HOST void relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -164,6 +204,14 @@ namespace zinhart
 	  template<class precision_type>
 		HOST std::uint32_t relu_layer<precision_type>::get_size()const
 		{ return this->size; }
+
+	  template<class precision_type>
+		HOST void relu_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type relu_layer<precision_type>::get_bias()const
+		{ return this->bias; }
 
 	  template<class precision_type>
 		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
@@ -193,6 +241,15 @@ namespace zinhart
 		{ return this->size; }
 
 	  template<class precision_type>
+		HOST void leaky_relu_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type leaky_relu_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
+
+	  template<class precision_type>
 		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -220,6 +277,15 @@ namespace zinhart
 		{ return this->size; }
 
 	  template<class precision_type>
+		HOST void exp_leaky_relu_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type exp_leaky_relu_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
+
+	  template<class precision_type>
 		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length)
 		{  
 #if CUDA_ENABLED == 1 
@@ -245,6 +311,15 @@ namespace zinhart
 	  template<class precision_type>
 		HOST std::uint32_t softmax_layer<precision_type>::get_size()const
 		{ return this->size; }
+
+	  template<class precision_type>
+		HOST void softmax_layer<precision_type>::set_bias(precision_type bias)
+		{ this->bias = bias; }
+
+	  template<class precision_type>
+		HOST precision_type softmax_layer<precision_type>::get_bias()const
+		{ return this->bias; }
+
 
 	  template <class precision_type>
 		HOST void activation<precision_type>::activate(layer_info::input_layer input, zinhart::function_space::objective o)
