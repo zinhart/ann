@@ -137,6 +137,7 @@ namespace zinhart
 		  private:
 			using layer<precision_type>::a;
 			using layer<precision_type>::size;
+			using layer<precision_type>::bias;
 		  public:
 			HOST input_layer() = default;
 			HOST input_layer(const input_layer&) = default;
@@ -247,6 +248,7 @@ namespace zinhart
 		  private:
 			using layer<precision_type>::a;
 			using layer<precision_type>::size;
+			using layer<precision_type>::bias;
 		  public:
 			HOST relu_layer() = default;
 			HOST relu_layer(const relu_layer&) = default;
@@ -260,7 +262,6 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
-			using layer<precision_type>::bias;
 		};
 
 	  template<class precision_type>
