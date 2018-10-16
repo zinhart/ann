@@ -19,7 +19,7 @@ namespace zinhart
 		  precision_type * global_device_total_deltas;
 #endif
 		protected:
-		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(input relu sigmoid etc) and the number of inputs of the respective layer 
+//		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(input relu sigmoid etc) and the number of inputs of the respective layer 
 
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length in the case of one thread, for multiple it is total_activations_lengths/n_threads
@@ -53,8 +53,8 @@ namespace zinhart
 
 		  //model manipulating functions
 		  //I assume the first layer will be an input layer
-		  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
-		  HOST const std::vector<zinhart::activation::LAYER_INFO> get_total_layers()const;
+		//  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
+		//  HOST const std::vector<zinhart::activation::LAYER_INFO> get_total_layers()const;
 		  HOST void clear_layers();
 		  HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty);
 #if CUDA_ENABLED == 1
@@ -73,10 +73,10 @@ namespace zinhart
 								 double * device_total_observation, double * device_total_activation, double * device_total_bia, double * device_total_hidden_weight);
 
 #else
-		  HOST void init(const std::uint32_t & n_threads = 1);
+/*		  HOST void init(const std::uint32_t & n_threads = 1);
 		  HOST std::int32_t forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id = 0);
 		  HOST void get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id = 0);
-		  HOST void cleanup();
+		  HOST void cleanup();*/
 #endif
 	  };// END CLASS ann<architecture::mlp_dense>
 
@@ -95,7 +95,7 @@ namespace zinhart
 		  precision_type * global_device_total_deltas;
 #endif
 		protected:
-		  std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
+		  //std::vector<zinhart::activation::LAYER_INFO> total_layers;//Layer types(intput relu sigmoid etc) and the number of inputs of the respective layer 
 
 		  std::uint32_t total_activations_length{0};// this is the sum of all the hidden layers and the output layer neurons * the total number of threads in use
 		  std::uint32_t total_deltas_length{0};// same as the number of total_activations_length in the case of one thread, for multiple it is total_activations_lengths/n_threads
@@ -126,8 +126,8 @@ namespace zinhart
 
 		  //model manipulating functions
 		  //I assume the first layer will be an input layer
-		  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
-		  HOST const std::vector<zinhart::activation::LAYER_INFO> get_total_layers()const;
+//		  HOST void add_layer(const zinhart::activation::LAYER_INFO & ith_layer);
+//		  HOST const std::vector<zinhart::activation::LAYER_INFO> get_total_layers()const;
 		  HOST void clear_layers();
 		  HOST int train(const std::uint16_t & max_epochs, const std::uint32_t & batch_size, const double & weight_penalty);
 #if CUDA_ENABLED == 1

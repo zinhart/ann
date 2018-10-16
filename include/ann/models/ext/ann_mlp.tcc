@@ -3,6 +3,7 @@ namespace zinhart
 {
   namespace models
   {
+	/*
  	template <class precision_type>
   	  HOST void ann<architecture::mlp_dense, precision_type>::add_layer(const zinhart::activation::LAYER_INFO & ith_layer)
   	  { total_layers.push_back(ith_layer); }
@@ -12,7 +13,7 @@ namespace zinhart
 	template <class precision_type>
 	  HOST void ann<architecture::mlp_dense, precision_type>::clear_layers()
 	  {total_layers.clear(); }
-/*	template <class precision_type>
+	template <class precision_type>
   	  HOST void ann<architecture::mlp_dense, precision_type>::gradient_check(precision_type * theta, precision_type * numerically_approx_gradient, std::uint32_t theta_length, precision_type epsilon, std::uint32_t n_threads, std::uint32_t thread_id)
 	  { static_cast<multi_layer_perceptron<connection::dense, precision_type>*>(this)->gradient_check(theta, numerically_approx_gradient, theta_length, epsilon, n_threads, thread_id); }
 */
@@ -251,7 +252,7 @@ namespace zinhart
 			,device_total_observation, device_total_activation, device_total_bia, device_total_hidden_weight); }
 	//cpu only functions here
 #else
-	template <class precision_type>
+/*	template <class precision_type>
 		HOST void ann<architecture::mlp_dense, precision_type>::init(const std::uint32_t & n_threads)
 		{
 		  assert(this->total_layers.size() != 0);
@@ -283,7 +284,8 @@ namespace zinhart
 		  this->total_gradient = (precision_type*) mkl_malloc( this->total_gradient_length * sizeof( precision_type ), alignment );
 		  this->total_bias = (precision_type*) mkl_malloc( this->total_bias_length * sizeof( precision_type ), alignment );
 		}
-	template <class precision_type>
+*/
+/*	template <class precision_type>
 	  HOST std::int32_t ann<architecture::mlp_dense, precision_type>::forward_propagate(const std::uint32_t & case_index, const precision_type * total_training_cases, const std::uint32_t & thread_id )
 	  {
 		static_cast<multi_layer_perceptron<connection::dense, precision_type>>(this)->forward_propagate(this->total_layers, 
@@ -297,6 +299,7 @@ namespace zinhart
 	template <class precision_type>
 	  HOST void ann<architecture::mlp_dense, precision_type>::get_model_outputs(precision_type * model_outputs, const std::uint32_t & thread_id)
 	  {	static_cast<multi_layer_perceptron<connection::dense, precision_type>>(this)->get_outputs(this->total_layers, model_outputs, thread_id); }
+	  
 	template <class precision_type>
 	  HOST void ann<architecture::mlp_dense, precision_type>::cleanup()
 	  {
@@ -312,6 +315,7 @@ namespace zinhart
 		total_gradient_length = 0;
 		total_bias_length = 0;
 	  }
+	  */
 #endif
 
 	

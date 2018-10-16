@@ -9,73 +9,6 @@
 #include <vector>
 #include <iomanip>
 using namespace zinhart::models;
-using namespace zinhart::activation;
-
-  // lambda to call member function multi_layer_perceptron.forward propagate
-  auto fprop_model = [](std::vector<LAYER_INFO> & layers,
-						double * total_cases_ptr_init, const std::uint32_t ith_training_case,
-						double * total_hidden_inputs_init, double * total_activations_ptr_init, const std::uint32_t activations_length,
-						double * total_hidden_weights_ptr_init, const std::uint32_t weights_length,
-						double * total_bias_ptr_init,
-						const std::uint32_t total_threads, const std::uint32_t thread_index
-					   )
-					   {
-					     multi_layer_perceptron<connection::dense, double> mlp;
-					     mlp.forward_propagate(layers,
-											   total_cases_ptr_init, ith_training_case,
-											   total_hidden_inputs_init, total_activations_ptr_init, activations_length,
-											   total_hidden_weights_ptr_init, weights_length,
-											   total_bias_ptr_init,
-											   total_threads,
-											   thread_index
-										      );
-
-					  }; 
-  auto bprop_model = [](const std::vector<zinhart::activation::LAYER_INFO> & total_layers_init, 
-						const double * const total_training_cases_init, const double * const total_targets_init, const double * const d_error_init, const std::uint32_t case_index_init,
-						const double * const total_hidden_inputs_init, const double * const total_activations_init, double * total_deltas_init, const std::uint32_t total_activations_length_init,
-						const double * const total_hidden_weights_init, double * total_gradient_init, const std::uint32_t total_hidden_weights_length_init,
-						const double * const total_bias_init,
-						const std::uint32_t n_threads_init,
-					    const std::uint32_t thread_id_init
-					)
-					{
-					  multi_layer_perceptron<connection::dense, double> mlp;
-					  mlp.backward_propagate(total_layers_init,
-						                     total_training_cases_init, total_targets_init, d_error_init, case_index_init,
-											 total_hidden_inputs_init, total_activations_init, total_deltas_init, total_activations_length_init,
-											 total_hidden_weights_init, total_gradient_init, total_hidden_weights_length_init,
-											 total_bias_init,
-											 n_threads_init,
-											 thread_id_init
-						                    );
-					};
-
-
-  auto gradient_check_lamda = [](zinhart::loss_functions::loss_function<double> * loss,
-								 const std::vector<zinhart::activation::LAYER_INFO> & total_layers_p,
-								 const double * total_training_cases_p, const double * total_targets_p, const std::uint32_t case_index_p,
-								 double * total_hidden_inputs_p, double * total_activations_p, const std::uint32_t total_activations_length_p,
-								 double * const total_hidden_weights_p, const std::uint32_t total_hidden_weights_length_p,
-								 const double * total_bias_p, 
-								 double * numerically_approx_gradient_p, 
-								 const double limit_epsilon_p, 
-								 const std::uint32_t n_threads_p, const std::uint32_t thread_id_p)
-                              {
-							  	multi_layer_perceptron<connection::dense, double> mlp_p;
-								mlp_p.gradient_check(loss, 
-												  total_layers_p,
-												  total_training_cases_p, total_targets_p, case_index_p,
-												  total_hidden_inputs_p, total_activations_p, total_activations_length_p,
-												  total_hidden_weights_p, total_hidden_weights_length_p,
-												  total_bias_p,
-												  numerically_approx_gradient_p,
-												  limit_epsilon_p,
-												  n_threads_p, thread_id_p
-												  );
-							  };
-
-
 
 void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, std::uint32_t layer_id, std::uint32_t layer_size)
 {
@@ -234,7 +167,6 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 
   // the model
   multi_layer_perceptron<connection::dense, double> model;
-  zinhart::activation::activation_function af;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   zinhart::function_space::objective objective_function{};
 
@@ -458,7 +390,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
   std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
 
   // the model
-   multi_layer_perceptron<connection::dense, double> model;
+  multi_layer_perceptron<connection::dense, double> model;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   zinhart::function_space::objective objective_function{};
 
@@ -670,7 +602,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   std::mt19937 mt(rd());
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, 10);
-  std::uniform_int_distribution<std::uint32_t> layer_dist(1, total_activation_types() - 1);// does not include input layer
+  std::uniform_int_distribution<std::uint32_t> layer_dist(1, 7);// does not include input layer
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
   const std::uint32_t n_threads{thread_dist(mt)};
@@ -678,7 +610,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   std::uint32_t output_layer{0};
   const std::uint32_t alignment = 64;
   std::uint32_t i{0}, j{0}, k{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
-  const zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME name{zinhart::function_space::error_metrics::LOSS_FUNCTION_NAME::MSE};
 
   zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
 //  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
@@ -931,7 +862,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 
   // the model
   multi_layer_perceptron<connection::dense, double> model;
-  zinhart::activation::activation_function af;
   zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
 //  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
 
@@ -944,22 +874,9 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	random_layer(total_layers, /*layer_dist(mt)*/2, neuron_dist(mt));
+	random_layer(total_layers, /*layer_dist(mt)*/3, neuron_dist(mt));
   }
-/*
-  // set layers
-  std::vector<LAYER_INFO> total_layers;
-  LAYER_INFO a_layer;
-  a_layer.first = ACTIVATION_NAME::INPUT;
-  a_layer.second = neuron_dist(mt);
-  total_layers.push_back(a_layer);
-  for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
-  {
-	a_layer.first = zinhart::activation::ACTIVATION_NAME::SIGMOID;//ACTIVATION_NAME(layer_dist(mt));
-	a_layer.second = neuron_dist(mt);  
-	total_layers.push_back(a_layer);
-  }
-*/  
+  
   const std::uint32_t output_layer{total_layers.size() - 1};
   // To ensure their are atleast as many cases as threads 
   std::uniform_int_distribution<std::uint32_t> case_dist(n_threads, 50);

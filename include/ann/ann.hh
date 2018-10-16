@@ -4,7 +4,7 @@
 #include <concurrent_routines/concurrent_routines_error.hh>
 #include <ann/loss_function.hh>
 #include <ann/layer.hh>
-#include <ann/activation.hh>
+//#include <ann/activation.hh>
 #include <ann/optimizer.hh>
 #include <vector>
 #if CUDA_ENABLED == true
