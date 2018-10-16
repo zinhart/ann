@@ -22,14 +22,14 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void input_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void input_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
 #endif
 		}
 	  template<class precision_type>
-		HOST void input_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void input_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -71,7 +71,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void identity_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void identity_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -79,7 +79,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void identity_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void identity_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -122,7 +122,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -130,7 +130,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -172,7 +172,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -180,7 +180,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -222,7 +222,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -230,7 +230,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -272,7 +272,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -280,7 +280,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -322,19 +322,19 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
-		  a.activate(layer_info::leaky_relu_layer(), d, o, deltas, error, activations, length);
+		  a.activate(layer_info::leaky_relu_layer(), d, o, deltas, error, activations, length, coefficient);
 #endif
 		}
 	  template<class precision_type>
-		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
-		  a.activate(layer_info::leaky_relu_layer(), d, h, deltas, activations, length);
+		  a.activate(layer_info::leaky_relu_layer(), d, h, deltas, activations, length, coefficient);
 #endif
 		}
 	  template<class precision_type>
@@ -373,19 +373,19 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
-		  a.activate(layer_info::exp_leaky_relu_layer(), d, o, deltas, error, activations, length);
+		  a.activate(layer_info::exp_leaky_relu_layer(), d, o, deltas, error, activations, length, coefficient);
 #endif
 		}
 	  template<class precision_type>
-		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
-		  a.activate(layer_info::exp_leaky_relu_layer(), d, h, deltas, activations, length);
+		  a.activate(layer_info::exp_leaky_relu_layer(), d, h, deltas, activations, length, coefficient);
 #endif
 		}
 	  template<class precision_type>
@@ -424,7 +424,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::output_layer o, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -432,7 +432,7 @@ namespace zinhart
 #endif
 		}
 	  template<class precision_type>
-		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::derivative d, layer_info::hidden_layer h, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
 #if CUDA_ENABLED == 1
 #else
@@ -477,12 +477,16 @@ namespace zinhart
 		}
 
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(identity, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(identity, *(activations + i) );
 		}
 			
 	  template <class precision_type>
@@ -498,12 +502,16 @@ namespace zinhart
 			*(start + i) =	derivative( sigmoid, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(sigmoid, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(sigmoid, *(activations + i) );
 		}
 
 	  template <class precision_type>
@@ -519,12 +527,16 @@ namespace zinhart
 			*(start + i) =	derivative( softplus, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(softplus, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(softplus, *(activations + i) );
 		}
 
 
@@ -542,12 +554,16 @@ namespace zinhart
 			*(start + i) =	derivative( hyperbolic_tangent, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(hyperbolic_tangent, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(hyperbolic_tangent, *(activations + i) );
 		}
 
 	  template <class precision_type>
@@ -563,12 +579,16 @@ namespace zinhart
 			*(start + i) =	derivative( relu, *(start + i) );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(relu, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(relu, *(activations + i) );
 		}
 
 	  template <class precision_type>
@@ -584,12 +604,16 @@ namespace zinhart
 			*(start + i) =	derivative( leaky_relu, *(start + i), coefficient );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient)
+		HOST void activation<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(leaky_relu, *(activations + i) ); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient)
+		HOST void activation<precision_type>::activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(leaky_relu, *(activations + i) );
 		}
 
 	  template <class precision_type>
@@ -605,12 +629,16 @@ namespace zinhart
 			*(start + i) =	derivative( exp_leaky_relu, *(start + i), coefficient );
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient)
+		HOST void activation<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) = *(error + i) * derivative(exp_leaky_relu, *(activations + i), coefficient); 
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient)
+		HOST void activation<precision_type>::activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient)
 		{
+		  for(std::uint32_t i = 0; i < length; ++i)
+			*(deltas + i) *= derivative(exp_leaky_relu, *(activations + i), coefficient );
 		}
 
 	  template <class precision_type>
@@ -634,12 +662,20 @@ namespace zinhart
 			  *(start + j) = (j == i) ? *(start + i) * (precision_type{1.0} - *(start + i)) : -*(start + j) * *(start + i);
 		}
 	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, precision_type * error, precision_type * activations, const std::uint32_t & length)
-			{
-			}
-	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, precision_type * activations, const std::uint32_t & length)
+		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
+		  /*
+		  for(std::uint32_t i = 0; i < length; ++i)
+			for(std::uint32_t j = 0; j < length; ++j)
+			  *(start + j) = (j == i) ? *(start + i) * (precision_type{1.0} - *(start + i)) : -*(start + j) * *(start + i);*/
+		//  for(std::uint32_t i = 0; i < length; ++i)
+		//	*(deltas + i) = *(error + i) * derivative(softmax, *(activations + i) ); 
+		}
+	  template <class precision_type>
+		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)
+		{
+		 // for(std::uint32_t i = 0; i < length; ++i)
+		//	*(deltas + i) *= derivative(softmax, *(activations + i) );
 		}
 
 	  template <class precision_type>
@@ -729,7 +765,14 @@ namespace zinhart
 		}
 	  template <class precision_type>
         CUDA_CALLABLE_MEMBER precision_type activation<precision_type>::derivative(layer_info::tanh_layer hyperbolic_tangent, const precision_type & x)
-		{ return precision_type{1.0} - (x * x); }
+		{ 
+
+#if CUDA_ENABLED == 1
+  		  return precision_type{1.0} - precision_type{ x * x };
+#else
+		  return precision_type{1.0} - precision_type{ x * x };
+#endif
+		}
 
 	  template <class precision_type>
   		CUDA_CALLABLE_MEMBER precision_type activation<precision_type>::objective(layer_info::relu_layer relu, const precision_type & x)
