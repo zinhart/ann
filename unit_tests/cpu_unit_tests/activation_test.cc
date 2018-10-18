@@ -605,12 +605,12 @@ TEST(activation_test, softmax_activation)
   // declarations for random numbers
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<std::uint32_t> neuron_dist(2, /*100*/2);
+  std::uniform_int_distribution<std::uint32_t> neuron_dist(2, 100);
   std::uniform_real_distribution<float> real_dist(-0.5, 0.5);
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{/*neuron_dist(mt)*/3}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
