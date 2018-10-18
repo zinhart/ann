@@ -874,7 +874,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	random_layer(total_layers, /*layer_dist(mt)*/3, neuron_dist(mt));
+	random_layer(total_layers, /*layer_dist(mt)*/4, neuron_dist(mt));
   }
   
   const std::uint32_t output_layer{total_layers.size() - 1};

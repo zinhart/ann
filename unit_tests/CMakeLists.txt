@@ -32,11 +32,10 @@ else()
   set(test_lib
 	  cpu_unit_tests/run_all.cc
 	  cpu_unit_tests/loss_function_test.cc
-	  #cpu_unit_tests/activation_test.cc
+	  cpu_unit_tests/activation_test.cc
 	  #cpu_unit_tests/layer_test.cc
 	  cpu_unit_tests/optimizer_test.cc
-	  #	  cpu_unit_tests/activation_test.cc
-	  cpu_unit_tests/multi_layer_perceptron_test.cc
+	  #cpu_unit_tests/multi_layer_perceptron_test.cc
 	  cpu_unit_tests/ann_test.cc
 	 )
   add_executable(ann_unit_tests ${test_lib})

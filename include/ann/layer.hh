@@ -54,59 +54,36 @@ namespace zinhart
 			HOST void activate(layer_info::input_layer input, zinhart::function_space::derivative d);
 
 			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::identity_layer identity, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::identity_layer identity, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::identity_layer identity, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::sigmoid_layer sigmoid, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::sigmoid_layer sigmoid, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::softplus_layer softplus, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::softplus_layer softplus, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::softplus_layer softplus, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::tanh_layer hyperbolic_tangent, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::relu_layer relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::relu_layer relu, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::relu_layer relu, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient = 0.1, const precision_type & bias = 1);
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
-
-
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
-			HOST void activate(layer_info::leaky_relu_layer leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::leaky_relu_layer leaky_relu, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::leaky_relu_layer leaky_relu, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
 
 			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient = 0.1, const precision_type & bias = 1);
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
-
-
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
-			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
+			HOST void activate(layer_info::exp_leaky_relu_layer exp_leaky_relu, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length, const precision_type & coefficient = 0.1);
 
 			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias = 1);
-  			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * activations, const std::uint32_t & length);
-
-
-			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
-			HOST void activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::softmax_layer softmax, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, precision_type * jacobian, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length);
+			HOST void activate(layer_info::softmax_layer softmax, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, precision_type * jacobian, const precision_type * const activations, const std::uint32_t & length);
 
 			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length,                                precision_type & scale = 1, precision_type & shift = 0, precision_type epsilon = 1.e-6);
 			HOST void activate(layer_info::batch_normalization_layer batch_norm, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length,
@@ -155,9 +132,8 @@ namespace zinhart
 		  public:
 			HOST virtual ~layer() = default;
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) = 0;	
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)= 0;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)= 0;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)= 0;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)= 0;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length)= 0;
 			HOST virtual void set_size(std::uint32_t size) = 0;
 			HOST virtual std::uint32_t get_size()const = 0;
 			HOST virtual void set_bias(precision_type bias) = 0;
@@ -180,9 +156,8 @@ namespace zinhart
 			HOST input_layer & operator = (input_layer&&) = default;
 			HOST ~input_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
@@ -205,9 +180,8 @@ namespace zinhart
 			HOST identity_layer & operator = (identity_layer&&) = default;
 			HOST ~identity_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -229,9 +203,8 @@ namespace zinhart
 			HOST sigmoid_layer & operator = (sigmoid_layer&&) = default;
 			HOST ~sigmoid_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -254,9 +227,8 @@ namespace zinhart
 			HOST softplus_layer & operator = (softplus_layer&&) = default;
 			HOST ~softplus_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -278,9 +250,8 @@ namespace zinhart
 			HOST tanh_layer & operator = (tanh_layer&&) = default;
 			HOST ~tanh_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -302,9 +273,8 @@ namespace zinhart
 			HOST relu_layer & operator = (relu_layer&&) = default;
 			HOST ~relu_layer() = default; 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -327,9 +297,8 @@ namespace zinhart
 			HOST ~leaky_relu_layer() = default; 
 			precision_type coefficient{0.1};
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -352,9 +321,8 @@ namespace zinhart
 			HOST ~exp_leaky_relu_layer() = default; 
 			precision_type coefficient{0.1};
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
@@ -369,17 +337,20 @@ namespace zinhart
 			using layer<precision_type>::a;
 			using layer<precision_type>::size;
 			using layer<precision_type>::bias;
+			HOST std::uint32_t jacobian_size;
+			HOST void set_jacobian_size(std::uint32_t size);
+			std::uint32_t get_jacobian_size()const;
+			precision_type * jacobian{nullptr};
 		  public:
-			HOST softmax_layer() = default;
-			HOST softmax_layer(const softmax_layer&) = default;
-			HOST softmax_layer(softmax_layer&&) = default;
-			HOST softmax_layer & operator = (const softmax_layer&) = default;
-			HOST softmax_layer & operator = (softmax_layer&&) = default;
-			HOST ~softmax_layer() = default; 
+			HOST softmax_layer(std::uint32_t size);
+			HOST softmax_layer(const softmax_layer&);
+			HOST softmax_layer(softmax_layer&&);
+			HOST softmax_layer & operator = (const softmax_layer&);
+			HOST softmax_layer & operator = (softmax_layer&&);
+			HOST ~softmax_layer(); 
 			HOST virtual void activate(zinhart::function_space::objective o, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::output_layer, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
-			HOST virtual void activate(zinhart::function_space::derivative d, layer_info::hidden_layer, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length) override;
+			HOST virtual void activate(layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, const precision_type * const activations, const std::uint32_t & length) override;
 			HOST virtual void set_size(std::uint32_t size) override;
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
