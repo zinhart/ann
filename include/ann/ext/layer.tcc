@@ -1,5 +1,8 @@
 #include <concurrent_routines/serial/serial.hh>
-#include <type_traits>
+#if CUDA_ENABLED == 1 
+#else
+#include <algorithm>
+#endif
 namespace zinhart
 {
   namespace models
@@ -338,7 +341,7 @@ namespace zinhart
 		HOST softmax_layer<precision_type>::softmax_layer(std::uint32_t size)
 		{ 
 		  set_size(size);
-		  set_jacobian_size(get_size() * get_size());
+		  set_jacobian_size(get_size());
 #if CUDA_ENABLED == 1 
 
 #else
@@ -349,7 +352,7 @@ namespace zinhart
 		HOST softmax_layer<precision_type>::softmax_layer(const softmax_layer & sl)
 		{
 		  set_size(sl.get_size());
-		  set_jacobian_size(get_size() * get_size());
+		  set_jacobian_size(get_size());
 #if CUDA_ENABLED == 1 
 
 #else
@@ -360,7 +363,7 @@ namespace zinhart
 		HOST softmax_layer<precision_type>::softmax_layer(softmax_layer && sl)
 		{
 		  set_size(sl.get_size());
-		  set_jacobian_size(get_size() * get_size());
+		  set_jacobian_size(get_size());
 #if CUDA_ENABLED == 1 
 
 #else
@@ -372,7 +375,7 @@ namespace zinhart
 		HOST softmax_layer<precision_type> & softmax_layer<precision_type>::operator = (const softmax_layer & sl)
 		{
 		  set_size(sl.get_size());
-		  set_jacobian_size(get_size() * get_size());
+		  set_jacobian_size(get_size());
 #if CUDA_ENABLED == 1 
 
 #else
@@ -383,7 +386,7 @@ namespace zinhart
 		HOST softmax_layer<precision_type> & softmax_layer<precision_type>::operator = (softmax_layer && sl)
 		{
 		  set_size(sl.get_size());
-		  set_jacobian_size(get_size() * get_size());
+		  set_jacobian_size(get_size());
 #if CUDA_ENABLED == 1 
 
 #else
@@ -596,59 +599,51 @@ namespace zinhart
 		{
 		  std::uint32_t i{0};
 		  precision_type sum{0.0};
+		  precision_type max = *std::max_element(start, start + length);
+
+		  for(i = 0; i < length; ++i)
+		  {
+			*(start + i) = std::exp( ( *(start + i) + bias) - max );
+			// denominator
+			sum += *(start + i);
+		  }
 		  
-		  // add in bias
+		  // normalize
 		  for(i = 0; i < length; ++i)
-			*(start + i) += bias;
-
-		  // calculaet denominator
-		  for(i = 0; i < length; ++i)
-			sum += std::exp( *(start + i) );
-
-		  // calculate each activation
-		  for(i = 0; i < length; ++i)
-			*(start + i) = std::exp( *(start + i) ) / sum;
+			*(start + i) /= sum;
 		}
-/*	  template <class precision_type>
-		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, zinhart::function_space::derivative d, precision_type * start, const std::uint32_t & length)
-		{
-		  for(std::uint32_t i = 0; i < length; ++i)
-			for(std::uint32_t j = 0; j < length; ++j)
-			  *(start + j) = (j == i) ? *(start + i) * (precision_type{1.0} - *(start + i)) : -*(start + j) * *(start + i);
-		}*/
 	  template <class precision_type>
 		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, layer_info::output_layer o, zinhart::function_space::derivative d, precision_type * deltas, precision_type * jacobian, const precision_type * const error, const precision_type * const activations, const std::uint32_t & length)
 		{
-		  precision_type sum{0};
-		  for(std::uint32_t i = 0; i < this->get_size(); ++i)
+		  for(std::uint32_t i = 0; i < length; ++i)
 		  {
-			for(std::uint32_t j = 0; j < this->get_size(); ++j)
+			for(std::uint32_t j = 0; j < length; ++j)
 			  jacobian[j] = (j == i) ? *(activations + i) * (precision_type{1.0} - *(activations + i)) : -*(activations + j) * *(activations + i);
 
 			// dot prod
+  			precision_type sum{0};
 			for(std::uint32_t j = 0; j < length; ++j)
 			  sum += jacobian[j] * activations[j];
 
 			// multiply by error
-			*(deltas + i) *= *(error + i) * sum;
+			*(deltas + i) = *(error + i) * sum;
 		  }
 		}
 	  template <class precision_type>
 		HOST void activation<precision_type>::activate(layer_info::softmax_layer softmax, layer_info::hidden_layer h, zinhart::function_space::derivative d, precision_type * deltas, precision_type * jacobian, const precision_type * const activations, const std::uint32_t & length)
 		{
-		  precision_type sum{0};
-		  for(std::uint32_t i = 0; i < this->get_size(); ++i)
+		  for(std::uint32_t i = 0; i < length; ++i)
 		  {
-			for(std::uint32_t j = 0; j < this->get_size(); ++j)
+			for(std::uint32_t j = 0; j < length; ++j)
 			  jacobian[j] = (j == i) ? *(activations + i) * (precision_type{1.0} - *(activations + i)) : -*(activations + j) * *(activations + i);
 
 			// dot prod
+		  	precision_type sum{0};
 			for(std::uint32_t j = 0; j < length; ++j)
 			  sum += jacobian[j] * activations[j];
 
-			// multiply
 			*(deltas + i) *=  sum;
-		  }
+		  } 
 		}
 /*
 	  template <class precision_type>
