@@ -23,7 +23,7 @@ namespace zinhart
 		  HOST void gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
 								   const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
 								   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
-								   precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+								   precision_type * total_activations, const std::uint32_t total_activations_length,
 								   precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 								   const precision_type * total_bias, 
 								   precision_type * numerically_approx_gradient, 
@@ -51,7 +51,7 @@ namespace zinhart
 			// Defaults to single-threaded
 			void forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
 								   const precision_type * total_training_cases, const std::uint32_t  case_index,
-								   precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+								   precision_type * total_activations, const std::uint32_t total_activations_length,
 								   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 								   const precision_type * total_bias,
 							       const std::uint32_t n_threads = 1,

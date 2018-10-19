@@ -9,7 +9,7 @@ namespace zinhart
   	  HOST void multi_layer_perceptron<connection::dense, precision_type>::gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
 																						  const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
 																						  const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
-																						  precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+																						  precision_type * total_activations, const std::uint32_t total_activations_length,
 																						  precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 																						  const precision_type * total_bias, 
 																						  precision_type * numerically_approx_gradient, 
@@ -17,7 +17,7 @@ namespace zinhart
 																						  const std::uint32_t n_threads, const std::uint32_t thread_id
 								                                                         )
 	  { 
-		zinhart::function_space::objective objective_function;
+		zinhart::function_space::objective objective_function{};
 		std::uint32_t i{0};
 		const std::uint32_t input_layer{0};
 		const std::uint32_t output_layer{total_layers.size() - 1};
@@ -68,7 +68,7 @@ namespace zinhart
 		  total_hidden_weights[i] += limit_epsilon;
 		  forward_propagate(total_layers, 
 							total_training_cases, case_index, 
-							total_hidden_inputs, total_activations, total_activations_length,
+							total_activations, total_activations_length,
 							total_hidden_weights, total_hidden_weights_length, 
 							total_bias,
 							n_threads, thread_id
@@ -83,7 +83,7 @@ namespace zinhart
 		  total_hidden_weights[i] -= limit_epsilon;
 		  forward_propagate(total_layers, 
 							total_training_cases, case_index, 
-							total_hidden_inputs, total_activations, total_activations_length,
+							total_activations, total_activations_length,
 							total_hidden_weights, total_hidden_weights_length, 
 							total_bias,
 							n_threads, thread_id
@@ -265,7 +265,7 @@ namespace zinhart
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
 																						const precision_type * total_training_cases, const std::uint32_t  case_index,
-																						precision_type * total_hidden_inputs, precision_type * total_activations, const std::uint32_t total_activations_length,
+																						precision_type * total_activations, const std::uint32_t total_activations_length,
 																						const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
 																						const precision_type * total_bias,
 																						const std::uint32_t n_threads,
@@ -273,10 +273,8 @@ namespace zinhart
 																					  )
 	  {
 		zinhart::function_space::objective objective_function{};
-		//std::uint32_t i{0}, j{0};
 
 		const std::uint32_t input_layer{0};
-//		const std::uint32_t output_layer{total_layers.size() - 1};
 
 		// All layer counters
 		std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
@@ -291,7 +289,6 @@ namespace zinhart
 		
 		// variables for the thread calling this method, to determine it's workspace
 		std::uint32_t current_threads_workspace_index{0}, thread_stride{0};
-//		precision_type * current_threads_hidden_input_ptr{nullptr};
 		precision_type * current_threads_output_ptr{nullptr};
 
 		// variables for gemm
@@ -303,7 +300,6 @@ namespace zinhart
 
 		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
 		current_threads_workspace_index = thread_id * thread_stride;
-//		current_threads_hidden_input_ptr = total_hidden_inputs + current_threads_workspace_index;
 		current_threads_output_ptr = total_activations + current_threads_workspace_index;
 
 		// do input layer and the first hidden layer -> Wx
@@ -335,7 +331,6 @@ namespace zinhart
 		while( current_layer < total_layers.size() )
 		{
 		  const precision_type * current_weight_matrix{total_hidden_weights + weight_index};
-		  //precision_type * current_layer_inputs_ptr{total_hidden_inputs + current_threads_workspace_index + current_layer_index};
 		  precision_type * current_layer_outputs_ptr{total_activations + current_threads_workspace_index + current_layer_index};
 		  const precision_type * prior_layer_ptr{total_activations + current_threads_workspace_index + previous_layer_index}; 
 
