@@ -49,7 +49,7 @@ void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<do
   }
   else if(layer_id == 8)
   {
-	total_layers.push_back(std::make_shared<zinhart::models::layers::softmax_layer<double>>());
+	total_layers.push_back(std::make_shared<zinhart::models::layers::softmax_layer<double>>(layer_size));
 	total_layers.back()->set_size(layer_size);
   }
  /* else if(layer_id == 9)
@@ -98,6 +98,7 @@ void gradient_check_mlp(zinhart::loss_functions::loss_function<double> * loss,
 												  );
 						
 }
+/*
 void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, 
 						const double * const total_training_cases, const double * const total_targets, const double * const d_error, const std::uint32_t case_index,
 						const double * const total_hidden_inputs, double * total_activations, double * total_deltas, const std::uint32_t total_activations_length,
@@ -116,7 +117,7 @@ void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<doubl
 						 thread_id
 						);
 
-}
+}*/
 
 
 
@@ -140,13 +141,13 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   double * total_hidden_input_ptr_test{nullptr};
   double * total_hidden_weights_ptr{nullptr};
   double * total_bias_ptr{nullptr};
-  double * current_inputs_ptr{nullptr};
+  //double * current_inputs_ptr{nullptr};
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
-  double * current_threads_hidden_input_ptr{nullptr};
+//  double * current_threads_hidden_input_ptr{nullptr};
 
   // loop counters misc vars
-  std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, n_layers{layer_dist(mt)};
+  std::uint32_t i{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   // variables necessary for forward_propagation
   const std::uint32_t input_layer{0};
@@ -156,7 +157,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   std::uint32_t previous_layer_index{0};
   std::uint32_t weight_index{0};
   std::uint32_t current_threads_activation_index{0};
-  std::uint32_t case_index{0};
+//  std::uint32_t case_index{0};
   std::uint32_t m{0}, n{0}, k{0};
   double alpha{1.0}, beta{0.0};
 
@@ -244,7 +245,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 
 	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
-	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
+	  //current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
 	  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
@@ -253,15 +254,8 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 				  current_threads_activation_ptr, n
 				 );
 
-	  // add in bias
-	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
-	  {
-//        total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
-        *(current_threads_activation_ptr + j) += total_bias_ptr[previous_layer];
-		// apply activation functions
-//		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-	  }
-	  total_layers[current_layer]->activate(objective_function, current_threads_activation_ptr, total_layers[current_layer]->get_size());
+	  // activate
+	  total_layers[current_layer]->activate(objective_function, current_threads_activation_ptr, total_layers[current_layer]->get_size(), total_bias_ptr[previous_layer]);
 		
 
 	  // f(Wx + b complete) for first hidden layer and input layer
@@ -282,7 +276,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 	  {
 		const double * current_weight_matrix{total_hidden_weights_ptr + weight_index};
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
-		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
+	//	double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
 
 		m = total_layers[current_layer]->get_size();
@@ -296,15 +290,8 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 					current_layer_ptr, n
 				   );
   
-		// add in bias
-		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
-		{
-//		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
-          *(current_layer_ptr + j) += total_bias_ptr[previous_layer];
-		  // apply activation functions
-//		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-		}
-		total_layers[current_layer]->activate(objective_function, current_layer_ptr, total_layers[current_layer]->get_size());
+	    // activate
+		total_layers[current_layer]->activate(objective_function, current_layer_ptr, total_layers[current_layer]->get_size(), total_bias_ptr[previous_layer]);
 		
 		// update weight matrix index	
 		weight_index += total_layers[current_layer]->get_size() * total_layers[previous_layer]->get_size();
@@ -341,7 +328,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
-
+/*
 TEST(multi_layer_perceptron, get_results_thread_safety)
 {
   // declarations for random numbers
@@ -643,7 +630,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	random_layer(total_layers, layer_dist(mt),/* neuron_dist(mt)*/2);
+	random_layer(total_layers, layer_dist(mt), neuron_dist(mt));
   }
 
   output_layer = total_layers.size() - 1;
@@ -874,7 +861,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-	random_layer(total_layers, /*layer_dist(mt)*/4, neuron_dist(mt));
+    //layer_dist(mt) // instead of 4
+	random_layer(total_layers, 4, neuron_dist(mt));
   }
   
   const std::uint32_t output_layer{total_layers.size() - 1};
@@ -1241,7 +1229,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  {
 		EXPECT_NEAR(gradient_approx[i], total_gradient_ptr[i], limit_epsilon)<<" ith_case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  }
-	  /**/
 	}
 	// clear futures
 	results.clear();
@@ -1269,4 +1256,4 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-
+*/

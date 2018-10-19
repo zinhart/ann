@@ -722,6 +722,7 @@ TEST(activation_test, softmax_activation)
   mkl_free(jacobian_ptr);
   mkl_free(jacobian_test_ptr);
 }
+
 /*
 TEST(activation_test, batch_norm_activation)
 {
