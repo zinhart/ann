@@ -11,7 +11,7 @@ namespace zinhart
 	{
 
 	  template<class precision_type>
-		HOST void input_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void input_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 #else
@@ -49,12 +49,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void identity_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void identity_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::identity_layer(), o, activations, length);
+		  a.activate(layer_info::identity_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -91,12 +91,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void sigmoid_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::sigmoid_layer(), o, activations, length);
+		  a.activate(layer_info::sigmoid_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -132,12 +132,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void softplus_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::softplus_layer(), o, activations, length);
+		  a.activate(layer_info::softplus_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -173,12 +173,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void tanh_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::tanh_layer(), o, activations, length);
+		  a.activate(layer_info::tanh_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -214,12 +214,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::relu_layer(), o, activations, length);
+		  a.activate(layer_info::relu_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -255,12 +255,12 @@ namespace zinhart
 		{ return this->bias; }
 
 	  template<class precision_type>
-		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::leaky_relu_layer(), o, activations, length, coefficient);
+		  a.activate(layer_info::leaky_relu_layer(), o, activations, length, coefficient, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -297,12 +297,12 @@ namespace zinhart
 
 
 	  template<class precision_type>
-		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void exp_leaky_relu_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::exp_leaky_relu_layer(), o, activations, length, coefficient);
+		  a.activate(layer_info::exp_leaky_relu_layer(), o, activations, length, coefficient, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -407,12 +407,12 @@ namespace zinhart
 
 
 	  template<class precision_type>
-		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length)
+		HOST void softmax_layer<precision_type>::activate(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
 		{  
 #if CUDA_ENABLED == 1 
 
 #else
-		  a.activate(layer_info::softmax_layer(), o, activations, length);
+		  a.activate(layer_info::softmax_layer(), o, activations, length, bias);
 #endif
 		}
 	  template<class precision_type>
@@ -428,7 +428,7 @@ namespace zinhart
 		{
 #if CUDA_ENABLED == 1
 #else
-		  a.activate(layer_info::softmax_layer(), h, d, deltas, activations, length);
+		  a.activate(layer_info::softmax_layer(), h, d, deltas, jacobian, activations, length);
 #endif
 		}
 	  template<class precision_type>
@@ -720,7 +720,7 @@ namespace zinhart
 #if CUDA_ENABLED == 1
   		  return precision_type{1.0} / (precision_type{1.0} + exp(-x));
 #else
-  		   precision_type{1.0} / ( precision_type{1.0} + std::exp(-x) );
+  		  return precision_type{1.0} / ( precision_type{1.0} + std::exp(-x) );
 #endif
 		}
 

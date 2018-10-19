@@ -20,7 +20,7 @@ TEST(activation_test, identity_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -104,7 +104,7 @@ TEST(activation_test, sigmoid_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -188,7 +188,7 @@ TEST(activation_test, softplus_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -272,7 +272,7 @@ TEST(activation_test, tanh_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -356,7 +356,7 @@ TEST(activation_test, relu_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -440,7 +440,7 @@ TEST(activation_test, leaky_relu_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
@@ -525,7 +525,7 @@ TEST(activation_test, exp_leaky_relu_activation)
 
   // declarations for vector legnths loop counters
   const std::uint32_t alignment{64};
-  std::uint32_t layer_length{neuron_dist(mt)}, i{0}, j{0};
+  std::uint32_t layer_length{neuron_dist(mt)}, i{0};
   double * layer_activations_ptr{nullptr};
   double * layer_activations_ptr_test{nullptr};
   double * layer_deltas_ptr{nullptr};
