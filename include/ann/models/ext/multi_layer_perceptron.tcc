@@ -19,7 +19,6 @@ namespace zinhart
 	  { 
 		zinhart::function_space::objective objective_function{};
 		std::uint32_t i{0};
-		const std::uint32_t input_layer{0};
 		const std::uint32_t output_layer{total_layers.size() - 1};
 
 		std::uint32_t output_layer_index{0};
@@ -30,11 +29,10 @@ namespace zinhart
 		// a ptr to the current training case, 
 		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
 		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
-		const precision_type * current_training_case{total_training_cases + (case_index * total_layers[input_layer]->get_size())};
 		const precision_type * current_target{total_targets + (case_index * total_layers[output_layer]->get_size())};
 
 		// variables for the thread calling this method, to determine it's workspace
-		std::uint32_t current_threads_activation_workspace_index{0}, current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
+		std::uint32_t /*current_threads_activation_workspace_index{0},*/ current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
 		precision_type * current_threads_gradient_ptr{nullptr};
 		precision_type * current_threads_output_layer_ptr{nullptr};
 
@@ -384,11 +382,11 @@ namespace zinhart
 		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer]->get_size(); ++i, ++j)
 		  *(model_outputs + j) = *(total_hidden_outputs + i);
 	  }
-	 /* 
+	  
 	template <class precision_type>
 	  void multi_layer_perceptron<connection::dense, precision_type>::backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
 																			const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-																			const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+																			const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
 																			const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
 																			const precision_type * const total_bias,
 																			const std::uint32_t n_threads,
@@ -396,7 +394,7 @@ namespace zinhart
 																			)
 	  {
 		zinhart::function_space::derivative derivative_function{};
-		std::uint32_t i{0}, j{0};
+		std::uint32_t i{0};
 
 		const std::uint32_t input_layer{0}, output_layer{total_layers.size() - 1};
 		std::uint32_t current_layer_index{0}, previous_layer_index{0}, current_gradient_index{0};
@@ -440,12 +438,11 @@ namespace zinhart
 		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
 
 		// set pointers for output layer gradient for the current thread
-	    const precision_type * current_threads_hidden_input_ptr{total_hidden_inputs + current_threads_activation_workspace_index};
+	    // const precision_type * current_threads_hidden_input_ptr{total_hidden_inputs + current_threads_activation_workspace_index};
 		const precision_type * current_threads_activation_ptr{total_activations + current_threads_activation_workspace_index};
 		precision_type * current_threads_delta_ptr{total_deltas + current_threads_activation_workspace_index};
 		precision_type * current_threads_gradient_ptr{total_gradient + current_threads_gradient_workspace_index};
 
-		const precision_type * output_layer_hidden_inputs_ptr{current_threads_hidden_input_ptr + current_layer_index};// unused variable
 		const precision_type * output_layer_activation_ptr{current_threads_activation_ptr + current_layer_index};
    		// if this is a 2 layer model then the prior activations are essentially the inputs to the model, i.e the while loop does not activate
 		const precision_type * prior_activation_ptr{ (total_layers.size() > 2) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case };
@@ -453,7 +450,7 @@ namespace zinhart
 		precision_type * current_gradient_ptr{current_threads_gradient_ptr + current_gradient_index};
 
 		// calc output layer deltas
-		total_layers[current_layer]->activate(derivative_function, zinhart::models::layers::layer_info::output_layer(), current_layer_deltas_ptr, current_error_matrix, output_layer_activation_ptr, total_layers[current_layer]->get_size());
+		total_layers[current_layer]->activate(zinhart::models::layers::layer_info::output_layer(), derivative_function, current_layer_deltas_ptr, current_error_matrix, output_layer_activation_ptr, total_layers[current_layer]->get_size());
 
 		// for gemm
 		m = total_layers[current_layer]->get_size();
@@ -501,7 +498,7 @@ namespace zinhart
 				 );
 
 		// calc hidden layer deltas
-		total_layers[current_layer]->activate(derivative_function, zinhart::models::layers::layer_info::hidden_layer(), current_layer_deltas_ptr, current_layer_activation_ptr , total_layers[current_layer]->get_size());
+		total_layers[current_layer]->activate(zinhart::models::layers::layer_info::hidden_layer(), derivative_function, current_layer_deltas_ptr, current_layer_activation_ptr, total_layers[current_layer]->get_size());
 
 		m = total_layers[current_layer]->get_size();
    		n = total_layers[previous_layer]->get_size();
@@ -520,7 +517,7 @@ namespace zinhart
 		--previous_layer;
 	  }
 	  
-	}*/
+	}
 #endif
   }
 }

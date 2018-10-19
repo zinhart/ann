@@ -98,10 +98,10 @@ void gradient_check_mlp(zinhart::loss_functions::loss_function<double> * loss,
 												  );
 						
 }
-/*
+
 void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, 
 						const double * const total_training_cases, const double * const total_targets, const double * const d_error, const std::uint32_t case_index,
-						const double * const total_hidden_inputs, double * total_activations, double * total_deltas, const std::uint32_t total_activations_length,
+						double * total_activations, double * total_deltas, const std::uint32_t total_activations_length,
 						const double * const total_hidden_weights, double * total_gradient, const std::uint32_t total_hidden_weights_length,
 						const double * const total_bias,
 						const std::uint32_t n_threads,
@@ -110,14 +110,14 @@ void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<doubl
   multi_layer_perceptron<connection::dense, double> mlp;
   mlp.backward_propagate(total_layers,
 						 total_training_cases, total_targets, d_error, case_index,
-						 total_hidden_inputs, total_activations, total_deltas, total_activations_length,
+						 total_activations, total_deltas, total_activations_length,
 						 total_hidden_weights, total_gradient, total_hidden_weights_length,
 						 total_bias,
 						 n_threads,
 						 thread_id
 						);
 
-}*/
+}
 
 
 
@@ -665,7 +665,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
 
-	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer]->get_size())};
+//	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer]->get_size())};
     const double * current_target{total_targets + (ith_case * total_layers[output_layer]->get_size())};
 	// for each thread perform a gradient check on the same values, ideally each thread would come to the same conclusion (return the same values)
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
@@ -742,7 +742,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   mkl_free(current_threads_output_layer_ptr);
   mkl_free(d_error);
 }
-/*
+
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
   // declarations for random numbers
@@ -752,7 +752,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, 7);// does not include input layer
   std::uniform_int_distribution<std::uint32_t> loss_function_dist(0, 1);
   std::uniform_int_distribution<std::uint32_t> thread_dist(1, 20);
-  std::uniform_real_distribution<float> real_dist(-1, 1);
+  std::uniform_real_distribution<float> real_dist(0, 1);
   // declarations for vector lengths
   std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_case_length{0}, total_targets_length{0}, total_cases{0}, total_error_length{0};
   
@@ -762,18 +762,13 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   double * total_activations_ptr_check{nullptr};
   double * total_deltas_ptr{nullptr};
   double * total_deltas_ptr_test{nullptr};
-  double * total_hidden_input_ptr{nullptr};
-  double * total_hidden_input_ptr_test{nullptr};
-  double * total_hidden_input_ptr_check{nullptr};
   double * total_hidden_weights_ptr{nullptr};
   double * total_gradient_ptr{nullptr};
   double * total_gradient_ptr_test{nullptr};
   double * total_bias_ptr{nullptr};
   double * total_targets_ptr{nullptr};
-  double * current_inputs_ptr{nullptr};
   double * total_cases_ptr{nullptr};
   double * current_threads_activation_ptr{nullptr};
-  double * current_threads_hidden_input_ptr{nullptr};
   double * current_threads_delta_ptr{nullptr};
   double * current_threads_gradient_ptr{nullptr};
   double * outputs_ptr{nullptr};
@@ -785,7 +780,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   // loop counters misc vars
   std::uint32_t i{0}, j{0}, ith_layer{0},ith_case{0}, thread_id{0}, activation_stride{0}, gradient_stride{0}, n_layers{layer_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
-  // variables necessary for forward_propagation & backward propagation
   const std::uint32_t input_layer{0};
   std::uint32_t current_layer{0};
   std::uint32_t previous_layer{0};
@@ -794,7 +788,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   std::uint32_t weight_index{0};
   std::uint32_t current_threads_activation_index{0};
   std::uint32_t current_threads_gradient_index{0};
-  std::uint32_t case_index{0};
   std::uint32_t m{0}, n{0}, k{0};
   double alpha{1.0}, beta{0.0}, error{0.0};
   const double limit_epsilon = 1.e-4;
@@ -817,8 +810,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_layers[input_layer]->set_size(neuron_dist(mt));
   for(ith_layer = 0; ith_layer < n_layers; ++ith_layer)
   {
-    //layer_dist(mt) // instead of 4
-	random_layer(total_layers, 4, neuron_dist(mt));
+    //layer_dist(mt)
+	random_layer(total_layers, 2, neuron_dist(mt));
   }
   
   const std::uint32_t output_layer{total_layers.size() - 1};
@@ -855,9 +848,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   total_activations_ptr_check = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_deltas_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_deltas_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
-  total_hidden_input_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
-  total_hidden_input_ptr_test = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
-  total_hidden_input_ptr_check = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   outputs_ptr = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   outputs_ptr_test = (double*) mkl_malloc( output_layer_nodes * sizeof( double ), alignment );
   total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
@@ -880,9 +870,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	total_activations_ptr[i] = 0.0;
 	total_activations_ptr_test[i] = 0.0;
 	total_activations_ptr_check[i] = 0.0;
-	total_hidden_input_ptr[i] = 0.0;
-	total_hidden_input_ptr_test[i] = 0.0;
-	total_hidden_input_ptr_check[i] = 0.0;
 	total_deltas_ptr[i] = 0.0;
 	total_deltas_ptr_test[i] = 0.0;
   }
@@ -920,7 +907,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
 	  
-	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_hidden_input_ptr, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  current_layer_index = 0;
@@ -933,7 +920,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 
 	  current_threads_activation_index = thread_id * activation_stride;
 	  current_threads_activation_ptr = total_activations_ptr_test + current_threads_activation_index;
-	  current_threads_hidden_input_ptr = total_hidden_input_ptr_test + current_threads_activation_index;
 	  // Wx for first hidden layer and input layer
 	  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 				  m, n, k,
@@ -942,15 +928,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 				  current_threads_activation_ptr, n
 				 );
 	
-	  // add in bias
-	  for(i = current_threads_activation_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
-	  {
-//        total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
-        *(current_threads_activation_ptr + j) += total_bias_ptr[previous_layer];
-		// apply activation functions
-//		total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-	  }
-	  total_layers[current_layer]->activate(objective_function, current_threads_activation_ptr, total_layers[current_layer]->get_size());
+      // activate
+	  total_layers[current_layer]->activate(objective_function, current_threads_activation_ptr, total_layers[current_layer]->get_size(), total_bias_ptr[previous_layer]);
 	  // f(Wx + b complete) for first hidden layer and input layer
 	  
 	  // save outputs if a two layer model
@@ -973,7 +952,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  {
 		const double * current_weight_matrix{total_hidden_weights_ptr + weight_index};
 		double * current_layer_ptr{total_activations_ptr_test + current_threads_activation_index + current_layer_index};
-		double * current_layer_Wx{total_hidden_input_ptr_test + current_threads_activation_index + current_layer_index};
 		const double * prior_layer_ptr = total_activations_ptr_test + current_threads_activation_index + previous_layer_index; 
 
 		m = total_layers[current_layer]->get_size();
@@ -987,15 +965,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 					current_layer_ptr, n
 				   );
 
-		// add in bias
-		for(i = current_threads_activation_index + current_layer_index, j = 0; j < total_layers[current_layer]->get_size(); ++i, ++j)
-		{
-//		  total_activations_ptr_test[i] += total_bias_ptr[previous_layer];
-          *(current_layer_ptr + j) += total_bias_ptr[previous_layer];
-		  // apply activation functions
-//		  total_activations_ptr_test[i] = af(total_layers[current_layer].first, zinhart::activation::ACTIVATION_TYPE::OBJECTIVE, total_activations_ptr_test[i]);
-		}
-		total_layers[current_layer]->activate(objective_function, current_layer_ptr, total_layers[current_layer]->get_size());
+        // activate
+		total_layers[current_layer]->activate(objective_function, current_layer_ptr, total_layers[current_layer]->get_size(), total_bias_ptr[previous_layer]);
 
   		// save outputs if a two layer model
   	    if(current_layer == total_layers.size() - 1)
@@ -1018,8 +989,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  results[thread_id].get();
 
 	  // validate forward prop outputs
-	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<<"i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<<"i: "<<i<<"\n";
 
@@ -1059,8 +1028,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	 current_threads_gradient_ptr = total_gradient_ptr_test + current_threads_gradient_index;
 
 	 // set pointers
-	 double * current_layers_hidden_input_ptr{current_threads_hidden_input_ptr + current_layer_index};
-	 double * current_layer_activation_ptr{current_threads_activation_ptr + current_layer_index};
 	 // if this is a 2 layer model then the prior activations are essentially the inputs to the model
 	 const double * prior_layer_activation_ptr{(total_layers.size() > 2) ? (current_threads_activation_ptr + previous_layer_index) : current_training_case}; 
 	 double * current_layer_deltas_ptr{current_threads_delta_ptr + current_layer_index};
@@ -1072,14 +1039,14 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
  
 	 // begin backprop 
 	 results[thread_id] = pool.add_task(bprop_mlp, std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
-										 total_hidden_input_ptr, total_activations_ptr, total_deltas_ptr, total_activations_length, 
+										 total_activations_ptr, total_deltas_ptr, total_activations_length, 
 										 total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length, 
 										 total_bias_ptr, 
 										 n_threads, thread_id 
 									    );
 
 	  // calculate output layer deltas
-	  total_layers[current_layer]->activate(derivative_function, zinhart::models::layers::layer_info::output_layer(), current_layer_deltas_ptr, current_error_matrix, 
+	  total_layers[current_layer]->activate(zinhart::models::layers::layer_info::output_layer(), derivative_function, current_layer_deltas_ptr, current_error_matrix, 
 			                                 (total_activations_ptr_test + current_threads_activation_index + current_layer_index), total_layers[current_layer]->get_size());
 
 	 // set up to calculate output layer gradient 
@@ -1128,7 +1095,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 				 );
   	    
 		// calculate hidden layer deltas
-	    total_layers[current_layer]->activate(derivative_function, zinhart::models::layers::layer_info::hidden_layer(), current_layer_deltas_ptr, 
+	    total_layers[current_layer]->activate(zinhart::models::layers::layer_info::hidden_layer(), derivative_function, current_layer_deltas_ptr, 
 			                                 (total_activations_ptr_test + current_threads_activation_index + current_layer_index), total_layers[current_layer]->get_size());
 
 		m = total_layers[current_layer]->get_size();
@@ -1148,12 +1115,9 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  }	  
 	  // serial backprop done
 	  // synchronize w.r.t the current thread, back prop ends here
-	  
 	  results[thread_id].get();
 
 	  // validate bprop outputs
-	  for(i = 0; i < total_activations_length; ++i)
-		EXPECT_DOUBLE_EQ(total_hidden_input_ptr[i], total_hidden_input_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  for(i = 0; i < total_activations_length; ++i)
@@ -1166,7 +1130,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets_ptr, ith_case,
-									  total_hidden_input_ptr_check, total_activations_ptr_check, total_activations_length,
+									  total_activations_ptr_check, total_activations_length,
 									  total_hidden_weights_ptr, total_hidden_weights_length,
 									  total_bias_ptr,
 									  gradient_approx,
@@ -1198,9 +1162,6 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(total_activations_ptr_check);
   mkl_free(total_deltas_ptr);
   mkl_free(total_deltas_ptr_test);
-  mkl_free(total_hidden_input_ptr);
-  mkl_free(total_hidden_input_ptr_test);
-  mkl_free(total_hidden_input_ptr_check);
   mkl_free(outputs_ptr);
   mkl_free(outputs_ptr_test);
   mkl_free(total_hidden_weights_ptr);
@@ -1212,4 +1173,3 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(d_error);
   mkl_free(gradient_approx);
 }
-*/

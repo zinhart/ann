@@ -69,7 +69,7 @@ namespace zinhart
 			// Defaults to single threaded
 			void backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
 									const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-									const precision_type * const total_hidden_inputs, const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+									const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
 									const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
 									const precision_type * const total_bias,
 									const std::uint32_t n_threads = 1,
