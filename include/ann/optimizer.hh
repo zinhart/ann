@@ -11,6 +11,86 @@ namespace zinhart
 {
   namespace optimizers
   {
+	namespace optimum_attributes
+	{
+	  enum sgd_optimizer                         : std::uint32_t;
+	  enum momentum_optimizer                    : std::uint32_t;
+	  enum nesterov_momentum_optimizer           : std::uint32_t;
+	  enum adagrad_optimizer                     : std::uint32_t;
+	  enum conjugate_gradient_optimizer          : std::uint32_t;
+	  enum adadelta_optimizer                    : std::uint32_t;
+	  enum rms_prop_optimizer                    : std::uint32_t;
+	  enum rprop_optimizer                       : std::uint32_t;
+	  enum adamax_optimizer                      : std::uint32_t;
+	  enum amsgrad_optimizer                     : std::uint32_t;
+	  enum adam_optimizer                        : std::uint32_t;
+	  enum nadam_optimizer                       : std::uint32_t;
+	  union optimum_type
+	  {
+		sgd_optimizer sgd;
+		momentum_optimizer momentum;
+		nesterov_momentum_optimizer nesterov_momentum;
+		adagrad_optimizer adagrad;
+		conjugate_gradient_optimizer conjugrad;
+		adadelta_optimizer adadelta;
+		rms_prop_optimizer rms_prop;
+		rprop_optimizer rprop;
+		adamax_optimizer adamax;
+		amsgrad_optimizer amsgrad;
+		adam_optimizer adam;
+		nadam_optimizer nadam;
+	  };
+	};
+	template <class precision_type>
+	  class optimum
+	  {
+		optimum() = default;
+		optimum(const optimum&) = default;
+		optimum(optimum &&) = default;
+		optimum & operator = (const optimum&) = default;
+		optimum & operator = (optimum &&) = default;
+		~optimum() = default;
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta);
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta);
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
+											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
+										   );
+	   	CUDA_CALLABLE_MEMBER void update(optimum_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
+											const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+										   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+											const precision_type & current_gradient, const precision_type & epsilon
+										   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+												 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
+        
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
+											const precision_type & current_gradient,  const precision_type & eta, 
+											const precision_type & beta, const precision_type & epsilon
+										   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+											const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+											const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
+										   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
+											 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+										    );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
+											precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
+											const precision_type & current_gradient, const precision_type & eta, 
+											const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+			                  			   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+											const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
+											const precision_type & beta_2, const precision_type & epsilon
+										   );
+		CUDA_CALLABLE_MEMBER void update(optimum_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+											const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
+											const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+										   );
+	
+	  };
 	// all the optimizers
 	typedef std::integral_constant<std::uint32_t, 0> SGD;
 	typedef std::integral_constant<std::uint32_t, 1> MOMENTUM;
