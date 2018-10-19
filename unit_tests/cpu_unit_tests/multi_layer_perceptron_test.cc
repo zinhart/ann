@@ -541,7 +541,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
   mkl_free(total_bias_ptr);
   mkl_free(total_cases_ptr);
 }
-/*
+
 TEST(multi_layer_perceptron, gradient_check_thread_safety)
 {
   // declarations for random numbers
@@ -556,14 +556,13 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   const std::uint32_t input_layer{0};
   std::uint32_t output_layer{0};
   const std::uint32_t alignment = 64;
-  std::uint32_t i{0}, j{0}, k{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
+  std::uint32_t i{0}, ith_case{0}, thread_id{0}, ith_layer{0}, n_layers{layer_dist(mt)}, total_cases{0}, total_cases_length{0}, total_targets_length{0}, total_activations_length, total_hidden_weights_length{0}, total_gradient_length{0};
 
   zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
 //  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
   
   double * total_cases_ptr{nullptr};
   double * total_targets{nullptr};
-  double * total_hidden_inputs{nullptr};
   double * total_activations{nullptr};
   double * total_deltas{nullptr};
   double * total_hidden_weights{nullptr};
@@ -616,7 +615,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 
   total_cases_ptr = (double*) mkl_malloc( total_cases_length * sizeof( double ), alignment );
   total_targets = (double*) mkl_malloc( total_targets_length * sizeof( double ), alignment );
-  total_hidden_inputs = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_activations = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_deltas = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
   total_hidden_weights = {(double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment )};
@@ -638,7 +636,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   for(i = 0; i < total_activations_length; ++i)
   {
 	total_activations[i] = 0.0;
-	total_hidden_inputs[i] = 0.0;
 	total_deltas[i] = 0.0;
   }
   for(i = 0; i < total_hidden_weights_length; ++i)
@@ -681,7 +678,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 		total_hidden_weights_copy[i] += limit_epsilon;
 		mlp.forward_propagate(total_layers, 
 						  total_cases_ptr, ith_case, 
-						  total_hidden_inputs, total_activations, total_activations_length,
+						  total_activations, total_activations_length,
 						  total_hidden_weights_copy, total_hidden_weights_length, 
 						  bias,
 						  n_threads, thread_id
@@ -696,7 +693,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 		total_hidden_weights_copy[i] -= limit_epsilon;
 		mlp.forward_propagate(total_layers, 
 					  total_cases_ptr, ith_case, 
-					  total_hidden_inputs, total_activations, total_activations_length,
+					  total_activations, total_activations_length,
 					  total_hidden_weights_copy, total_hidden_weights_length, 
 					  bias,
 					  n_threads, thread_id
@@ -714,7 +711,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets, ith_case,
-									  total_hidden_inputs, total_activations, total_activations_length,
+									  total_activations, total_activations_length,
 									  total_hidden_weights, total_hidden_weights_length,
 									  bias,
 									  numerically_approx_gradients_parallel,
@@ -735,7 +732,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
  
   delete loss;
   mkl_free(total_cases_ptr);
-  mkl_free(total_hidden_inputs);
   mkl_free(total_deltas);
   mkl_free(total_activations);
   mkl_free(total_hidden_weights);
@@ -746,7 +742,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   mkl_free(current_threads_output_layer_ptr);
   mkl_free(d_error);
 }
-
+/*
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 {
   // declarations for random numbers
