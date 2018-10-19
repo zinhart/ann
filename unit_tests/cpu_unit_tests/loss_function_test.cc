@@ -85,7 +85,7 @@ TEST(loss_function_test, mean_squared_error)
   // random number generators
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), /*std::numeric_limits<std::uint16_t>::max()*/ 30);
   std::mt19937 mt(rd());
 
   // loop counters & testing variables
@@ -130,7 +130,7 @@ TEST(loss_function_test, mean_squared_error)
   
   // validate loss objective
   EXPECT_DOUBLE_EQ(sum, sum_test);
-/*
+
   // calculate error derivative
   mse->error(derivative(), outputs, targets, results, n_elements);
 
@@ -141,7 +141,6 @@ TEST(loss_function_test, mean_squared_error)
   // validate loss derivative
   for(i = 0; i < n_elements; ++i)
     EXPECT_DOUBLE_EQ(*(results + i), *(results_test + i));
-*/
 
   // cleanup
   delete mse;

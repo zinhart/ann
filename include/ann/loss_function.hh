@@ -35,7 +35,7 @@ namespace zinhart
 		HOST error_function & operator = (error_function&&) = default;
 		HOST ~error_function() = default;
 
-		HOST precision_type error(loss_attributes::mean_squared_error mse, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const std::uint32_t & output_size);
+		HOST precision_type error(loss_attributes::mean_squared_error mse, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length);
 		HOST void error(loss_attributes::mean_squared_error mse, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length, const std::uint32_t & output_size);
 
 		HOST precision_type error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const precision_type & epsilon = 1.e-30);
