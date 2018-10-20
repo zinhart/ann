@@ -3,6 +3,316 @@ namespace zinhart
 {
   namespace optimizers
   {
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta)
+	  { theta -=  ( eta * gradient ); }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta)
+	  {
+ 		precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
+		theta -= current_velocity;
+		prior_velocity = current_velocity;
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
+										const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
+									   )
+	  {
+		precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
+		theta -= current_velocity;
+		prior_velocity = current_velocity;
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void update(optimum_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
+										const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+									   )
+	  {
+		prior_gradient += current_gradient * current_gradient;
+		theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+										const precision_type & current_gradient, const precision_type & epsilon
+									   )
+	  {
+		precision_type gamma { ( current_gradient - prior_gradient ) * current_gradient / ( prior_gradient * prior_gradient + epsilon ) };
+		precision_type step { current_gradient + ( gamma * hessian ) };
+		theta += step;
+		prior_gradient = current_gradient;
+		hessian = step;
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+											 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon)
+	  {
+		prior_gradient = gamma * prior_gradient + (precision_type{1.0} - gamma) * current_gradient * current_gradient;
+		precision_type delta { -(sqrt(prior_delta * prior_delta + epsilon) / sqrt(prior_gradient * prior_gradient + epsilon)) * current_gradient };
+		theta += delta;
+		prior_delta = gamma * prior_delta + (precision_type{1.0} - gamma) * delta * delta;
+	  }
+	
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
+										const precision_type & current_gradient,  const precision_type & eta, 
+										const precision_type & beta, const precision_type & epsilon
+									   )
+	  {
+  		prior_gradient = gamma * prior_gradient * prior_gradient + (precision_type{1} - gamma) * current_gradient * current_gradient;
+		theta -= eta * current_gradient / sqrt(prior_gradient * prior_gradient + epsilon);
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+										const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+										const precision_type & delta_max, const precision_type & delta_min
+									   )
+	  {
+		if(current_gradient * prior_gradient > 0) // if the sign of the gradient has stayed positive
+		{
+	   	  current_delta = ( current_delta * eta_pos < delta_max) ? current_delta * eta_pos : delta_max;
+   		  theta += -current_gradient * current_delta;
+		  prior_gradient = current_gradient; 
+		}
+		else if(current_gradient * prior_gradient < 0)// if the sign of the gradient has stayed negative
+		{
+		  current_delta = ( current_delta * eta_neg > delta_min) ? current_delta * eta_neg : delta_min;
+		  prior_gradient = 0;
+		} 
+		else// if either the prior or current gradient is 0, because of a negative gradient
+		{
+		  theta += -current_gradient * current_delta;
+		  prior_gradient = current_gradient; 
+		}
+	  }
+	// adamax, the max operation is w.r.t the infinity norm
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+										 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
+										 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+										)
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1.0} - beta_1) * current_gradient; 
+		prior_variance = (beta_2 * prior_variance > fabs(current_gradient)) ? beta_2 * prior_variance : fabs(current_gradient);
+		theta -= (eta / (precision_type{1.0} - beta_1_t) ) * (prior_mean / (prior_variance + epsilon)); 
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
+										precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
+										const precision_type & current_gradient, const precision_type & eta, 
+										const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+									   )
+	  {
+  		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		// max(prior_variance > prior_bias_corrected_variance)
+		prior_bias_corrected_variance = (prior_variance > prior_bias_corrected_variance) ? prior_variance : prior_bias_corrected_variance;
+		theta -= eta * ( prior_mean ) / ( sqrt( prior_bias_corrected_variance) + epsilon ) ;
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+										const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
+										const precision_type & beta_2, const precision_type & epsilon
+									   )
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		precision_type bias_corrected_mean{ prior_mean / (precision_type{1} - beta_1_t) };
+		precision_type bias_corrected_variace{ prior_variance / (precision_type{1} - beta_2_t) };
+		theta -= eta * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
+	  }
+
+	template <class precision_type>
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+										const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
+										const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+									   )
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		precision_type prior_bias_corrected_mean{prior_mean / (precision_type{1} - beta_1_t )};
+		precision_type prior_bias_corrected_variance{prior_variance / (precision_type{1} - beta_2_t)};
+		theta -= eta / ( sqrt(prior_bias_corrected_variance) + epsilon ) * (beta_1 * prior_bias_corrected_mean + (precision_type{1} - beta_1) / (precision_type{1} - beta_1_t) * current_gradient  );
+
+	  }
+	/*
+	
+	// Stochastic gradient descent
+	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void stochastic_gradient_descent::update(precision_type & theta, const precision_type & gradient, const precision_type & eta)
+		{ theta -=  ( eta * gradient ); }
+    
+	// Momentum
+	  template <class precision_type>
+		 CUDA_CALLABLE_MEMBER void momentum::update(precision_type & theta, precision_type & prior_velocity,
+												   	const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
+												   )
+		 {
+   		   precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
+   		   theta -= current_velocity;
+   		   prior_velocity = current_velocity;
+   		 }
+
+	// Nesterov momentum
+  	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void nesterov_momentum::update(precision_type & theta, precision_type & prior_velocity, 
+														    const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
+														   )
+		{
+		  precision_type velocity { gamma * prior_velocity + eta * current_gradient * (  theta - gamma * prior_velocity) };
+		  theta -= velocity;
+		  prior_velocity = velocity;
+		}
+
+	
+  	// adagrad	
+  	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void adagrad::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon)
+		{
+		  prior_gradient += current_gradient * current_gradient;
+		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
+		}
+	  
+
+	  // conjugate gradient descent
+	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void conjugate_gradient_descent::update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+																	 const precision_type & current_gradient, const precision_type & epsilon
+																	)
+	  {
+		precision_type gamma { ( current_gradient - prior_gradient ) * current_gradient / ( prior_gradient * prior_gradient + epsilon ) };
+		precision_type step { current_gradient + ( gamma * hessian ) };
+		theta += step;
+		prior_gradient = current_gradient;
+		hessian = step;
+	  }
+	  // adadelta	
+	  template <class precision_type>	 
+		CUDA_CALLABLE_MEMBER void adadelta::update(precision_type & theta,  precision_type & prior_gradient, precision_type & prior_delta,
+									               const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
+												  )
+		{
+		  prior_gradient = gamma * prior_gradient + (precision_type{1.0} - gamma) * current_gradient * current_gradient;
+		  precision_type delta { -(sqrt(prior_delta * prior_delta + epsilon) / sqrt(prior_gradient * prior_gradient + epsilon)) * current_gradient };
+		  theta += delta;
+		  prior_delta = gamma * prior_delta + (precision_type{1.0} - gamma) * delta * delta;
+		}
+		
+	 // rms_prop
+	  template <class precision_type>
+		CUDA_CALLABLE_MEMBER void rms_prop::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient,  
+												   const precision_type & eta, const precision_type & gamma, const precision_type & epsilon
+												  )
+		{
+		  prior_gradient = gamma * prior_gradient * prior_gradient + (precision_type{1} - gamma) * current_gradient * current_gradient;
+		  theta -= eta * current_gradient / sqrt(prior_gradient * prior_gradient + epsilon);
+		}
+
+	//rprop
+	template <class precision_type>
+	 CUDA_CALLABLE_MEMBER void resilient_propagation::update(precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+															 const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+															 const precision_type & delta_max, const precision_type & delta_min
+															)
+	 {
+	   if(current_gradient * prior_gradient > 0) // if the sign of the gradient has stayed positive
+	   {
+		 current_delta = ( current_delta * eta_pos < delta_max) ? current_delta * eta_pos : delta_max;
+		 theta += -current_gradient * current_delta;
+		 prior_gradient = current_gradient; 
+	   }
+	   else if(current_gradient * prior_gradient < 0)// if the sign of the gradient has stayed negative
+	   {
+		 current_delta = ( current_delta * eta_neg > delta_min) ? current_delta * eta_neg : delta_min;
+		 prior_gradient = 0;
+	   } 
+	   else// if either the prior or current gradient is 0, because of a negative gradient
+	   {
+		 theta += -current_gradient * current_delta;
+		 prior_gradient = current_gradient; 
+	   }
+	 }
+
+	// adamax, the max operation is w.r.t the infinity norm
+  	template <class precision_type>
+	  CUDA_CALLABLE_MEMBER void adamax::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+											   const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
+											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+									          )
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1.0} - beta_1) * current_gradient; 
+		prior_variance = (beta_2 * prior_variance > fabs(current_gradient)) ? beta_2 * prior_variance : fabs(current_gradient);
+		theta -= (eta / (precision_type{1.0} - beta_1_t) ) * (prior_mean / (prior_variance + epsilon)); 
+	  }
+	template <class precision_type>
+	  CUDA_CALLABLE_MEMBER void adamax::moment_update(precision_type & beta_1_t, const precision_type & beta_1)
+	  {	beta_1_t *= beta_1; }
+
+  	template <class precision_type>
+ 	  CUDA_CALLABLE_MEMBER void adam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & beta_2_t, 
+											 const precision_type & eta, const precision_type & beta_1,
+										     const precision_type & beta_2, const precision_type & epsilon
+                                            )
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		precision_type bias_corrected_mean{ prior_mean / (precision_type{1} - beta_1_t) };
+		precision_type bias_corrected_variace{ prior_variance / (precision_type{1} - beta_2_t) };
+		theta -= eta * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
+	  }
+	template <class precision_type>
+	  CUDA_CALLABLE_MEMBER void adam::moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2)
+	  {
+		beta_1_t *= beta_1;
+		beta_2_t *= beta_2;
+	  }
+
+	  template <class precision_type>
+	 	CUDA_CALLABLE_MEMBER void amsgrad::update(precision_type & theta, 
+												  precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
+												  const precision_type & current_gradient, const precision_type & eta, 
+												  const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+										         )
+		{
+	  	  prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		  prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		  // max(prior_variance > prior_bias_corrected_variance)
+		  prior_bias_corrected_variance = (prior_variance > prior_bias_corrected_variance) ? prior_variance : prior_bias_corrected_variance;
+		  theta -= eta * ( prior_mean ) / ( sqrt( prior_bias_corrected_variance) + epsilon ) ;
+		 }
+	  
+	// nadam 
+	template <class precision_type>	 
+	  CUDA_CALLABLE_MEMBER void nadam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+											  const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, const precision_type & beta_2, 
+											  const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+											 )
+	  {
+		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
+		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		precision_type prior_bias_corrected_mean{prior_mean / (precision_type{1} - beta_1_t )};
+		precision_type prior_bias_corrected_variance{prior_variance / (precision_type{1} - beta_2_t)};
+		theta -= eta / ( sqrt(prior_bias_corrected_variance) + epsilon ) * (beta_1 * prior_bias_corrected_mean + (precision_type{1} - beta_1) / (precision_type{1} - beta_1_t) * current_gradient  );
+	  }
+	template <class precision_type>
+	  CUDA_CALLABLE_MEMBER void nadam::moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2)
+	  {
+		beta_1_t *= beta_1;
+		beta_2_t *= beta_2;
+	  }
+
+
+
+
+
 	// This overload is for SGD
 	template <class precision_type>
 	  CUDA_CALLABLE_MEMBER void optimizer::operator()(SGD && s, 
@@ -29,11 +339,6 @@ namespace zinhart
 		  results.push_back(pool.add_task(thread_launch, theta, gradient, eta, thread, pool.size(), theta_length));
 
 	  }
-	/*
-	 *  This overload is shared by momentum, nesterov momentum, and adagrad
-	 *  for momentum and nesterov-momentum free_1 = prior_velocity, free_2 = gamma, free_3 = eta
-	 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
-	 *  */
 	template <class precision_type>
 	  CUDA_CALLABLE_MEMBER void optimizer::operator()(MOMENTUM && m,
 													  precision_type * theta, std::uint32_t theta_length, precision_type * prior_velocity, 
@@ -336,11 +641,6 @@ namespace zinhart
 	  CUDA_CALLABLE_MEMBER void optimizer_interface<OPTIMIZER>::operator()(precision_type & theta, const precision_type & gradient, const precision_type & eta)
 	  { static_cast<OPTIMIZER*>(this)->update(theta, gradient, eta); }
 	
-	/*
-	 *  This overload is shared by momentum, nesterov momentum, and adagrad
-	 *  for momentum and nesterove momentom free_2 = gamma, free_3 = eta
-	 *  for adagrad free_2 = eta, free_3 = epsilon
-	 *  */
 	template <class OPTIMIZER>
   	  template <class precision_type>
 	  CUDA_CALLABLE_MEMBER void optimizer_interface<OPTIMIZER>::operator()(precision_type & theta, precision_type & free_1, const precision_type & current_gradient, const precision_type & free_2, const precision_type & free_3)
@@ -421,170 +721,6 @@ namespace zinhart
 																			 const precision_type & epsilon
 																			)
 		{ static_cast<OPTIMIZER*>(this)->update(theta, prior_mean, prior_variance, current_gradient, eta, gamma, beta_1, beta_2, beta_1_t, beta_2_t, epsilon); };	
-
-	// Stochastic gradient descent
-	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void stochastic_gradient_descent::update(precision_type & theta, const precision_type & gradient, const precision_type & eta)
-		{ theta -=  ( eta * gradient ); }
-    
-	// Momentum
-	  template <class precision_type>
-		 CUDA_CALLABLE_MEMBER void momentum::update(precision_type & theta, precision_type & prior_velocity,
-												   	const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
-												   )
-		 {
-   		   precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
-   		   theta -= current_velocity;
-   		   prior_velocity = current_velocity;
-   		 }
-
-	// Nesterov momentum
-  	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void nesterov_momentum::update(precision_type & theta, precision_type & prior_velocity, 
-														    const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
-														   )
-		{
-		  precision_type velocity { gamma * prior_velocity + eta * current_gradient * (  theta - gamma * prior_velocity) };
-		  theta -= velocity;
-		  prior_velocity = velocity;
-		}
-
-	
-  	// adagrad	
-  	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void adagrad::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon)
-		{
-		  prior_gradient += current_gradient * current_gradient;
-		  theta -= eta * current_gradient / sqrt(prior_gradient + epsilon);
-		}
-	  
-
-	  // conjugate gradient descent
-	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void conjugate_gradient_descent::update(precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
-																	 const precision_type & current_gradient, const precision_type & epsilon
-																	)
-	  {
-		precision_type gamma { ( current_gradient - prior_gradient ) * current_gradient / ( prior_gradient * prior_gradient + epsilon ) };
-		precision_type step { current_gradient + ( gamma * hessian ) };
-		theta += step;
-		prior_gradient = current_gradient;
-		hessian = step;
-	  }
-	  // adadelta	
-	  template <class precision_type>	 
-		CUDA_CALLABLE_MEMBER void adadelta::update(precision_type & theta,  precision_type & prior_gradient, precision_type & prior_delta,
-									               const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
-												  )
-		{
-		  prior_gradient = gamma * prior_gradient + (precision_type{1.0} - gamma) * current_gradient * current_gradient;
-		  precision_type delta { -(sqrt(prior_delta * prior_delta + epsilon) / sqrt(prior_gradient * prior_gradient + epsilon)) * current_gradient };
-		  theta += delta;
-		  prior_delta = gamma * prior_delta + (precision_type{1.0} - gamma) * delta * delta;
-		}
-		
-	 // rms_prop
-	  template <class precision_type>
-		CUDA_CALLABLE_MEMBER void rms_prop::update(precision_type & theta, precision_type & prior_gradient, const precision_type & current_gradient,  
-												   const precision_type & eta, const precision_type & gamma, const precision_type & epsilon
-												  )
-		{
-		  prior_gradient = gamma * prior_gradient * prior_gradient + (precision_type{1} - gamma) * current_gradient * current_gradient;
-		  theta -= eta * current_gradient / sqrt(prior_gradient * prior_gradient + epsilon);
-		}
-
-	//rprop
-	template <class precision_type>
-	 CUDA_CALLABLE_MEMBER void resilient_propagation::update(precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
-															 const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
-															 const precision_type & delta_max, const precision_type & delta_min
-															)
-	 {
-	   if(current_gradient * prior_gradient > 0) // if the sign of the gradient has stayed positive
-	   {
-		 current_delta = ( current_delta * eta_pos < delta_max) ? current_delta * eta_pos : delta_max;
-		 theta += -current_gradient * current_delta;
-		 prior_gradient = current_gradient; 
-	   }
-	   else if(current_gradient * prior_gradient < 0)// if the sign of the gradient has stayed negative
-	   {
-		 current_delta = ( current_delta * eta_neg > delta_min) ? current_delta * eta_neg : delta_min;
-		 prior_gradient = 0;
-	   } 
-	   else// if either the prior or current gradient is 0, because of a negative gradient
-	   {
-		 theta += -current_gradient * current_delta;
-		 prior_gradient = current_gradient; 
-	   }
-	 }
-
-	// adamax, the max operation is w.r.t the infinity norm
-  	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER void adamax::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
-											   const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
-											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-									          )
-	  {
-		prior_mean = beta_1 * prior_mean + (precision_type{1.0} - beta_1) * current_gradient; 
-		prior_variance = (beta_2 * prior_variance > fabs(current_gradient)) ? beta_2 * prior_variance : fabs(current_gradient);
-		theta -= (eta / (precision_type{1.0} - beta_1_t) ) * (prior_mean / (prior_variance + epsilon)); 
-	  }
-	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER void adamax::moment_update(precision_type & beta_1_t, const precision_type & beta_1)
-	  {	beta_1_t *= beta_1; }
-
-  	template <class precision_type>
- 	  CUDA_CALLABLE_MEMBER void adam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
-											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & beta_2_t, 
-											 const precision_type & eta, const precision_type & beta_1,
-										     const precision_type & beta_2, const precision_type & epsilon
-                                            )
-	  {
-		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
-		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
-		precision_type bias_corrected_mean{ prior_mean / (precision_type{1} - beta_1_t) };
-		precision_type bias_corrected_variace{ prior_variance / (precision_type{1} - beta_2_t) };
-		theta -= eta * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
-	  }
-	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER void adam::moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2)
-	  {
-		beta_1_t *= beta_1;
-		beta_2_t *= beta_2;
-	  }
-
-	  template <class precision_type>
-	 	CUDA_CALLABLE_MEMBER void amsgrad::update(precision_type & theta, 
-												  precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
-												  const precision_type & current_gradient, const precision_type & eta, 
-												  const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-										         )
-		{
-	  	  prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
-		  prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
-		  // max(prior_variance > prior_bias_corrected_variance)
-		  prior_bias_corrected_variance = (prior_variance > prior_bias_corrected_variance) ? prior_variance : prior_bias_corrected_variance;
-		  theta -= eta * ( prior_mean ) / ( sqrt( prior_bias_corrected_variance) + epsilon ) ;
-		 }
-	  
-	// nadam 
-	template <class precision_type>	 
-	  CUDA_CALLABLE_MEMBER void nadam::update(precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-											  const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, const precision_type & beta_2, 
-											  const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
-											 )
-	  {
-		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
-		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
-		precision_type prior_bias_corrected_mean{prior_mean / (precision_type{1} - beta_1_t )};
-		precision_type prior_bias_corrected_variance{prior_variance / (precision_type{1} - beta_2_t)};
-		theta -= eta / ( sqrt(prior_bias_corrected_variance) + epsilon ) * (beta_1 * prior_bias_corrected_mean + (precision_type{1} - beta_1) / (precision_type{1} - beta_1_t) * current_gradient  );
-	  }
-	template <class precision_type>
-	  CUDA_CALLABLE_MEMBER void nadam::moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2)
-	  {
-		beta_1_t *= beta_1;
-		beta_2_t *= beta_2;
-	  }
+	*/
   }// END NAMESPACE OPTIMIZERS
 }// END NAMESPACE ZINHART

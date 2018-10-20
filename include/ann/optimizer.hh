@@ -91,6 +91,167 @@ namespace zinhart
 										   );
 	
 	  };
+
+	template <class precision_type>
+	  class optimizer
+	  {
+		optimizer() = default;
+		optimizer(const optimizer&) = default;
+		optimizer(optimizer &&) = default;
+		optimizer & operator = (const optimizer&) = default;
+		optimizer & operator = (optimizer &&) = default;
+		~optimizer() = default;
+		virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
+	  };
+
+	template <class precision_type>
+  	  class sgd : public optimizer<precision_type>
+	  {
+		sgd() = default;
+		sgd(const sgd&) = default;
+		sgd(sgd &&) = default;
+	    sgd & operator = (const sgd&) = default;
+		sgd & operator = (sgd &&) = default;
+		~sgd() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+
+	template <class precision_type>
+  	  class momentum : public optimizer<precision_type>
+	  {
+		momentum() = default;
+		momentum(const momentum&) = default;
+		momentum(momentum &&) = default;
+	    momentum & operator = (const momentum&) = default;
+		momentum & operator = (momentum &&) = default;
+		~momentum() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class nesterov_momentum : public optimizer<precision_type>
+	  {
+		nesterov_momentum() = default;
+		nesterov_momentum(const nesterov_momentum&) = default;
+		nesterov_momentum(nesterov_momentum &&) = default;
+	    nesterov_momentum & operator = (const nesterov_momentum&) = default;
+		nesterov_momentum & operator = (nesterov_momentum &&) = default;
+		~nesterov_momentum() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class adagrad : public optimizer<precision_type>
+	  {
+		adagrad() = default;
+		adagrad(const adagrad&) = default;
+		adagrad(adagrad &&) = default;
+	    adagrad & operator = (const adagrad&) = default;
+		adagrad & operator = (adagrad &&) = default;
+		~adagrad() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+
+	template <class precision_type>
+  	  class conjugate_gradient : public optimizer<precision_type>
+	  {
+		conjugate_gradient() = default;
+		conjugate_gradient(const conjugate_gradient&) = default;
+		conjugate_gradient(conjugate_gradient &&) = default;
+	    conjugate_gradient & operator = (const conjugate_gradient&) = default;
+		conjugate_gradient & operator = (conjugate_gradient &&) = default;
+		~conjugate_gradient() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class adadelta : public optimizer<precision_type>
+	  {
+		adadelta() = default;
+		adadelta(const adadelta&) = default;
+		adadelta(adadelta &&) = default;
+	    adadelta & operator = (const adadelta&) = default;
+		adadelta & operator = (adadelta &&) = default;
+		~adadelta() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class rms_prop : public optimizer<precision_type>
+	  {
+		rms_prop() = default;
+		rms_prop(const rms_prop&) = default;
+		rms_prop(rms_prop &&) = default;
+	    rms_prop & operator = (const rms_prop&) = default;
+		rms_prop & operator = (rms_prop &&) = default;
+		~rms_prop() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class rprop : public optimizer<precision_type>
+	  {
+		rprop() = default;
+		rprop(const rprop&) = default;
+		rprop(rprop &&) = default;
+	    rprop & operator = (const rprop&) = default;
+		rprop & operator = (rprop &&) = default;
+		~rprop() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class adamax : public optimizer<precision_type>
+	  {
+		adamax() = default;
+		adamax(const adamax&) = default;
+		adamax(adamax &&) = default;
+	    adamax & operator = (const adamax&) = default;
+		adamax & operator = (adamax &&) = default;
+		~adamax() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+
+	template <class precision_type>
+  	  class amsgrad : public optimizer<precision_type>
+	  {
+		amsgrad() = default;
+		amsgrad(const amsgrad&) = default;
+		amsgrad(amsgrad &&) = default;
+	    amsgrad & operator = (const amsgrad&) = default;
+		amsgrad & operator = (amsgrad &&) = default;
+		~amsgrad() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+	template <class precision_type>
+  	  class adam : public optimizer<precision_type>
+	  {
+		adam() = default;
+		adam(const adam&) = default;
+		adam(adam &&) = default;
+	    adam & operator = (const adam&) = default;
+		adam & operator = (adam &&) = default;
+		~adam() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+
+
+	template <class precision_type>
+  	  class nadam : public optimizer<precision_type>
+	  {
+		nadam() = default;
+		nadam(const nadam&) = default;
+		nadam(nadam &&) = default;
+	    nadam & operator = (const nadam&) = default;
+		nadam & operator = (nadam &&) = default;
+		~nadam() = default;
+		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+	  };
+	/*
 	// all the optimizers
 	typedef std::integral_constant<std::uint32_t, 0> SGD;
 	typedef std::integral_constant<std::uint32_t, 1> MOMENTUM;
@@ -126,11 +287,6 @@ namespace zinhart
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  );
 
-		/*
-		 *  This overload is shared by momentum, nesterov momentum, and adagrad
-		 *  for momentum and nesterov-momentum free_1 = prior_velocity, free_2 = gamma, free_3 = eta
-		 *  for adagrad free_1 = prior_gradient free_2 = eta, free_3 = epsilon
-		 *  */
 		template <class precision_type>
 		  CUDA_CALLABLE_MEMBER void operator()(MOMENTUM &&, 
 											   precision_type * theta, std::uint32_t theta_length, precision_type * prior_velocity, 
@@ -241,7 +397,7 @@ namespace zinhart
 											   const precision_type & beta_2 = 0.9, const precision_type & epsilon= 1.e-8,
 											   zinhart::parallel::thread_pool & pool = zinhart::parallel::default_thread_pool::get_default_thread_pool()
 											  ); 
-	/*	*/
+	
 	};
 	template <class OPTIMIZER>
 	  class optimizer_interface : public optimizer
@@ -259,11 +415,6 @@ namespace zinhart
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, const precision_type & gradient, const precision_type & eta);
 	      
-		  /*
-		   *  This overload is shared by momentum, nesterov momentum, and adagrad 
-		   *  for momentum and nesterov momentom free_2 = gamma, free_3 = eta
-		   *  for adagrad free_2 = eta, free_3 = epsilon
-		   *  */
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER void operator()(precision_type & theta, precision_type & free_1, 
 												 const precision_type & current_gradient, const precision_type & free_2, const precision_type & free_3
@@ -320,7 +471,7 @@ namespace zinhart
 												 const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
 												 const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 				                                ); 
-  /**/
+  
 	  };
 
 	  class stochastic_gradient_descent : public optimizer_interface<stochastic_gradient_descent>
@@ -522,7 +673,9 @@ namespace zinhart
 		  template <class precision_type>
 			CUDA_CALLABLE_MEMBER static void moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2);
 	  };
+	  */
   }// END NAMESPACE OPTIMIZERS
+  
 /*
 HOST void call_sgd(optimizer & op, double & theta, const double & gradient, double eta = 0.9);
 HOST void call_momentum(optimizer & op, double & theta, double & prior_velocity, const double & gradient, double gamma = 0.9, double eta = 0.1);
