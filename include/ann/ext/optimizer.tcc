@@ -147,7 +147,20 @@ namespace zinhart
 	template <class precision_type>
 	  HOST void sgd<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		  std::uint32_t start{0}, stop{0};
+		  zinhart::serial::map(thread_id, n_threads, length, start, stop);
+		  for(std::uint32_t op{start}; op < stop; ++op)
+		  {
+		  }
 	  }
+
+	template <class precision_type>
+  	  HOST void sgd<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t sgd<precision_type>::get_size()const
+	  { return size; }
 
 	template <class precision_type>
 	  HOST void momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
@@ -155,9 +168,26 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+  	  HOST void momentum<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t momentum<precision_type>::get_size()const
+	  { return size; }
+
+
+	template <class precision_type>
 	  HOST void nesterov_momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
+
+	template <class precision_type>
+  	  HOST void nesterov_momentum<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t nesterov_momentum<precision_type>::get_size()const
+	  { return size; }
 
 
 	template <class precision_type>
@@ -166,9 +196,25 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+  	  HOST void adagrad<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t adagrad<precision_type>::get_size()const
+	  { return size; }
+
+	template <class precision_type>
 	  HOST void conjugate_gradient<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
+
+	template <class precision_type>
+  	  HOST void conjugate_gradient<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t conjugate_gradient<precision_type>::get_size()const
+	  { return size; }
 
 	template <class precision_type>
 	  HOST void adadelta<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
@@ -176,9 +222,25 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+  	  HOST void adadelta<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t adadelta<precision_type>::get_size()const
+	  { return size; }
+
+	template <class precision_type>
 	  HOST void rms_prop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
+
+	template <class precision_type>
+  	  HOST void rms_prop<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t rms_prop<precision_type>::get_size()const
+	  { return size; }
 
 	template <class precision_type>
 	  HOST void rprop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
@@ -186,9 +248,25 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+  	  HOST void rprop<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t rprop<precision_type>::get_size()const
+	  { return size; }
+
+	template <class precision_type>
 	  HOST void adamax<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
+
+	template <class precision_type>
+  	  HOST void adamax<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t adamax<precision_type>::get_size()const
+	  { return size; }
 
 	template <class precision_type>
 	  HOST void amsgrad<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
@@ -196,14 +274,38 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+  	  HOST void amsgrad<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t amsgrad<precision_type>::get_size()const
+	  { return size; }
+
+	template <class precision_type>
 	  HOST void adam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
+  	  HOST void adam<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t adam<precision_type>::get_size()const
+	  { return size; }
+
+	template <class precision_type>
 	  HOST void nadam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
+
+	template <class precision_type>
+  	  HOST void nadam<precision_type>::set_size(const std::uint32_t & size)
+	  { this->size = size; }
+	
+	template <class precision_type>
+	  HOST std::uint32_t nadam<precision_type>::get_size()const
+	  { return size; }
 	/*
 	
 	// Stochastic gradient descent

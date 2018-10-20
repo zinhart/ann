@@ -95,162 +95,235 @@ namespace zinhart
 	template <class precision_type>
 	  class optimizer
 	  {
-/*		optimizer() = default;
-		optimizer(const optimizer&) = default;
-		optimizer(optimizer &&) = default;
-		optimizer & operator = (const optimizer&) = default;
-		optimizer & operator = (optimizer &&) = default;
-		~optimizer() = default;
-*/
-		virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
+		protected:
+		  optimum<precision_type> op;
+		  std::uint32_t size;
+		public:
+  		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
+		  HOST virtual void set_size(const std::uint32_t & size) = 0;
+		  HOST virtual std::uint32_t get_size()const = 0;
 	  };
 
 	template <class precision_type>
   	  class sgd : public optimizer<precision_type>
 	  {
-		sgd() = default;
-		sgd(const sgd&) = default;
-		sgd(sgd &&) = default;
-	    sgd & operator = (const sgd&) = default;
-		sgd & operator = (sgd &&) = default;
-		~sgd() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  sgd() = default;
+		  sgd(const sgd&) = default;
+		  sgd(sgd &&) = default;
+		  sgd & operator = (const sgd&) = default;
+		  sgd & operator = (sgd &&) = default;
+		  ~sgd() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
 	template <class precision_type>
   	  class momentum : public optimizer<precision_type>
 	  {
-		momentum() = default;
-		momentum(const momentum&) = default;
-		momentum(momentum &&) = default;
-	    momentum & operator = (const momentum&) = default;
-		momentum & operator = (momentum &&) = default;
-		~momentum() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  momentum() = default;
+		  momentum(const momentum&) = default;
+		  momentum(momentum &&) = default;
+		  momentum & operator = (const momentum&) = default;
+		  momentum & operator = (momentum &&) = default;
+		  ~momentum() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class nesterov_momentum : public optimizer<precision_type>
 	  {
-		nesterov_momentum() = default;
-		nesterov_momentum(const nesterov_momentum&) = default;
-		nesterov_momentum(nesterov_momentum &&) = default;
-	    nesterov_momentum & operator = (const nesterov_momentum&) = default;
-		nesterov_momentum & operator = (nesterov_momentum &&) = default;
-		~nesterov_momentum() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  nesterov_momentum() = default;
+		  nesterov_momentum(const nesterov_momentum&) = default;
+		  nesterov_momentum(nesterov_momentum &&) = default;
+		  nesterov_momentum & operator = (const nesterov_momentum&) = default;
+		  nesterov_momentum & operator = (nesterov_momentum &&) = default;
+		  ~nesterov_momentum() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+ 		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class adagrad : public optimizer<precision_type>
 	  {
-		adagrad() = default;
-		adagrad(const adagrad&) = default;
-		adagrad(adagrad &&) = default;
-	    adagrad & operator = (const adagrad&) = default;
-		adagrad & operator = (adagrad &&) = default;
-		~adagrad() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  adagrad() = default;
+		  adagrad(const adagrad&) = default;
+		  adagrad(adagrad &&) = default;
+		  adagrad & operator = (const adagrad&) = default;
+		  adagrad & operator = (adagrad &&) = default;
+		  ~adagrad() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+ 		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
 	template <class precision_type>
   	  class conjugate_gradient : public optimizer<precision_type>
 	  {
-		conjugate_gradient() = default;
-		conjugate_gradient(const conjugate_gradient&) = default;
-		conjugate_gradient(conjugate_gradient &&) = default;
-	    conjugate_gradient & operator = (const conjugate_gradient&) = default;
-		conjugate_gradient & operator = (conjugate_gradient &&) = default;
-		~conjugate_gradient() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  conjugate_gradient() = default;
+		  conjugate_gradient(const conjugate_gradient&) = default;
+		  conjugate_gradient(conjugate_gradient &&) = default;
+		  conjugate_gradient & operator = (const conjugate_gradient&) = default;
+		  conjugate_gradient & operator = (conjugate_gradient &&) = default;
+		  ~conjugate_gradient() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class adadelta : public optimizer<precision_type>
 	  {
-		adadelta() = default;
-		adadelta(const adadelta&) = default;
-		adadelta(adadelta &&) = default;
-	    adadelta & operator = (const adadelta&) = default;
-		adadelta & operator = (adadelta &&) = default;
-		~adadelta() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  adadelta() = default;
+		  adadelta(const adadelta&) = default;
+		  adadelta(adadelta &&) = default;
+		  adadelta & operator = (const adadelta&) = default;
+		  adadelta & operator = (adadelta &&) = default;
+		  ~adadelta() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class rms_prop : public optimizer<precision_type>
 	  {
-		rms_prop() = default;
-		rms_prop(const rms_prop&) = default;
-		rms_prop(rms_prop &&) = default;
-	    rms_prop & operator = (const rms_prop&) = default;
-		rms_prop & operator = (rms_prop &&) = default;
-		~rms_prop() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  rms_prop() = default;
+		  rms_prop(const rms_prop&) = default;
+		  rms_prop(rms_prop &&) = default;
+		  rms_prop & operator = (const rms_prop&) = default;
+		  rms_prop & operator = (rms_prop &&) = default;
+		  ~rms_prop() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class rprop : public optimizer<precision_type>
 	  {
-		rprop() = default;
-		rprop(const rprop&) = default;
-		rprop(rprop &&) = default;
-	    rprop & operator = (const rprop&) = default;
-		rprop & operator = (rprop &&) = default;
-		~rprop() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  rprop() = default;
+		  rprop(const rprop&) = default;
+		  rprop(rprop &&) = default;
+		  rprop & operator = (const rprop&) = default;
+		  rprop & operator = (rprop &&) = default;
+		  ~rprop() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class adamax : public optimizer<precision_type>
 	  {
-		adamax() = default;
-		adamax(const adamax&) = default;
-		adamax(adamax &&) = default;
-	    adamax & operator = (const adamax&) = default;
-		adamax & operator = (adamax &&) = default;
-		~adamax() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  adamax() = default;
+		  adamax(const adamax&) = default;
+		  adamax(adamax &&) = default;
+		  adamax & operator = (const adamax&) = default;
+		  adamax & operator = (adamax &&) = default;
+		  ~adamax() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
 	template <class precision_type>
   	  class amsgrad : public optimizer<precision_type>
 	  {
-		amsgrad() = default;
-		amsgrad(const amsgrad&) = default;
-		amsgrad(amsgrad &&) = default;
-	    amsgrad & operator = (const amsgrad&) = default;
-		amsgrad & operator = (amsgrad &&) = default;
-		~amsgrad() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  amsgrad() = default;
+		  amsgrad(const amsgrad&) = default;
+		  amsgrad(amsgrad &&) = default;
+		  amsgrad & operator = (const amsgrad&) = default;
+		  amsgrad & operator = (amsgrad &&) = default;
+		  ~amsgrad() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
   	  class adam : public optimizer<precision_type>
 	  {
-		adam() = default;
-		adam(const adam&) = default;
-		adam(adam &&) = default;
-	    adam & operator = (const adam&) = default;
-		adam & operator = (adam &&) = default;
-		~adam() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  adam() = default;
+		  adam(const adam&) = default;
+		  adam(adam &&) = default;
+		  adam & operator = (const adam&) = default;
+		  adam & operator = (adam &&) = default;
+		  ~adam() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
 	template <class precision_type>
   	  class nadam : public optimizer<precision_type>
 	  {
-		nadam() = default;
-		nadam(const nadam&) = default;
-		nadam(nadam &&) = default;
-	    nadam & operator = (const nadam&) = default;
-		nadam & operator = (nadam &&) = default;
-		~nadam() = default;
-		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		private:
+		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::size;
+		public:
+		  nadam() = default;
+		  nadam(const nadam&) = default;
+		  nadam(nadam &&) = default;
+		  nadam & operator = (const nadam&) = default;
+		  nadam & operator = (nadam &&) = default;
+		  ~nadam() = default;
+		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void set_size(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size()const override;
 	  };
 	/*
 	// all the optimizers
