@@ -11,7 +11,7 @@ namespace zinhart
 {
   namespace optimizers
   {
-	namespace optimum_attributes
+	namespace optimizer_attributes
 	{
 	  enum sgd_optimizer                         : std::uint32_t;
 	  enum momentum_optimizer                    : std::uint32_t;
@@ -50,42 +50,42 @@ namespace zinhart
 		optimum & operator = (const optimum&) = default;
 		optimum & operator = (optimum &&) = default;
 		~optimum() = default;
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta);
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta);
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta);
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta);
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
 											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
 										   );
-	   	CUDA_CALLABLE_MEMBER void update(optimum_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
+	   	CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
 											const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
 										   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
 											const precision_type & current_gradient, const precision_type & epsilon
 										   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
 												 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
         
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
 											const precision_type & current_gradient,  const precision_type & eta, 
 											const precision_type & beta, const precision_type & epsilon
 										   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
 											const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
 											const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
 										   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
 											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
 											 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 										    );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
 											precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
 											const precision_type & current_gradient, const precision_type & eta, 
 											const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 			                  			   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 											const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
 											const precision_type & beta_2, const precision_type & epsilon
 										   );
-		CUDA_CALLABLE_MEMBER void update(optimum_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 											const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
 											const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 										   );
@@ -96,7 +96,7 @@ namespace zinhart
 	  class optimizer
 	  {
 		protected:
-		  optimum<precision_type> op;
+		  optimum<precision_type> opt;
 		  std::uint32_t size;
 		public:
   		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
@@ -108,7 +108,7 @@ namespace zinhart
   	  class sgd : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  sgd() = default;
@@ -120,6 +120,7 @@ namespace zinhart
 		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
+		  precision_type eta{0.1};
 	  };
 
 
@@ -128,7 +129,7 @@ namespace zinhart
 	  {
 
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  momentum() = default;
@@ -146,7 +147,7 @@ namespace zinhart
   	  class nesterov_momentum : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  nesterov_momentum() = default;
@@ -164,7 +165,7 @@ namespace zinhart
   	  class adagrad : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  adagrad() = default;
@@ -183,7 +184,7 @@ namespace zinhart
   	  class conjugate_gradient : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  conjugate_gradient() = default;
@@ -201,7 +202,7 @@ namespace zinhart
   	  class adadelta : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  adadelta() = default;
@@ -219,7 +220,7 @@ namespace zinhart
   	  class rms_prop : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  rms_prop() = default;
@@ -237,7 +238,7 @@ namespace zinhart
   	  class rprop : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  rprop() = default;
@@ -255,7 +256,7 @@ namespace zinhart
   	  class adamax : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  adamax() = default;
@@ -274,7 +275,7 @@ namespace zinhart
   	  class amsgrad : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  amsgrad() = default;
@@ -293,7 +294,7 @@ namespace zinhart
 	  {
 		
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  adam() = default;
@@ -312,7 +313,7 @@ namespace zinhart
   	  class nadam : public optimizer<precision_type>
 	  {
 		private:
-		  using optimizer<precision_type>::op; 
+		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		public:
 		  nadam() = default;

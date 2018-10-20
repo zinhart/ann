@@ -5,11 +5,11 @@ namespace zinhart
   {
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta)
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta)
 	  { theta -=  ( eta * gradient ); }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta)
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta)
 	  {
  		precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
 		theta -= current_velocity;
@@ -17,7 +17,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
 										const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
 									   )
 	  {
@@ -27,7 +27,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void update(optimum_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
+  	  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
 										const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
 									   )
 	  {
@@ -36,7 +36,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
 										const precision_type & current_gradient, const precision_type & epsilon
 									   )
 	  {
@@ -48,7 +48,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
 											 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon)
 	  {
 		prior_gradient = gamma * prior_gradient + (precision_type{1.0} - gamma) * current_gradient * current_gradient;
@@ -58,7 +58,7 @@ namespace zinhart
 	  }
 	
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
 										const precision_type & current_gradient,  const precision_type & eta, 
 										const precision_type & beta, const precision_type & epsilon
 									   )
@@ -68,7 +68,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
 										const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
 										const precision_type & delta_max, const precision_type & delta_min
 									   )
@@ -92,7 +92,7 @@ namespace zinhart
 	  }
 	// adamax, the max operation is w.r.t the infinity norm
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
 										 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
 										 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 										)
@@ -103,7 +103,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
 										precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
 										const precision_type & current_gradient, const precision_type & eta, 
 										const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
@@ -117,7 +117,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 										const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
 										const precision_type & beta_2, const precision_type & epsilon
 									   )
@@ -130,7 +130,7 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimum_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
 										const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
 										const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
 									   )
@@ -150,8 +150,7 @@ namespace zinhart
 		  std::uint32_t start{0}, stop{0};
 		  zinhart::serial::map(thread_id, n_threads, length, start, stop);
 		  for(std::uint32_t op{start}; op < stop; ++op)
-		  {
-		  }
+			opt.update(optimizer_attributes::sgd_optimizer(), *(theta + op), *(gradient + op), eta );
 	  }
 
 	template <class precision_type>
