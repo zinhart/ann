@@ -95,12 +95,13 @@ namespace zinhart
 	template <class precision_type>
 	  class optimizer
 	  {
-		optimizer() = default;
+/*		optimizer() = default;
 		optimizer(const optimizer&) = default;
 		optimizer(optimizer &&) = default;
 		optimizer & operator = (const optimizer&) = default;
 		optimizer & operator = (optimizer &&) = default;
 		~optimizer() = default;
+*/
 		virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
 	  };
 
@@ -113,7 +114,7 @@ namespace zinhart
 	    sgd & operator = (const sgd&) = default;
 		sgd & operator = (sgd &&) = default;
 		~sgd() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 
@@ -126,7 +127,7 @@ namespace zinhart
 	    momentum & operator = (const momentum&) = default;
 		momentum & operator = (momentum &&) = default;
 		~momentum() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -138,7 +139,7 @@ namespace zinhart
 	    nesterov_momentum & operator = (const nesterov_momentum&) = default;
 		nesterov_momentum & operator = (nesterov_momentum &&) = default;
 		~nesterov_momentum() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -150,7 +151,7 @@ namespace zinhart
 	    adagrad & operator = (const adagrad&) = default;
 		adagrad & operator = (adagrad &&) = default;
 		~adagrad() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 
@@ -163,7 +164,7 @@ namespace zinhart
 	    conjugate_gradient & operator = (const conjugate_gradient&) = default;
 		conjugate_gradient & operator = (conjugate_gradient &&) = default;
 		~conjugate_gradient() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -175,7 +176,7 @@ namespace zinhart
 	    adadelta & operator = (const adadelta&) = default;
 		adadelta & operator = (adadelta &&) = default;
 		~adadelta() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -187,7 +188,7 @@ namespace zinhart
 	    rms_prop & operator = (const rms_prop&) = default;
 		rms_prop & operator = (rms_prop &&) = default;
 		~rms_prop() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -199,7 +200,7 @@ namespace zinhart
 	    rprop & operator = (const rprop&) = default;
 		rprop & operator = (rprop &&) = default;
 		~rprop() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -211,7 +212,7 @@ namespace zinhart
 	    adamax & operator = (const adamax&) = default;
 		adamax & operator = (adamax &&) = default;
 		~adamax() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 
@@ -224,7 +225,7 @@ namespace zinhart
 	    amsgrad & operator = (const amsgrad&) = default;
 		amsgrad & operator = (amsgrad &&) = default;
 		~amsgrad() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 	template <class precision_type>
@@ -236,7 +237,7 @@ namespace zinhart
 	    adam & operator = (const adam&) = default;
 		adam & operator = (adam &&) = default;
 		~adam() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 
 
@@ -249,7 +250,7 @@ namespace zinhart
 	    nadam & operator = (const nadam&) = default;
 		nadam & operator = (nadam &&) = default;
 		~nadam() = default;
-		virtual void update(precision_type * theta, precision_type * gradient, std::uint32_t length);
+		HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 	  };
 	/*
 	// all the optimizers
