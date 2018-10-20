@@ -145,63 +145,63 @@ namespace zinhart
 
 
 	template <class precision_type>
-	  HOST void sgd<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void sgd<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void nesterov_momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void nesterov_momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 
 	template <class precision_type>
-	  HOST void adagrad<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void adagrad<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void conjugate_gradient<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void conjugate_gradient<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void adadelta<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void adadelta<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void rms_prop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void rms_prop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void rprop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void rprop<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void adamax<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void adamax<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void amsgrad<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void amsgrad<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void adam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void adam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 
 	template <class precision_type>
-	  HOST void nadam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
+	  HOST void nadam<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 	  }
 	/*
