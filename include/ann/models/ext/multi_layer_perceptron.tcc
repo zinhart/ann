@@ -1,5 +1,5 @@
 #include "mkl.h"
-#include "concurrent_routines/concurrent_routines.hh"
+#include "multi_core/multi_core.hh"
 #include "cassert"
 namespace zinhart
 {

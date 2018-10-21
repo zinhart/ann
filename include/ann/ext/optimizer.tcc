@@ -148,7 +148,7 @@ namespace zinhart
 	  HOST void sgd<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
 		  std::uint32_t start{0}, stop{0};
-		  zinhart::serial::map(thread_id, n_threads, length, start, stop);
+		  zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
 		  for(std::uint32_t op{start}; op < stop; ++op)
 			opt.update(optimizer_attributes::sgd_optimizer(), *(theta + op), *(gradient + op), eta );
 	  }

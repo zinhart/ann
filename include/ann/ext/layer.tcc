@@ -1,4 +1,4 @@
-#include <concurrent_routines/serial/serial.hh>
+#include <multi_core/serial/serial.hh>
 #if CUDA_ENABLED == 1 
 #else
 #include <algorithm>

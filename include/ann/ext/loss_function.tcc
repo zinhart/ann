@@ -1,4 +1,4 @@
-#include <concurrent_routines/concurrent_routines.hh>
+#include <multi_core/multi_core.hh>
 namespace zinhart
 {
   namespace loss_functions

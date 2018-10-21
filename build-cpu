@@ -39,14 +39,14 @@ if [[ "$#" == "2" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DMultiCoreUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	printf "Finished make\n"
   elif [[ "$2" == "--st" || "$2" == "--static" ]]
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DConcurrentRoutinesUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DMultiCoreUseCodeCoverage=OFF -DAnnUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	printf "Finished make\n"
   else
@@ -59,7 +59,7 @@ if [[ "$#" == "3" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=ON -DMultiCoreUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	make -j $MAX_THREADS ann_coverage
 	# strip extraneous files
@@ -69,7 +69,7 @@ if [[ "$#" == "3" && ("$1" == "--bd" || "$1" == "--build-debug") ]] ; then
   then
     mkdir -p ${DEBUG_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=DEBUG -DBuildCuda=OFF -DBuildShared=OFF -DMultiCoreUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	make -j $MAX_THREADS ann_coverage
 	# strip extraneous files
@@ -86,14 +86,14 @@ if [[ "$#" == "2" && ("$1" == "--br" || "$1" == "--build-release") ]] ; then
   then
     mkdir -p ${RELEASE_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=ON -DAnnUseCodeCoverage -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=ON -DAnnUseCodeCoverage -DMultiCoreUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	printf "Finished make\n"
   elif [[ "$2" == "--st" || "$2" == "--static" ]]
   then
     mkdir -p ${RELEASE_FOLDER} && cd $_
     printf "Proceding with cmake in debug mode\n"
-	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=OFF -DAnnUseCodeCoverage -DConcurrentRoutinesUseCodeCoverage=OFF ..
+	cmake -DCMAKE_BUILD_TYPE=RELEASE -DBuildCuda=OFF -DBuildShared=OFF -DAnnUseCodeCoverage -DMultiCoreUseCodeCoverage=OFF ..
 	make -j $MAX_THREADS
 	printf "Finished make\n"
   else

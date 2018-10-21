@@ -1,5 +1,5 @@
 #include <ann/ann.hh>
-#include <concurrent_routines/concurrent_routines.hh>
+#include <multi_core/multi_core.hh>
 #include <ann/function_space.hh>
 #include <gtest/gtest.h>
 #include <limits>
@@ -160,8 +160,8 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 
 
   // the thread pool & futures
-  zinhart::parallel::thread_pool pool(n_threads);
-  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
   multi_layer_perceptron<connection::dense, double> model;
@@ -357,8 +357,8 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 
 
   // the thread pool & futures
-  zinhart::parallel::thread_pool pool(n_threads);
-  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
   multi_layer_perceptron<connection::dense, double> model;
@@ -576,8 +576,8 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 
 
   // the thread pool & futures
-  zinhart::parallel::thread_pool pool(n_threads);
-  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
    multi_layer_perceptron<connection::dense, double> model;
@@ -793,8 +793,8 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   const double limit_epsilon = 1.e-4;
 
   // the thread pool & futures
-  zinhart::parallel::thread_pool pool(n_threads);
-  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
   multi_layer_perceptron<connection::dense, double> model;

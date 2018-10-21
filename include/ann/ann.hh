@@ -1,7 +1,7 @@
 #ifndef ANN_HH
 #define ANN_HH
-#include <concurrent_routines/concurrent_routines.hh>
-#include <concurrent_routines/concurrent_routines_error.hh>
+#include <multi_core/multi_core.hh>
+#include <multi_core/multi_core_error.hh>
 #include <ann/loss_function.hh>
 #include <ann/layer.hh>
 //#include <ann/activation.hh>

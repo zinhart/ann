@@ -79,7 +79,7 @@ if(BuildCuda)
   endif()
   
   # set include paths
-  include_directories(. include ${MKL_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS} concurrent_routines/include)
+  include_directories(. include ${MKL_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS} multi_core/include)
 
 else()
   string(REGEX MATCH "CUDA_ENABLED" result "${COMPILE_DEFINITIONS}")
@@ -88,7 +88,7 @@ else()
 	add_definitions(-DCUDA_ENABLED=false)
   endif()
   # set include paths
-  include_directories(. include ${MKL_INCLUDE_DIR} concurrent_routines/include)
+  include_directories(. include ${MKL_INCLUDE_DIR} multi_core/include)
 endif()
 
 
@@ -112,8 +112,8 @@ if (Sanitize)
   set(CMAKE_CXX_FLAGS "-fsantize=address -fsanitize=undefined ${CMAKE_CXX_FLAGS}")
 endif()
 
-# add concurrent_routines directory
-add_subdirectory(concurrent_routines)
+# add multi_core directory
+add_subdirectory(multi_core)
 
 # add src directory
 add_subdirectory(src)
@@ -202,7 +202,7 @@ if(AnnUseCodeCoverage)
   if(CMAKE_COMPILER_IS_GNUCXX)
 	  include(CodeCoverage)
 	  # ignore extraneous files
-	  set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*' '${PROJECT_BINARY_DIR}/concurrent_routines/*')
+	  set(COVERAGE_LCOV_EXCLUDES '/usr/include/*' '${PROJECT_BINARY_DIR}/googlebench-src/*' '${PROJECT_BINARY_DIR}/googletest-src/*' '${PROJECT_BINARY_DIR}/multi_core/*')
 	  SETUP_TARGET_FOR_COVERAGE_LCOV(NAME         ${PROJECT_NAME}_coverage 
 									 EXECUTABLE   ./unit_tests/ann_unit_tests 
 									 DEPENDENCIES ${PROJECT_NAME})
