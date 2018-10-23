@@ -9,7 +9,7 @@ namespace zinhart
 	  { theta -=  ( eta * gradient ); }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta)
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma)
 	  {
  		precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
 		theta -= current_velocity;
@@ -18,7 +18,7 @@ namespace zinhart
 
 	template <class precision_type>
   	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
-										const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
+										const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma
 									   )
 	  {
 		precision_type current_velocity{ gamma * prior_velocity + eta * current_gradient };
@@ -142,15 +142,32 @@ namespace zinhart
 		theta -= eta / ( sqrt(prior_bias_corrected_variance) + epsilon ) * (beta_1 * prior_bias_corrected_mean + (precision_type{1} - beta_1) / (precision_type{1} - beta_1_t) * current_gradient  );
 
 	  }
-
+	template <class precision_type>
+	  HOST sgd<precision_type>::sgd(precision_type learning_rate)
+	  { this->learning_rate = learning_rate; }
+	template <class precision_type>
+	  HOST sgd<precision_type>::sgd(const sgd & s)
+	  { s.learning_rate = this->learning_rate; }
+	template <class precision_type>
+	  HOST sgd<precision_type>::sgd(sgd && s)
+	  { s.learning_rate = this->learning_rate; }
+	template <class precision_type>
+	  HOST sgd<precision_type> & sgd<precision_type>::operator = (const sgd & s)
+	  { s.learning_rate = this->learning_rate; }
+	template <class precision_type>
+	  HOST sgd<precision_type> & sgd<precision_type>::operator = (sgd && s)
+	  { s.learning_rate = learning_rate; }
+	template <class precision_type>
+	  HOST sgd<precision_type>::~sgd()
+	  {}
 
 	template <class precision_type>
 	  HOST void sgd<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
-		  std::uint32_t start{0}, stop{0};
-		  zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
-		  for(std::uint32_t op{start}; op < stop; ++op)
-			opt.update(optimizer_attributes::sgd_optimizer(), *(theta + op), *(gradient + op), eta );
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::sgd_optimizer(), *(theta + op), *(gradient + op), learning_rate );
 	  }
 
 	template <class precision_type>
@@ -162,8 +179,60 @@ namespace zinhart
 	  { return size; }
 
 	template <class precision_type>
+	  HOST momentum<precision_type>::momentum(std::uint32_t size, precision_type learning_rate, precision_type momentum_term)
+	  {
+		this->learning_rate = learning_rate; 
+	    this->momentum_term = momentum_term;
+		set_size(size);
+		velocity = new precision_type[get_size()];
+		for(std::uint32_t i = 0; i < get_size(); ++i)
+		  velocity[i] = 0.0;
+	  }
+	template <class precision_type>
+	  HOST momentum<precision_type>::momentum(const momentum & m)
+	  {
+		this->learning_rate = m.learning_rate; 
+	    this->momentum_term = m.momentum_term;
+		set_size(m.get_size());
+		velocity = new precision_type[get_size()];
+	  }
+	template <class precision_type>
+	  HOST momentum<precision_type>::momentum(momentum && m)
+	  {
+		this->learning_rate = m.learning_rate; 
+	    this->momentum_term = m.momentum_term;
+		set_size(m.get_size());
+		velocity = m.prior_velocity;
+		m.velocity = nullptr;
+	  }
+	template <class precision_type>
+	  HOST momentum<precision_type> & momentum<precision_type>::operator = (const momentum & m)
+	  {
+		this->learning_rate = m.learning_rate; 
+	    this->momentum_term = m.momentum_term;
+		set_size(m.get_size());
+		velocity = new precision_type[get_size()];
+	  }
+	template <class precision_type>
+	  HOST momentum<precision_type> & momentum<precision_type>::operator = (momentum && m)
+	  {
+		this->learning_rate = m.learning_rate; 
+	    this->momentum_term = m.momentum_term;
+		set_size(m.get_size());
+		velocity = m.prior_velocity;
+		m.velocity = nullptr;
+	  }
+	template <class precision_type>
+	  HOST momentum<precision_type>::~momentum()
+	  { delete [] velocity; }
+
+	template <class precision_type>
 	  HOST void momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::momentum_optimizer(), *(theta + op), *(velocity + op),*(gradient + op), learning_rate, momentum_term);
 	  }
 
 	template <class precision_type>
@@ -174,10 +243,60 @@ namespace zinhart
 	  HOST std::uint32_t momentum<precision_type>::get_size()const
 	  { return size; }
 
-
+	template <class precision_type>
+	  HOST nesterov_momentum<precision_type>::nesterov_momentum(std::uint32_t size, precision_type learning_rate, precision_type momentum_term)
+	  {
+		this->learning_rate = learning_rate; 
+	    this->momentum_term = momentum_term;
+		set_size(size);
+		velocity = new precision_type[get_size()];
+		for(std::uint32_t i = 0; i < get_size(); ++i)
+		  velocity[i] = 0.0;
+	  }
+	template <class precision_type>
+  	  HOST nesterov_momentum<precision_type>::nesterov_momentum(const nesterov_momentum & nm)
+	  {
+		this->learning_rate = nm.learning_rate; 
+	    this->momentum_term = nm.momentum_term;
+		set_size(nm.get_size());
+		velocity = new precision_type[get_size()];
+	  }
+	template <class precision_type>
+  	  HOST nesterov_momentum<precision_type>::nesterov_momentum(nesterov_momentum && nm)
+	  {
+		this->learning_rate = nm.learning_rate; 
+	    this->momentum_term = nm.momentum_term;
+		set_size(nm.get_size());
+		velocity = nm.prior_velocity;
+		nm.velocity = nullptr;
+	  }
+	template <class precision_type>
+	  HOST nesterov_momentum<precision_type> & nesterov_momentum<precision_type>::operator = (const nesterov_momentum & nm)
+	  {
+		this->learning_rate = nm.learning_rate; 
+	    this->momentum_term = nm.momentum_term;
+		set_size(nm.get_size());
+		velocity = new precision_type[get_size()];
+	  }
+	template <class precision_type>
+	  HOST nesterov_momentum<precision_type> & nesterov_momentum<precision_type>::operator = (nesterov_momentum && nm)
+	  {
+		this->learning_rate = nm.learning_rate; 
+	    this->momentum_term = nm.momentum_term;
+		set_size(nm.get_size());
+		velocity = nm.prior_velocity;
+		nm.velocity = nullptr;
+	  }
+	template <class precision_type>
+	  HOST nesterov_momentum<precision_type>::~nesterov_momentum()
+	  { delete [] velocity; }
 	template <class precision_type>
 	  HOST void nesterov_momentum<precision_type>::update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::nesterov_momentum_optimizer(), *(theta + op), *(velocity + op),*(gradient + op), learning_rate, momentum_term);
 	  }
 
 	template <class precision_type>
@@ -305,6 +424,8 @@ namespace zinhart
 	template <class precision_type>
 	  HOST std::uint32_t nadam<precision_type>::get_size()const
 	  { return size; }
+  }// END NAMESPACE OPTIMIZERS
+}// END NAMESPACE ZINHART
 	/*
 	
 	// Stochastic gradient descent
@@ -885,5 +1006,4 @@ namespace zinhart
 																			)
 		{ static_cast<OPTIMIZER*>(this)->update(theta, prior_mean, prior_variance, current_gradient, eta, gamma, beta_1, beta_2, beta_1_t, beta_2_t, epsilon); };	
 	*/
-  }// END NAMESPACE OPTIMIZERS
-}// END NAMESPACE ZINHART
+

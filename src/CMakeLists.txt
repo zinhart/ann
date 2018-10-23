@@ -25,7 +25,7 @@ if(BuildCuda)
 
 else()
   set(ann_lib 
-	#	  cpu/optimizer.cc
+	  cpu/optimizer.cc
 	  #	  cpu/activation.cc
 	  cpu/ann.cc
 	 )

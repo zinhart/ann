@@ -1,6 +1,6 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
-#include "multi_core/multi_core.hh"
+#include <multi_core/multi_core.hh>
 #include <type_traits>
 #if CUDA_ENABLED == 1
 #include <math.h>
@@ -40,56 +40,58 @@ namespace zinhart
 		adam_optimizer adam;
 		nadam_optimizer nadam;
 	  };
-	};
+	}
+
 	template <class precision_type>
 	  class optimum
 	  {
-		optimum() = default;
-		optimum(const optimum&) = default;
-		optimum(optimum &&) = default;
-		optimum & operator = (const optimum&) = default;
-		optimum & operator = (optimum &&) = default;
-		~optimum() = default;
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::sgd_optimizer sgd, precision_type & theta, const precision_type & gradient, const precision_type & eta);
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::momentum_optimizer momentum, precision_type & theta, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta);
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & theta, precision_type & prior_velocity, 
-											const precision_type & current_gradient, const precision_type & gamma, const precision_type & eta
-										   );
-	   	CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad,precision_type & theta, precision_type & prior_gradient, 
-											const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
-										   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & theta, precision_type & prior_gradient, precision_type & hessian, 
-											const precision_type & current_gradient, const precision_type & epsilon
-										   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adadelta_optimizer adadelta, precision_type & theta, precision_type & prior_gradient, precision_type & prior_delta, 
-												 const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
-        
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & theta, precision_type & prior_gradient, 
-											const precision_type & current_gradient,  const precision_type & eta, 
-											const precision_type & beta, const precision_type & epsilon
-										   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & theta, precision_type & prior_gradient, precision_type & current_delta,
-											const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
-											const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
-										   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, 
-											 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
-											 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-										    );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & theta, 
-											precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
-											const precision_type & current_gradient, const precision_type & eta, 
-											const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-			                  			   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-											const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
-											const precision_type & beta_2, const precision_type & epsilon
-										   );
-		CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nadam_optimizer nadam, precision_type & theta, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-											const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
-											const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
-										   );
-	
+		public:
+		  optimum() = default;
+		  optimum(const optimum&) = default;
+		  optimum(optimum &&) = default;
+		  optimum & operator = (const optimum&) = default;
+		  optimum & operator = (optimum &&) = default;
+		  ~optimum() = default;
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::sgd_optimizer sgd, precision_type & weight, const precision_type & gradient, const precision_type & eta);
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::momentum_optimizer momentum, precision_type & weight, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma);
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & weight, precision_type & prior_velocity, 
+											  const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad,precision_type & weight, precision_type & prior_gradient, 
+											  const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & weight, precision_type & prior_gradient, precision_type & hessian, 
+											  const precision_type & current_gradient, const precision_type & epsilon
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adadelta_optimizer adadelta, precision_type & weight, precision_type & prior_gradient, precision_type & prior_delta, 
+												   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
+		  
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & weight, precision_type & prior_gradient, 
+											  const precision_type & current_gradient,  const precision_type & eta, 
+											  const precision_type & beta, const precision_type & epsilon
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & weight, precision_type & prior_gradient, precision_type & current_delta,
+											  const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
+											  const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, 
+											   const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
+											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+											  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & weight, 
+											  precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
+											  const precision_type & current_gradient, const precision_type & eta, 
+											  const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+											  const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
+											  const precision_type & beta_2, const precision_type & epsilon
+											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nadam_optimizer nadam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
+											  const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
+											  const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+											 );
+	  
 	  };
 
 	template <class precision_type>
@@ -99,7 +101,7 @@ namespace zinhart
 		  optimum<precision_type> opt;
 		  std::uint32_t size;
 		public:
-  		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
+  		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
 		  HOST virtual void set_size(const std::uint32_t & size) = 0;
 		  HOST virtual std::uint32_t get_size()const = 0;
 	  };
@@ -110,17 +112,17 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type learning_rate;
 		public:
-		  sgd() = default;
-		  sgd(const sgd&) = default;
-		  sgd(sgd &&) = default;
-		  sgd & operator = (const sgd&) = default;
-		  sgd & operator = (sgd &&) = default;
-		  ~sgd() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST sgd(precision_type learning_rate = 0.9);
+		  HOST sgd(const sgd&);
+		  HOST sgd(sgd &&);
+		  HOST sgd & operator = (const sgd&);
+		  HOST sgd & operator = (sgd &&);
+		  HOST ~sgd();
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
-		  precision_type eta{0.1};
 	  };
 
 
@@ -131,14 +133,17 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type learning_rate;
+		  precision_type momentum_term;
+		  precision_type * velocity;
 		public:
-		  momentum() = default;
-		  momentum(const momentum&) = default;
-		  momentum(momentum &&) = default;
-		  momentum & operator = (const momentum&) = default;
-		  momentum & operator = (momentum &&) = default;
-		  ~momentum() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
+		  HOST momentum(const momentum & m);
+		  HOST momentum(momentum && m);
+		  HOST momentum & operator = (const momentum & m);
+		  HOST momentum & operator = (momentum && m);
+		  HOST ~momentum();
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -149,14 +154,17 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type learning_rate;
+		  precision_type momentum_term;
+		  precision_type * velocity;
 		public:
-		  nesterov_momentum() = default;
-		  nesterov_momentum(const nesterov_momentum&) = default;
-		  nesterov_momentum(nesterov_momentum &&) = default;
-		  nesterov_momentum & operator = (const nesterov_momentum&) = default;
-		  nesterov_momentum & operator = (nesterov_momentum &&) = default;
-		  ~nesterov_momentum() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST nesterov_momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
+		  HOST nesterov_momentum(const nesterov_momentum & nm);
+		  HOST nesterov_momentum(nesterov_momentum && nm);
+		  HOST nesterov_momentum & operator = (const nesterov_momentum & nm);
+		  HOST nesterov_momentum & operator = (nesterov_momentum && nm);
+		  HOST ~nesterov_momentum();
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
  		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -174,7 +182,7 @@ namespace zinhart
 		  adagrad & operator = (const adagrad&) = default;
 		  adagrad & operator = (adagrad &&) = default;
 		  ~adagrad() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
  		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -193,7 +201,7 @@ namespace zinhart
 		  conjugate_gradient & operator = (const conjugate_gradient&) = default;
 		  conjugate_gradient & operator = (conjugate_gradient &&) = default;
 		  ~conjugate_gradient() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -211,7 +219,7 @@ namespace zinhart
 		  adadelta & operator = (const adadelta&) = default;
 		  adadelta & operator = (adadelta &&) = default;
 		  ~adadelta() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -229,7 +237,7 @@ namespace zinhart
 		  rms_prop & operator = (const rms_prop&) = default;
 		  rms_prop & operator = (rms_prop &&) = default;
 		  ~rms_prop() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -247,7 +255,7 @@ namespace zinhart
 		  rprop & operator = (const rprop&) = default;
 		  rprop & operator = (rprop &&) = default;
 		  ~rprop() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -265,7 +273,7 @@ namespace zinhart
 		  adamax & operator = (const adamax&) = default;
 		  adamax & operator = (adamax &&) = default;
 		  ~adamax() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -284,7 +292,7 @@ namespace zinhart
 		  amsgrad & operator = (const amsgrad&) = default;
 		  amsgrad & operator = (amsgrad &&) = default;
 		  ~amsgrad() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -303,7 +311,7 @@ namespace zinhart
 		  adam & operator = (const adam&) = default;
 		  adam & operator = (adam &&) = default;
 		  ~adam() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
@@ -322,11 +330,22 @@ namespace zinhart
 		  nadam & operator = (const nadam&) = default;
 		  nadam & operator = (nadam &&) = default;
 		  ~nadam() = default;
-		  HOST virtual void update(precision_type * theta, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
 	  };
-	/*
+#if CUDA_ENABLED == 1
+	void optimize(optimizer<double> * const o, double * weights, const double * const gradient, const std::uint32_t & length);
+#else
+	void optimize(optimizer<double> * const o, double * weights, const double * const gradient, const std::uint32_t length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
+	void optimize_m(const std::shared_ptr<optimizer<double>> & o, double * weights, const double * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
+#endif
+
+  }// END NAMESPACE OPTIMIZERS
+ }// END NAMESPAC ZINHART
+#include <ann/ext/optimizer.tcc>
+#endif
+   /*
 	// all the optimizers
 	typedef std::integral_constant<std::uint32_t, 0> SGD;
 	typedef std::integral_constant<std::uint32_t, 1> MOMENTUM;
@@ -749,8 +768,6 @@ namespace zinhart
 			CUDA_CALLABLE_MEMBER static void moment_update(precision_type & beta_1_t, precision_type & beta_2_t, const precision_type & beta_1, const precision_type & beta_2);
 	  };
 	  */
-  }// END NAMESPACE OPTIMIZERS
-  
 /*
 HOST void call_sgd(optimizer & op, double & theta, const double & gradient, double eta = 0.9);
 HOST void call_momentum(optimizer & op, double & theta, double & prior_velocity, const double & gradient, double gamma = 0.9, double eta = 0.1);
@@ -776,13 +793,10 @@ HOST void call_nadam(
 										double eta = 0.001, double mu = 0.9, double beta_1 = 0.9, double beta_2 = 0.999, double beta_1_t = 0.9, double beta_2_t = 0.999, double epsilon = 1e-8
 								    	);
 HOST void call_nadam_moment_update(optimizer & op, double & beta_1_t, double & beta_2_t, double beta_1 = 0.9, double beta_2 = 0.999);
-*/
+
 #if CUDA_ENABLED == 1
 //Kernels for each optimizer will go here
 //and cache prefereces as well
 #endif
-
-}
-#include "ext/optimizer.tcc"
-#endif
+*/
 

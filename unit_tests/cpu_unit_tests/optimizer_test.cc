@@ -2,50 +2,188 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <limits>
-/*
+
+using namespace zinhart::optimizers;
+
 TEST(optimizer, sgd)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> uint_dist(zinhart::parallel::default_thread_pool::get_default_thread_pool().size(), std::numeric_limits<std::uint16_t>::max());
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max() );
   std::mt19937 mt(rd());
-  std::uint32_t n_elements{uint_dist(mt)}, i{0}, j{0};
-  double * theta{nullptr}, * gradient{nullptr}, * theta_test{nullptr}, * gradient_test{nullptr};
-  double kth_theta{0.0}, kth_gradient{0.0}, eta{real_dist(mt)};
-  std::vector<zinhart::parallel::thread_pool::task_future<void>> results;
-  theta = new double[n_elements];
-  gradient = new double[n_elements];
-  theta_test = new double[n_elements];
-  gradient_test = new double[n_elements];
-  for(i = 0; i < n_elements; ++i)
+  std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
+  double * weights{nullptr}, * gradient{nullptr}, * weights_test{nullptr}, * gradient_test{nullptr};
+  double learning_rate{real_dist(mt)};
+  const std::uint32_t alignment = 64;
+
+  // the thread pool & futures
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+
+  // the optimizer
+  std::shared_ptr<optimizer<double>> op = std::make_shared<sgd<double>>(learning_rate);
+
+  // allocate
+  weights = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient = (double*) mkl_malloc(length * sizeof(double), alignment);
+  weights_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  
+  // initialize
+  for(i = 0; i < length; ++i)
   {
-	kth_theta = real_dist(mt);
-	kth_gradient = real_dist(mt);
-	theta[i] = kth_theta;
-	gradient[i] = kth_gradient;
-	theta_test[i] = kth_theta;
-	gradient_test[i] = kth_gradient;
+	weights[i] = real_dist(mt);
+	weights_test[i] = weights[i];
+	gradient[i] = real_dist(mt);
+	gradient_test[i] = gradient[i];
   }
-  zinhart::optimizers::optimizer op;
-  op(zinhart::optimizers::SGD(), theta, gradient, n_elements, results, eta);
-  for(i = 0; i < n_elements; ++i)
+  for(thread_id = 0; thread_id < n_threads; ++thread_id)
   {
-	theta_test[i] -= eta * gradient_test[i]; 
+	// add tasks to pool and store in results
+	results.push_back(pool.add_task(optimize_m, op, weights, gradient, length, n_threads, thread_id));
   }
-  for(i = 0; i < results.size(); ++i)
-	results[i].get();
-  results.clear(); 
-  for(i = 0; i < n_elements; ++i)
+  // serial version in test
+  optimize_m(op, weights_test, gradient_test, length);
+
+  // synchronize
+  for(thread_id = 0; thread_id < n_threads; ++thread_id) 
+	results[thread_id].get();
+
+  // validate
+  for(i = 0; i < length; ++i)
   {
-	ASSERT_DOUBLE_EQ(theta[i], theta_test[i]);
-	ASSERT_DOUBLE_EQ(gradient[i], gradient_test[i]);
-  }
-  delete [] theta;
-  delete [] gradient;
-  delete [] theta_test;
-  delete [] gradient_test;
+	EXPECT_DOUBLE_EQ(weights[i], weights_test[i])<<"i: "<<i;
+	EXPECT_DOUBLE_EQ(gradient[i], gradient_test[i])<<"i: "<<i;
+  }	
+
+  // cleanup
+  mkl_free(weights);
+  mkl_free(gradient);
+  mkl_free(weights_test);
+  mkl_free(gradient_test);
 }
 
+TEST(optimizer, momentum)
+{
+  std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
+  double * weights{nullptr}, * gradient{nullptr}, * weights_test{nullptr}, * gradient_test{nullptr};
+  double learning_rate{real_dist(mt)}, momentum_term{real_dist(mt)};
+  const std::uint32_t alignment = 64;
+
+  // the thread pool & futures
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+
+  // the optimizer
+  std::shared_ptr<optimizer<double>> op = std::make_shared<momentum<double>>(length, learning_rate, momentum_term);
+  std::shared_ptr<optimizer<double>> op_test = std::make_shared<momentum<double>>(length, learning_rate, momentum_term);
+
+  // allocate
+  weights = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient = (double*) mkl_malloc(length * sizeof(double), alignment);
+  weights_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  
+  // initialize
+  for(i = 0; i < length; ++i)
+  {
+	weights[i] = real_dist(mt);
+	weights_test[i] = weights[i];
+	gradient[i] = real_dist(mt);
+	gradient_test[i] = gradient[i];
+  }
+  for(thread_id = 0; thread_id < n_threads; ++thread_id)
+  {
+	// add tasks to pool and store in results
+	results.push_back(pool.add_task(optimize_m, op, weights, gradient, length, n_threads, thread_id));
+  }
+  // serial version in test
+  optimize_m(op_test, weights_test, gradient_test, length);
+
+  // synchronize
+  for(thread_id = 0; thread_id < n_threads; ++thread_id) 
+	results[thread_id].get();
+
+  // validate
+  for(i = 0; i < length; ++i)
+  {
+	EXPECT_DOUBLE_EQ(weights[i], weights_test[i])<<"i: "<<i;
+	EXPECT_DOUBLE_EQ(gradient[i], gradient_test[i])<<"i: "<<i;
+  }	
+
+  // cleanup
+  mkl_free(weights);
+  mkl_free(gradient);
+  mkl_free(weights_test);
+  mkl_free(gradient_test);
+}
+
+TEST(optimizer, nesterov_momentum)
+{
+  std::random_device rd;
+  std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
+  std::mt19937 mt(rd());
+  std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
+  double * weights{nullptr}, * gradient{nullptr}, * weights_test{nullptr}, * gradient_test{nullptr};
+  double learning_rate{real_dist(mt)}, momentum_term{real_dist(mt)};
+  const std::uint32_t alignment = 64;
+
+  // the thread pool & futures
+  zinhart::multi_core::thread_pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+
+  // the optimizer
+  std::shared_ptr<optimizer<double>> op = std::make_shared<nesterov_momentum<double>>(length, learning_rate, momentum_term);
+  std::shared_ptr<optimizer<double>> op_test = std::make_shared<nesterov_momentum<double>>(length, learning_rate, momentum_term);
+
+  // allocate
+  weights = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient = (double*) mkl_malloc(length * sizeof(double), alignment);
+  weights_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  gradient_test = (double*) mkl_malloc(length * sizeof(double), alignment);
+  
+  // initialize
+  for(i = 0; i < length; ++i)
+  {
+	weights[i] = real_dist(mt);
+	weights_test[i] = weights[i];
+	gradient[i] = real_dist(mt);
+	gradient_test[i] = gradient[i];
+  }
+  for(thread_id = 0; thread_id < n_threads; ++thread_id)
+  {
+	// add tasks to pool and store in results
+	results.push_back(pool.add_task(optimize_m, op, weights, gradient, length, n_threads, thread_id));
+  }
+  // serial version in test
+  optimize_m(op_test, weights_test, gradient_test, length);
+
+  // synchronize
+  for(thread_id = 0; thread_id < n_threads; ++thread_id) 
+	results[thread_id].get();
+
+  // validate
+  for(i = 0; i < length; ++i)
+  {
+	EXPECT_DOUBLE_EQ(weights[i], weights_test[i])<<"i: "<<i;
+	EXPECT_DOUBLE_EQ(gradient[i], gradient_test[i])<<"i: "<<i;
+  }	
+
+  // cleanup
+  mkl_free(weights);
+  mkl_free(gradient);
+  mkl_free(weights_test);
+  mkl_free(gradient_test);
+}
+/*
 TEST(optimizer, momentum)
 {
   std::random_device rd;
