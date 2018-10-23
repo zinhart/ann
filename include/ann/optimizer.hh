@@ -67,12 +67,12 @@ namespace zinhart
 												   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
 		  
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & weight, precision_type & prior_gradient, 
-											  const precision_type & current_gradient,  const precision_type & eta, 
-											  const precision_type & beta, const precision_type & epsilon
+											  const precision_type & current_gradient,  const precision_type & learning_rate, 
+											  const precision_type & gamma, const precision_type & epsilon
 											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & weight, precision_type & prior_gradient, precision_type & current_delta,
-											  const precision_type & current_gradient, const precision_type & eta_pos, const precision_type & eta_neg,
-											  const precision_type & delta_max = 50, const precision_type & delta_min = 10.e-6
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & weight, precision_type & prior_gradient, precision_type & delta,
+											  const precision_type & current_gradient, const precision_type & learning_rate_pos = 1.2, const precision_type & learning_rate_neg = 0.5,
+											  const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6
 											 );
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, 
 											   const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
@@ -94,19 +94,23 @@ namespace zinhart
 	  
 	  };
 
+	// The template pattern + thread_safety
 	template <class precision_type>
 	  class optimizer
 	  {
 		protected:
 		  optimum<precision_type> opt;
 		  std::uint32_t size;
-		  virtual void safe_deallocate(){};
+  		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) = 0;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) = 0;
+		  HOST virtual std::uint32_t get_size_impl()const = 0;
+		  HOST virtual void safe_deallocate_impl(){};
 		public:
-  		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
-		  HOST virtual void set_size(const std::uint32_t & size) = 0;
-		  HOST virtual std::uint32_t get_size()const = 0;
-		  HOST virtual ~optimizer()
-		  {safe_deallocate();};
+  		  HOST void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
+		  HOST void set_size(const std::uint32_t size);
+		  HOST std::uint32_t get_size()const;
+		  void safe_deallocate();
+		  HOST virtual ~optimizer();
 	  };
 
 	template <class precision_type>
@@ -116,6 +120,9 @@ namespace zinhart
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
 		  precision_type learning_rate;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
 		public:
 		  HOST sgd(precision_type learning_rate = 0.9);
 		  HOST sgd(const sgd&) = delete;
@@ -123,9 +130,6 @@ namespace zinhart
 		  HOST sgd & operator = (const sgd&) = delete;
 		  HOST sgd & operator = (sgd &&) = delete;
 		  HOST ~sgd() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
@@ -139,7 +143,10 @@ namespace zinhart
 		  precision_type learning_rate;
 		  precision_type momentum_term;
 		  precision_type * velocity{nullptr};
-		  HOST void safe_deallocate()override;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
 		  HOST momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
 		  HOST momentum(const momentum & m) = delete;
@@ -147,9 +154,6 @@ namespace zinhart
 		  HOST momentum & operator = (const momentum & m) = delete;
 		  HOST momentum & operator = (momentum && m) = delete;
 		  HOST ~momentum();
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
@@ -161,7 +165,10 @@ namespace zinhart
 		  precision_type learning_rate;
 		  precision_type momentum_term;
 		  precision_type * velocity{nullptr};
-		  HOST void safe_deallocate()override;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+ 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
 		  HOST nesterov_momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
 		  HOST nesterov_momentum(const nesterov_momentum & nm) = delete;
@@ -169,9 +176,6 @@ namespace zinhart
 		  HOST nesterov_momentum & operator = (const nesterov_momentum & nm) = delete;
 		  HOST nesterov_momentum & operator = (nesterov_momentum && nm) = delete;
 		  HOST ~nesterov_momentum();
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
- 		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
@@ -183,7 +187,10 @@ namespace zinhart
 		  precision_type learning_rate;
 		  precision_type epsilon;
 		  precision_type * prior_gradient{nullptr};
-		  HOST void safe_deallocate()override;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+ 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
 		  HOST adagrad(std::uint32_t size, precision_type learning_rate = 0.01, precision_type epsilon = 1.e-8);
 		  HOST adagrad(const adagrad & a) = delete;
@@ -191,9 +198,6 @@ namespace zinhart
 		  HOST adagrad & operator = (const adagrad & a) = delete;
 		  HOST adagrad & operator = (adagrad && a) = delete;
 		  HOST ~adagrad();
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
- 		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
@@ -206,7 +210,10 @@ namespace zinhart
 		  precision_type * prior_gradient{nullptr};
 		  precision_type * hessian{nullptr};
 		  precision_type epsilon;
-		  HOST void safe_deallocate()override;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
 		  HOST conjugate_gradient(std::uint32_t size, precision_type epsilon = 1.e-30);
 		  conjugate_gradient(const conjugate_gradient&) = delete;
@@ -214,9 +221,6 @@ namespace zinhart
 		  conjugate_gradient & operator = (const conjugate_gradient&) = delete;
 		  conjugate_gradient & operator = (conjugate_gradient &&) = delete;
 		  HOST ~conjugate_gradient();
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
@@ -229,17 +233,17 @@ namespace zinhart
 		  precision_type epsilon;
 		  precision_type * prior_gradient{nullptr};
 		  precision_type * prior_delta{nullptr};
-		  HOST void safe_deallocate()override;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  HOST adadelta(std::uint32_t size, precision_type gamma = 0.99, precision_type epsilon = 1.e-8 );
+		  HOST adadelta(std::uint32_t size, precision_type gamma = 0.99, precision_type epsilon = 1.e-6 );
 		  adadelta(const adadelta&) = delete;
 		  adadelta(adadelta &&) = delete;
 		  adadelta & operator = (const adadelta&) = delete;
 		  adadelta & operator = (adadelta &&) = delete;
 		  HOST ~adadelta();
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
@@ -248,16 +252,21 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type * prior_gradient{nullptr};
+		  precision_type learning_rate;
+		  precision_type gamma;
+		  precision_type epsilon;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  rms_prop() = default;
-		  rms_prop(const rms_prop&) = default;
-		  rms_prop(rms_prop &&) = default;
-		  rms_prop & operator = (const rms_prop&) = default;
-		  rms_prop & operator = (rms_prop &&) = default;
-		  ~rms_prop() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
+		  HOST rms_prop(std::uint32_t size, precision_type learning_rate = 0.001, precision_type gamma = 0.90, precision_type epsilon = 1.e-8);
+		  rms_prop(const rms_prop&) = delete;
+		  rms_prop(rms_prop &&) = delete;
+		  rms_prop & operator = (const rms_prop&) = delete;
+		  rms_prop & operator = (rms_prop &&) = delete;
+		  HOST ~rms_prop();
 	  };
 
 	template <class precision_type>
@@ -266,16 +275,23 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type * prior_gradient{nullptr};
+		  precision_type * delta{nullptr};
+		  precision_type learning_rate_pos;
+		  precision_type learning_rate_neg;
+		  precision_type delta_max;
+		  precision_type delta_min;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  rprop() = default;
-		  rprop(const rprop&) = default;
-		  rprop(rprop &&) = default;
-		  rprop & operator = (const rprop&) = default;
-		  rprop & operator = (rprop &&) = default;
-		  ~rprop() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
+		  HOST rprop(std::uint32_t size, precision_type learning_rate_pos = 1.2, precision_type learning_rate_neg = 0.5, precision_type delta_max = 50, precision_type delta_min = 1.e-6);
+		  rprop(const rprop&) = delete;
+		  rprop(rprop &&) = delete;
+		  rprop & operator = (const rprop&) = delete;
+		  rprop & operator = (rprop &&) = delete;
+		  HOST ~rprop();
 	  };
 
 	template <class precision_type>
@@ -284,6 +300,11 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+
+
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
 		public:
 		  adamax() = default;
 		  adamax(const adamax&) = default;
@@ -291,9 +312,6 @@ namespace zinhart
 		  adamax & operator = (const adamax&) = default;
 		  adamax & operator = (adamax &&) = default;
 		  ~adamax() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
@@ -303,6 +321,10 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
 		public:
 		  amsgrad() = default;
 		  amsgrad(const amsgrad&) = default;
@@ -310,9 +332,6 @@ namespace zinhart
 		  amsgrad & operator = (const amsgrad&) = default;
 		  amsgrad & operator = (amsgrad &&) = default;
 		  ~amsgrad() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 	template <class precision_type>
@@ -322,6 +341,10 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
 		public:
 		  adam() = default;
 		  adam(const adam&) = default;
@@ -329,9 +352,6 @@ namespace zinhart
 		  adam & operator = (const adam&) = default;
 		  adam & operator = (adam &&) = default;
 		  ~adam() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 
 
@@ -341,6 +361,10 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
+		  HOST virtual std::uint32_t get_size_impl()const override;
 		public:
 		  nadam() = default;
 		  nadam(const nadam&) = default;
@@ -348,9 +372,6 @@ namespace zinhart
 		  nadam & operator = (const nadam&) = default;
 		  nadam & operator = (nadam &&) = default;
 		  ~nadam() = default;
-		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
-		  HOST virtual void set_size(const std::uint32_t & size) override;
-		  HOST virtual std::uint32_t get_size()const override;
 	  };
 #if CUDA_ENABLED == 1
 	void optimize(optimizer<double> * const o, double * weights, const double * const gradient, const std::uint32_t & length);
