@@ -741,6 +741,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   mkl_free(bias);
   mkl_free(current_threads_output_layer_ptr);
   mkl_free(d_error);
+  mkl_free(total_targets);
 }
 
 TEST(multi_layer_perceptron, backward_propagate_thread_safety)
@@ -1157,6 +1158,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   
   
   // release memory
+  delete loss;
   mkl_free(total_activations_ptr);
   mkl_free(total_activations_ptr_test);
   mkl_free(total_activations_ptr_check);

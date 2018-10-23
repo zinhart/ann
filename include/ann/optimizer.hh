@@ -57,9 +57,9 @@ namespace zinhart
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & weight, precision_type & prior_velocity, 
 											  const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma
 											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad,precision_type & weight, precision_type & prior_gradient, 
-											  const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
-											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad, precision_type & weight, precision_type & prior_gradient, 
+										   const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+										  );
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & weight, precision_type & prior_gradient, precision_type & hessian, 
 											  const precision_type & current_gradient, const precision_type & epsilon
 											 );
@@ -100,10 +100,13 @@ namespace zinhart
 		protected:
 		  optimum<precision_type> opt;
 		  std::uint32_t size;
+		  virtual void safe_deallocate(){};
 		public:
   		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0) = 0;
 		  HOST virtual void set_size(const std::uint32_t & size) = 0;
 		  HOST virtual std::uint32_t get_size()const = 0;
+		  HOST virtual ~optimizer()
+		  {safe_deallocate();};
 	  };
 
 	template <class precision_type>
@@ -115,11 +118,11 @@ namespace zinhart
 		  precision_type learning_rate;
 		public:
 		  HOST sgd(precision_type learning_rate = 0.9);
-		  HOST sgd(const sgd&);
-		  HOST sgd(sgd &&);
-		  HOST sgd & operator = (const sgd&);
-		  HOST sgd & operator = (sgd &&);
-		  HOST ~sgd();
+		  HOST sgd(const sgd&) = delete;
+		  HOST sgd(sgd &&) = delete;
+		  HOST sgd & operator = (const sgd&) = delete;
+		  HOST sgd & operator = (sgd &&) = delete;
+		  HOST ~sgd() = default;
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
@@ -135,13 +138,14 @@ namespace zinhart
 		  using optimizer<precision_type>::size;
 		  precision_type learning_rate;
 		  precision_type momentum_term;
-		  precision_type * velocity;
+		  precision_type * velocity{nullptr};
+		  HOST void safe_deallocate()override;
 		public:
 		  HOST momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
-		  HOST momentum(const momentum & m);
-		  HOST momentum(momentum && m);
-		  HOST momentum & operator = (const momentum & m);
-		  HOST momentum & operator = (momentum && m);
+		  HOST momentum(const momentum & m) = delete;
+		  HOST momentum(momentum && m) = delete;
+		  HOST momentum & operator = (const momentum & m) = delete;
+		  HOST momentum & operator = (momentum && m) = delete;
 		  HOST ~momentum();
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
@@ -156,13 +160,14 @@ namespace zinhart
 		  using optimizer<precision_type>::size;
 		  precision_type learning_rate;
 		  precision_type momentum_term;
-		  precision_type * velocity;
+		  precision_type * velocity{nullptr};
+		  HOST void safe_deallocate()override;
 		public:
 		  HOST nesterov_momentum(std::uint32_t size, precision_type learning_rate = 0.9, precision_type momentum_term = 0.1);
-		  HOST nesterov_momentum(const nesterov_momentum & nm);
-		  HOST nesterov_momentum(nesterov_momentum && nm);
-		  HOST nesterov_momentum & operator = (const nesterov_momentum & nm);
-		  HOST nesterov_momentum & operator = (nesterov_momentum && nm);
+		  HOST nesterov_momentum(const nesterov_momentum & nm) = delete;
+		  HOST nesterov_momentum(nesterov_momentum && nm) = delete;
+		  HOST nesterov_momentum & operator = (const nesterov_momentum & nm) = delete;
+		  HOST nesterov_momentum & operator = (nesterov_momentum && nm) = delete;
 		  HOST ~nesterov_momentum();
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
  		  HOST virtual void set_size(const std::uint32_t & size) override;
@@ -175,13 +180,17 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type learning_rate;
+		  precision_type epsilon;
+		  precision_type * prior_gradient{nullptr};
+		  HOST void safe_deallocate()override;
 		public:
-		  adagrad() = default;
-		  adagrad(const adagrad&) = default;
-		  adagrad(adagrad &&) = default;
-		  adagrad & operator = (const adagrad&) = default;
-		  adagrad & operator = (adagrad &&) = default;
-		  ~adagrad() = default;
+		  HOST adagrad(std::uint32_t size, precision_type learning_rate = 0.01, precision_type epsilon = 1.e-8);
+		  HOST adagrad(const adagrad & a) = delete;
+		  HOST adagrad(adagrad && a) = delete;
+		  HOST adagrad & operator = (const adagrad & a) = delete;
+		  HOST adagrad & operator = (adagrad && a) = delete;
+		  HOST ~adagrad();
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
  		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
@@ -194,13 +203,17 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type * prior_gradient{nullptr};
+		  precision_type * hessian{nullptr};
+		  precision_type epsilon;
+		  HOST void safe_deallocate()override;
 		public:
-		  conjugate_gradient() = default;
-		  conjugate_gradient(const conjugate_gradient&) = default;
-		  conjugate_gradient(conjugate_gradient &&) = default;
-		  conjugate_gradient & operator = (const conjugate_gradient&) = default;
-		  conjugate_gradient & operator = (conjugate_gradient &&) = default;
-		  ~conjugate_gradient() = default;
+		  HOST conjugate_gradient(std::uint32_t size, precision_type epsilon = 1.e-30);
+		  conjugate_gradient(const conjugate_gradient&) = delete;
+		  conjugate_gradient(conjugate_gradient &&) = delete;
+		  conjugate_gradient & operator = (const conjugate_gradient&) = delete;
+		  conjugate_gradient & operator = (conjugate_gradient &&) = delete;
+		  HOST ~conjugate_gradient();
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
@@ -212,13 +225,18 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
+		  precision_type gamma;
+		  precision_type epsilon;
+		  precision_type * prior_gradient{nullptr};
+		  precision_type * prior_delta{nullptr};
+		  HOST void safe_deallocate()override;
 		public:
-		  adadelta() = default;
-		  adadelta(const adadelta&) = default;
-		  adadelta(adadelta &&) = default;
-		  adadelta & operator = (const adadelta&) = default;
-		  adadelta & operator = (adadelta &&) = default;
-		  ~adadelta() = default;
+		  HOST adadelta(std::uint32_t size, precision_type gamma = 0.99, precision_type epsilon = 1.e-8 );
+		  adadelta(const adadelta&) = delete;
+		  adadelta(adadelta &&) = delete;
+		  adadelta & operator = (const adadelta&) = delete;
+		  adadelta & operator = (adadelta &&) = delete;
+		  HOST ~adadelta();
 		  HOST virtual void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads = 1, const std::uint32_t & thread_id = 0);
 		  HOST virtual void set_size(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size()const override;
