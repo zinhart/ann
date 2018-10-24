@@ -58,14 +58,14 @@ namespace zinhart
 
 		  HOST virtual void forward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 												   const precision_type * total_training_cases, const std::uint32_t case_index,
-												   precision_type * total_activations, const std::uint32_t total_activations_length,
-												   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+												   precision_type * tot_activations, const std::uint32_t tot_activations_length,
+												   const precision_type * total_hidden_wts, const std::uint32_t total_hidden_wts_length,
 												   const precision_type * total_bias,
 												   const std::uint32_t n_threads,
 												   const std::uint32_t thread_id);
 
 		  HOST virtual void get_outputs_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
-										     const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+										     const precision_type * tot_activations, const std::uint32_t tot_activations_length, 
 										     precision_type * model_outputs, 
 										     const std::uint32_t n_threads, 
 										     const std::uint32_t thread_id
@@ -74,8 +74,8 @@ namespace zinhart
 		  HOST virtual void gradient_check_impl(zinhart::loss_functions::loss_function<precision_type> * loss,
 										        const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 										        const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
-										        precision_type * total_activations, const std::uint32_t total_activations_length,
-										        precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+										        precision_type * tot_activations, const std::uint32_t tot_activations_length,
+										        precision_type * const total_hidden_wts, const std::uint32_t total_hidden_wts_length,
 										        const precision_type * total_bias, 
 										        precision_type * numerically_approx_gradient, 
 										        const precision_type limit_epsilon, 
@@ -85,8 +85,8 @@ namespace zinhart
 
 		  HOST virtual void backward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
 											        const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-											        const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
-											        const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+											        const precision_type * const tot_activations, precision_type * total_deltas, const std::uint32_t tot_activations_length,
+											        const precision_type * const total_hidden_wts, precision_type * tot_grad, const std::uint32_t total_hidden_wts_length,
 											        const precision_type * const total_bias,
 											        const std::uint32_t n_threads,
 											        const std::uint32_t thread_id
@@ -104,14 +104,14 @@ namespace zinhart
 #if CUDA_ENABLED == /*MULTI_CORE_DISABLED*/ false
 		  HOST void forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 			  						  const precision_type * total_training_cases, const std::uint32_t case_index,
-			  						  precision_type * total_activations, const std::uint32_t total_activations_length,
-			  						  const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+			  						  precision_type * tot_activations, const std::uint32_t tot_activations_length,
+			  						  const precision_type * total_hidden_wts, const std::uint32_t total_hidden_wts_length,
 			  						  const precision_type * total_bias,
 			  						  const std::uint32_t n_threads = 1,
 			  						  const std::uint32_t thread_id = 0
 			  						 );
 		  HOST void get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
-			  					const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+			  					const precision_type * tot_activations, const std::uint32_t tot_activations_length, 
 			  					precision_type * model_outputs, 
 			  					const std::uint32_t n_threads = 1, 
 			  					const std::uint32_t thread_id = 0
@@ -120,8 +120,8 @@ namespace zinhart
 		  HOST void gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
 			  					   const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 			  					   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
-			  					   precision_type * total_activations, const std::uint32_t total_activations_length,
-			  					   precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+			  					   precision_type * tot_activations, const std::uint32_t tot_activations_length,
+			  					   precision_type * const total_hidden_wts, const std::uint32_t total_hidden_wts_length,
 			  					   const precision_type * total_bias, 
 			  					   precision_type * numerically_approx_gradient, 
 			  					   const precision_type limit_epsilon, 
@@ -130,8 +130,8 @@ namespace zinhart
 			  					  );
 		  HOST void backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
 									   const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-									   const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
-									   const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+									   const precision_type * const tot_activations, precision_type * total_deltas, const std::uint32_t tot_activations_length,
+									   const precision_type * const total_hidden_wts, precision_type * tot_grad, const std::uint32_t total_hidden_wts_length,
 									   const precision_type * const total_bias,
 									   const std::uint32_t n_threads = 1,
 									   const std::uint32_t thread_id = 0
