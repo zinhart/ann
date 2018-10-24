@@ -24,7 +24,7 @@ TEST(loss_function_test, cross_entropy_multi_class)
   double * results{nullptr}, * results_test{nullptr};
 
   // a loss function
-  loss_function<double> * ce_multi_class = new cross_entropy_multi_class<double>();
+  loss_function<double> * loss = new cross_entropy_multi_class<double>();
   // an error function
   error_function<double> e;
 
@@ -49,7 +49,7 @@ TEST(loss_function_test, cross_entropy_multi_class)
   }	
 
   // calculate error
-  sum = ce_multi_class->error(objective(), outputs, targets, n_elements);
+  sum = loss->error(objective(), outputs, targets, n_elements);
 
   // perform error test
   for(i = 0; i < n_elements; ++i)
@@ -59,7 +59,7 @@ TEST(loss_function_test, cross_entropy_multi_class)
   EXPECT_DOUBLE_EQ(sum, sum_test);
 
   // calculate error derivative
-  ce_multi_class->error(derivative(), outputs, targets, results, n_elements);
+  loss->error(derivative(), outputs, targets, results, n_elements);
 
   // perform error derivative test
   for(i = 0; i < n_elements; ++i)
@@ -70,7 +70,7 @@ TEST(loss_function_test, cross_entropy_multi_class)
     EXPECT_DOUBLE_EQ(*(results + i), *(results_test + i));
 
   // cleanup
-  delete ce_multi_class;
+  delete loss;
   mkl_free(outputs);
   mkl_free(targets);
   mkl_free(results);
@@ -96,7 +96,7 @@ TEST(loss_function_test, mean_squared_error)
   double * results{nullptr}, * results_test{nullptr};
 
   // a loss function
-  loss_function<double> * mse = new mean_squared_error<double>();
+  loss_function<double> * loss = new mean_squared_error<double>();
   // an error function
   error_function<double> e;
 
@@ -121,7 +121,7 @@ TEST(loss_function_test, mean_squared_error)
   }	
 
   // calculate error
-  sum = mse->error(objective(), outputs, targets, n_elements);
+  sum = loss->error(objective(), outputs, targets, n_elements);
 
   // perform error test
   for(i = 0; i < n_elements; ++i)
@@ -132,7 +132,7 @@ TEST(loss_function_test, mean_squared_error)
   EXPECT_DOUBLE_EQ(sum, sum_test);
 
   // calculate error derivative
-  mse->error(derivative(), outputs, targets, results, n_elements);
+  loss->error(derivative(), outputs, targets, results, n_elements);
 
   // perform error derivative test
   for(i = 0; i < n_elements; ++i)
@@ -143,7 +143,7 @@ TEST(loss_function_test, mean_squared_error)
     EXPECT_DOUBLE_EQ(*(results + i), *(results_test + i));
 
   // cleanup
-  delete mse;
+  delete loss;
   mkl_free(outputs);
   mkl_free(targets);
   mkl_free(results);

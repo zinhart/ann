@@ -1,6 +1,5 @@
 #ifndef LOSS_FUNCTION_H
 #define LOSS_FUNCTION_H
-//#include <ann/activation.hh>
 #include <multi_core/multi_core.hh>
 #include <ann/function_space.hh>
 #if CUDA_ENABLED == 1
@@ -36,7 +35,7 @@ namespace zinhart
 		HOST ~error_function() = default;
 
 		HOST precision_type error(loss_attributes::mean_squared_error mse, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length);
-		HOST void error(loss_attributes::mean_squared_error mse, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length, const std::uint32_t & output_size);
+		HOST void error(loss_attributes::mean_squared_error mse, zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length);
 
 		HOST precision_type error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length, const precision_type & epsilon = 1.e-30);
 		HOST void error(loss_attributes::cross_entropy_multi_class ce, zinhart::function_space::derivative d,const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length);
@@ -53,15 +52,23 @@ namespace zinhart
   template <class precision_type>
 	class loss_function
 	{
-	  public:
-		HOST virtual ~loss_function() = default;
+	  protected:
+		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) = 0;
+		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) = 0;
 		error_function<precision_type> e;
-		HOST virtual precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) = 0;
-		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) = 0;
+	  public:
+		HOST precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length);
+		HOST void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length);
+		HOST virtual ~loss_function() = default;
 	};
   template <class precision_type>
 	class mean_squared_error : public loss_function<precision_type>
 	{
+	  private:
+		using loss_function<precision_type>::e;
+		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
+		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
+		const precision_type coefficient{2};
 	  public:
 		mean_squared_error() = default;
 		mean_squared_error(const mean_squared_error &) = default;
@@ -69,15 +76,16 @@ namespace zinhart
 		mean_squared_error & operator = (const mean_squared_error &) = default;
 		mean_squared_error & operator = (mean_squared_error &&) = default;
 		~mean_squared_error() = default;
-		std::uint32_t batch_size{2};
-		using loss_function<precision_type>::e;
-		HOST virtual precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
-		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
+
 	};
 
   template <class precision_type>
 	class cross_entropy_multi_class : public loss_function<precision_type>
 	{
+	  private:
+		using loss_function<precision_type>::e;
+		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
+		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
 	  public:
 		cross_entropy_multi_class() = default;
 		cross_entropy_multi_class(const cross_entropy_multi_class &) = default;
@@ -86,18 +94,8 @@ namespace zinhart
 		cross_entropy_multi_class & operator = (cross_entropy_multi_class &&) = default;
 		~cross_entropy_multi_class() = default;
 		precision_type epsilon{1.e-30};
-		using loss_function<precision_type>::e;
-		HOST virtual precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
-		HOST virtual void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
 	};
   }// END NAMESPACE LOSS_FUNCTIONS
-/*
-	  template <class precision_type>
-		HOST std::int32_t call_loss_function(const LOSS_FUNCTION_NAME loss_function_name, const LOSS_FUNCTION_TYPE loss_function_type, const std::vector<zinhart::activation::LAYER_INFO> & total_layers, precision_type * device_total_outputs, std::uint32_t device_id = 0);
-
-	  template <class precision_type>
-		HOST std::int32_t call_loss_function(const LOSS_FUNCTION_NAME loss_function_name, const LOSS_FUNCTION_TYPE loss_function_type, const std::vector<zinhart::activation::LAYER_INFO> & total_layers, precision_type * device_total_outputs, const precision_type & epsilon = 1.e-30, std::uint32_t device_id = 0);*/
-
 }// END NAMESPACE ZINHART
 #include "ext/loss_function.tcc"
 #endif  
