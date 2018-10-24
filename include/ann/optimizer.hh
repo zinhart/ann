@@ -1,5 +1,6 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
+#include <multi_core/multi_core.hh>
 #include <type_traits>
 #if CUDA_ENABLED == 1
 #include <math.h>

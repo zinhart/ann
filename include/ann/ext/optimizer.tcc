@@ -1,4 +1,3 @@
-#include <multi_core/multi_core.hh>
 #include <cassert>
 namespace zinhart
 {
