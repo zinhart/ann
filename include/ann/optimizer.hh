@@ -52,46 +52,63 @@ namespace zinhart
 		  optimum & operator = (const optimum&) = default;
 		  optimum & operator = (optimum &&) = default;
 		  ~optimum() = default;
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::sgd_optimizer sgd, precision_type & weight, const precision_type & gradient, const precision_type & eta);
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::momentum_optimizer momentum, precision_type & weight, precision_type & prior_velocity, const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma);
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, precision_type & weight, precision_type & prior_velocity, 
-											  const precision_type & current_gradient, const precision_type & eta, const precision_type & gamma
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad, precision_type & weight, precision_type & prior_gradient, 
-										   const precision_type & current_gradient, const precision_type & eta, const precision_type & epsilon
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::sgd_optimizer sgd, 
+			                               precision_type & weight, const precision_type & gradient, 
+										   const precision_type & eta
 										  );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, precision_type & weight, precision_type & prior_gradient, precision_type & hessian, 
-											  const precision_type & current_gradient, const precision_type & epsilon
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adadelta_optimizer adadelta, precision_type & weight, precision_type & prior_gradient, precision_type & prior_delta, 
-												   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon);
-		  
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, precision_type & weight, precision_type & prior_gradient, 
-											  const precision_type & current_gradient,  const precision_type & learning_rate, 
-											  const precision_type & gamma, const precision_type & epsilon
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, precision_type & weight, precision_type & prior_gradient, precision_type & delta,
-											  const precision_type & current_gradient, const precision_type & learning_rate_pos = 1.2, const precision_type & learning_rate_neg = 0.5,
-											  const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, 
-											   const precision_type & current_gradient, const precision_type & learning_rate, 
-											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & beta_1_t, 
-											   const precision_type & epsilon
-											  );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & weight, 
-											  precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
-											  const precision_type & current_gradient, const precision_type & learning_rate, 
-											  const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-											  const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
-											  const precision_type & beta_2, const precision_type & epsilon
-											 );
-		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nadam_optimizer nadam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-											  const precision_type & eta, const precision_type & gamma, const precision_type & beta_1, 
-											  const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
-											 );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::momentum_optimizer momentum, 
+			                               precision_type & weight, precision_type & prior_velocity, const precision_type & current_gradient, 
+										   const precision_type & learning_rate, const precision_type & gamma
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nesterov_momentum_optimizer nesterov, 
+			                               precision_type & weight, precision_type & prior_velocity, const precision_type & current_gradient, 
+										   const precision_type & learning_rate, const precision_type & gamma
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adagrad_optimizer adagrad, 
+			                               precision_type & weight, precision_type & prior_gradient, const precision_type & current_gradient, 
+										   const precision_type & eta, const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::conjugate_gradient_optimizer conjugad, 
+			                               precision_type & weight, precision_type & prior_gradient, precision_type & hessian, 
+										   const precision_type & current_gradient, const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adadelta_optimizer adadelta, 
+			                               precision_type & weight, precision_type & prior_gradient, precision_type & prior_delta, 
+										   const precision_type & current_gradient, const precision_type & gamma, const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rms_prop_optimizer rms_prop, 
+			                               precision_type & weight, precision_type & prior_gradient, const precision_type & current_gradient,  
+										   const precision_type & learning_rate, const precision_type & gamma, const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::rprop_optimizer rprop, 
+			                               precision_type & weight, precision_type & prior_gradient, precision_type & delta, const precision_type & current_gradient, 
+										   const precision_type & learning_rate_pos = 1.2, const precision_type & learning_rate_neg = 0.5,
+										   const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax, 
+			                               precision_type & weight, precision_type & mean, precision_type & variance, 
+										   const precision_type & current_gradient, const precision_type & learning_rate, 
+										   const precision_type & beta_1, const precision_type & beta_2, const precision_type & beta_1_t, 
+										   const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, 
+										   precision_type & weight, precision_type & mean, precision_type & variance, precision_type & bias_corrected_variance,
+										   const precision_type & current_gradient, const precision_type & learning_rate, 
+										   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, 
+			                               precision_type & weight, precision_type & mean, precision_type & variance, const precision_type & current_gradient, 
+										   const precision_type & learning_rate, const precision_type & beta_1, const precision_type & beta_2, 
+										   const precision_type & beta_1_t, const precision_type & beta_2_t, 
+										   const precision_type & epsilon
+										  );
+		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::nadam_optimizer nadam, 
+										   precision_type & weight, precision_type & mean, precision_type & variance, const precision_type & current_gradient, 
+										   const precision_type & learning_rate, const precision_type & gamma, 
+										   const precision_type & beta_1, const precision_type & beta_2, 
+										   const precision_type & beta_1_t, const precision_type & beta_2_t, 
+										   const precision_type & epsilon
+										  );
 	  
 	  };
 
@@ -363,17 +380,28 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
-
+		  precision_type * mean{nullptr};
+		  precision_type * variance{nullptr};
+		  precision_type learning_rate;
+		  precision_type beta_1;
+		  precision_type beta_2;
+		  precision_type beta_1_t;
+		  precision_type beta_2_t;
+		  precision_type epsilon;
 		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void update_bias_correction_impl() override;
+		  HOST virtual precision_type get_bias_corrected_first_moment_impl()const override;
+		  HOST virtual precision_type get_bias_corrected_second_moment_impl()const override;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  adam() = default;
-		  adam(const adam&) = default;
-		  adam(adam &&) = default;
-		  adam & operator = (const adam&) = default;
-		  adam & operator = (adam &&) = default;
-		  ~adam() = default;
+		  HOST adam(std::uint32_t size, precision_type learning_rate = 0.001, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type beta_2_t = 0.999, precision_type epsilon = 1.e-8);
+		  adam(const adam&) = delete;
+		  adam(adam &&) = delete;
+		  adam & operator = (const adam&) = delete;
+		  adam & operator = (adam &&) = delete;
+		  HOST ~adam();
 	  };
 
 
@@ -383,17 +411,29 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
-
+		  precision_type * mean{nullptr};
+		  precision_type * variance{nullptr};
+		  precision_type learning_rate;
+		  precision_type gamma;
+		  precision_type beta_1;
+		  precision_type beta_2;
+		  precision_type beta_1_t;
+		  precision_type beta_2_t;
+		  precision_type epsilon;
 		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  HOST virtual void update_bias_correction_impl() override;
+		  HOST virtual precision_type get_bias_corrected_first_moment_impl()const override;
+		  HOST virtual precision_type get_bias_corrected_second_moment_impl()const override;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  nadam() = default;
-		  nadam(const nadam&) = default;
-		  nadam(nadam &&) = default;
-		  nadam & operator = (const nadam&) = default;
-		  nadam & operator = (nadam &&) = default;
-		  ~nadam() = default;
+		  HOST nadam(std::uint32_t size, precision_type learning_rate = 0.001, precision_type gamma = 0.9, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type beta_2_t = 0.999, precision_type epsilon = 1.e-8);
+		  nadam(const nadam&) = delete;
+		  nadam(nadam &&) = delete;
+		  nadam & operator = (const nadam&) = delete;
+		  nadam & operator = (nadam &&) = delete;
+		  HOST ~nadam();
 	  };
 #if CUDA_ENABLED == 1
 	void optimize(optimizer<double> * const o, double * weights, const double * const gradient, const std::uint32_t & length);

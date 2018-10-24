@@ -117,16 +117,16 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adam_optimizer adam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
-										const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & eta, const precision_type & beta_1,
-										const precision_type & beta_2, const precision_type & epsilon
-									   )
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adam_optimizer adam, precision_type & weight, precision_type & mean, precision_type & variance, const precision_type & current_gradient, 
+										                        const precision_type & learning_rate, const precision_type & beta_1, const precision_type & beta_2, 
+										                        const precision_type & beta_1_t, const precision_type & beta_2_t, const precision_type & epsilon
+									                           )
 	  {
-		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
-		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
-		precision_type bias_corrected_mean{ prior_mean / (precision_type{1} - beta_1_t) };
-		precision_type bias_corrected_variace{ prior_variance / (precision_type{1} - beta_2_t) };
-		weight -= eta * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
+		mean = beta_1 * mean + (precision_type{1} - beta_1) * current_gradient;
+		variance = beta_2 * variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		precision_type bias_corrected_mean{ mean / (precision_type{1} - beta_1_t) };
+		precision_type bias_corrected_variace{ variance / (precision_type{1} - beta_2_t) };
+		weight -= learning_rate * ( bias_corrected_mean ) / (sqrt( bias_corrected_variace ) + epsilon ) ;
 	  }
 
 	template <class precision_type>
@@ -601,9 +601,51 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST adam<precision_type>::adam(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type beta_2_t, precision_type epsilon)
+	  {
+		set_size_impl(size);
+		this->learning_rate = learning_rate;
+		this->beta_1 = beta_1;
+		this->beta_2 = beta_2;
+		this->beta_1_t = beta_1_t;
+		this->beta_2_t = beta_2_t;
+		this->epsilon = epsilon;
+		mean = new precision_type[get_size_impl()];
+		variance = new precision_type[get_size_impl()];
+		for(std::uint32_t i = 0; i < get_size_impl(); ++i)
+		{
+		  mean[i] = 0.0;
+		  variance[i] = 0.0;
+		}
+	  }
+
+	template <class precision_type>
+	  HOST adam<precision_type>::~adam()
+	  { safe_deallocate_impl(); }
+
+	template <class precision_type>
 	  HOST void adam<precision_type>::update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::adam_optimizer(), *(weights + op), *(mean + op), *(variance + op), *(gradient + op), learning_rate, beta_1, beta_2, beta_1_t, beta_2_t, epsilon);
 	  }
+
+	template <class precision_type>
+	  HOST void adam<precision_type>::update_bias_correction_impl()
+	  {	
+		beta_1_t *= beta_1; 
+		beta_2_t *= beta_2;
+	  }
+
+	template <class precision_type>
+	  HOST precision_type adam<precision_type>::get_bias_corrected_first_moment_impl()const
+	  {	return beta_1_t; }
+
+	template <class precision_type>
+	  HOST precision_type adam<precision_type>::get_bias_corrected_second_moment_impl()const
+	  {	return beta_2_t; }
 
 	template <class precision_type>
   	  HOST void adam<precision_type>::set_size_impl(const std::uint32_t & size)
@@ -614,9 +656,61 @@ namespace zinhart
 	  { return size; }
 
 	template <class precision_type>
+  	  HOST void adam<precision_type>::safe_deallocate_impl()
+	  {
+		if(mean != nullptr)
+		  delete [] mean;
+		if(variance != nullptr)
+		  delete [] variance;
+	  }
+
+	template <class precision_type>
+	  HOST nadam<precision_type>::nadam(std::uint32_t size, precision_type learning_rate, precision_type gamma, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type beta_2_t, precision_type epsilon)
+	  {
+		set_size_impl(size);
+		this->learning_rate = learning_rate;
+		this->gamma = gamma;
+		this->beta_1 = beta_1;
+		this->beta_2 = beta_2;
+		this->beta_1_t = beta_1_t;
+		this->beta_2_t = beta_2_t;
+		this->epsilon = epsilon;
+		mean = new precision_type[get_size_impl()];
+		variance = new precision_type[get_size_impl()];
+		for(std::uint32_t i = 0; i < get_size_impl(); ++i)
+		{
+		  mean[i] = 0.0;
+		  variance[i] = 0.0;
+		}
+	  }
+
+	template <class precision_type>
+	  HOST nadam<precision_type>::~nadam()
+	  { safe_deallocate_impl(); }
+
+	template <class precision_type>
 	  HOST void nadam<precision_type>::update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::nadam_optimizer(), *(weights + op), *(mean + op), *(variance + op), *(gradient + op), learning_rate, gamma, beta_1, beta_2, beta_1_t, beta_2_t, epsilon);
 	  }
+
+	template <class precision_type>
+	  HOST void nadam<precision_type>::update_bias_correction_impl()
+	  {	
+		beta_1_t *= beta_1; 
+		beta_2_t *= beta_2;
+	  }
+
+	template <class precision_type>
+	  HOST precision_type nadam<precision_type>::get_bias_corrected_first_moment_impl()const
+	  {	return beta_1_t; }
+
+	template <class precision_type>
+	  HOST precision_type nadam<precision_type>::get_bias_corrected_second_moment_impl()const
+	  {	return beta_2_t; }
 
 	template <class precision_type>
   	  HOST void nadam<precision_type>::set_size_impl(const std::uint32_t & size)
@@ -625,6 +719,15 @@ namespace zinhart
 	template <class precision_type>
 	  HOST std::uint32_t nadam<precision_type>::get_size_impl()const
 	  { return size; }
+
+	template <class precision_type>
+  	  HOST void nadam<precision_type>::safe_deallocate_impl()
+	  {
+		if(mean != nullptr)
+		  delete [] mean;
+		if(variance != nullptr)
+		  delete [] variance;
+	  }
   }// END NAMESPACE OPTIMIZERS
 }// END NAMESPACE ZINHART
 	/*
