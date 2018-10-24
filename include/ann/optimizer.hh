@@ -75,12 +75,13 @@ namespace zinhart
 											  const precision_type & delta_max = 50, const precision_type & delta_min = 1.e-6
 											 );
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adamax_optimizer adamax ,precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, 
-											   const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
-											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+											   const precision_type & current_gradient, const precision_type & learning_rate, 
+											   const precision_type & beta_1, const precision_type & beta_2, const precision_type & beta_1_t, 
+											   const precision_type & epsilon
 											  );
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & weight, 
 											  precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
-											  const precision_type & current_gradient, const precision_type & eta, 
+											  const precision_type & current_gradient, const precision_type & learning_rate, 
 											  const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 											 );
 		  CUDA_CALLABLE_MEMBER void update(optimizer_attributes::adam_optimizer adam, precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, const precision_type & current_gradient, 
@@ -104,12 +105,18 @@ namespace zinhart
   		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) = 0;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) = 0;
 		  HOST virtual std::uint32_t get_size_impl()const = 0;
+		  HOST virtual void update_bias_correction_impl(){};
+		  HOST virtual precision_type get_bias_corrected_first_moment_impl()const{ return 0; };
+		  HOST virtual precision_type get_bias_corrected_second_moment_impl()const{ return 0; };
 		  HOST virtual void safe_deallocate_impl(){};
 		public:
   		  HOST void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
 		  HOST void set_size(const std::uint32_t size);
 		  HOST std::uint32_t get_size()const;
-		  void safe_deallocate();
+		  HOST void update_bias_correction();
+		  HOST precision_type get_bias_corrected_first_moment()const;
+		  HOST precision_type get_bias_corrected_second_moment()const;
+		  HOST void safe_deallocate();
 		  HOST virtual ~optimizer();
 	  };
 
@@ -300,18 +307,26 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
-
-
-		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  precision_type * mean{nullptr};
+		  precision_type * variance{nullptr};
+		  precision_type learning_rate;
+		  precision_type beta_1;
+		  precision_type beta_2;
+		  precision_type beta_1_t;
+		  precision_type epsilon;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
+		  HOST virtual void update_bias_correction_impl() override;
+		  HOST virtual precision_type get_bias_corrected_first_moment_impl()const override;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  adamax() = default;
-		  adamax(const adamax&) = default;
-		  adamax(adamax &&) = default;
-		  adamax & operator = (const adamax&) = default;
-		  adamax & operator = (adamax &&) = default;
-		  ~adamax() = default;
+		  HOST adamax(std::uint32_t size, precision_type learning_rate = 0.002, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type epsilon = 1e-8);
+		  adamax(const adamax&) = delete;
+		  adamax(adamax &&) = delete;
+		  adamax & operator = (const adamax&) = delete;
+		  adamax & operator = (adamax &&) = delete;
+		  HOST ~adamax();
 	  };
 
 
@@ -321,17 +336,24 @@ namespace zinhart
 		private:
 		  using optimizer<precision_type>::opt; 
 		  using optimizer<precision_type>::size;
-
-		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id);
+		  precision_type * mean{nullptr};
+		  precision_type * variance{nullptr};
+		  precision_type * bias_corrected_variance{nullptr};
+		  precision_type learning_rate;
+		  precision_type beta_1;
+		  precision_type beta_2;
+		  precision_type epsilon;
+		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST void safe_deallocate_impl()override;
 		public:
-		  amsgrad() = default;
-		  amsgrad(const amsgrad&) = default;
-		  amsgrad(amsgrad &&) = default;
-		  amsgrad & operator = (const amsgrad&) = default;
-		  amsgrad & operator = (amsgrad &&) = default;
-		  ~amsgrad() = default;
+		  HOST amsgrad(std::uint32_t size, precision_type learning_rate = 0.01, precision_type beta_1 = 0.9, precision_type beta_2 = 0.99, precision_type epsilon = 1.e-8);
+		  amsgrad(const amsgrad&) = delete;
+		  amsgrad(amsgrad &&) = delete;
+		  amsgrad & operator = (const amsgrad&) = delete;
+		  amsgrad & operator = (amsgrad &&) = delete;
+		  HOST ~amsgrad();
 	  };
 
 	template <class precision_type>

@@ -92,28 +92,28 @@ namespace zinhart
 	  }
 	// adamax, the max operation is w.r.t the infinity norm
 	template <class precision_type>
-  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adamax_optimizer adamax ,precision_type & weight, precision_type & prior_mean, precision_type & prior_variance, 
-										 const precision_type & current_gradient, const precision_type & beta_1_t, const precision_type & eta, 
-										 const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
+  	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::adamax_optimizer adamax, precision_type & weight, precision_type & mean, precision_type & variance, 
+										 const precision_type & current_gradient, const precision_type & learning_rate, 
+										 const precision_type & beta_1, const precision_type & beta_2, const precision_type & beta_1_t, const precision_type & epsilon
 										)
 	  {
-		prior_mean = beta_1 * prior_mean + (precision_type{1.0} - beta_1) * current_gradient; 
-		prior_variance = (beta_2 * prior_variance > fabs(current_gradient)) ? beta_2 * prior_variance : fabs(current_gradient);
-		weight -= (eta / (precision_type{1.0} - beta_1_t) ) * (prior_mean / (prior_variance + epsilon)); 
+		mean = beta_1 * mean + (precision_type{1.0} - beta_1) * current_gradient; 
+		variance = (beta_2 * variance > fabs(current_gradient)) ? beta_2 * variance : fabs(current_gradient);
+		weight -= (learning_rate / (precision_type{1.0} - beta_1_t) ) * (mean / (variance + epsilon)); 
 	  }
 
 	template <class precision_type>
   	  CUDA_CALLABLE_MEMBER void optimum<precision_type>::update(optimizer_attributes::amsgrad_optimizer amsgrad, precision_type & weight, 
-										precision_type & prior_mean, precision_type & prior_variance, precision_type & prior_bias_corrected_variance,
-										const precision_type & current_gradient, const precision_type & eta, 
+										precision_type & mean, precision_type & variance, precision_type & bias_corrected_variance,
+										const precision_type & current_gradient, const precision_type & learning_rate, 
 										const precision_type & beta_1, const precision_type & beta_2, const precision_type & epsilon
 									   )
 	  {
-  		prior_mean = beta_1 * prior_mean + (precision_type{1} - beta_1) * current_gradient;
-		prior_variance = beta_2 * prior_variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
-		// max(prior_variance > prior_bias_corrected_variance)
-		prior_bias_corrected_variance = (prior_variance > prior_bias_corrected_variance) ? prior_variance : prior_bias_corrected_variance;
-		weight -= eta * ( prior_mean ) / ( sqrt( prior_bias_corrected_variance) + epsilon ) ;
+  		mean = beta_1 * mean + (precision_type{1} - beta_1) * current_gradient;
+		variance = beta_2 * variance + (precision_type{1} - beta_2) * current_gradient * current_gradient;
+		// max(variance > bias_corrected_variance)
+		bias_corrected_variance = (variance > bias_corrected_variance) ? variance : bias_corrected_variance;
+		weight -= learning_rate * ( mean ) / ( sqrt( bias_corrected_variance) + epsilon ) ;
 	  }
 
 	template <class precision_type>
@@ -143,20 +143,31 @@ namespace zinhart
 
 	  }
 
+    // require members for subclasses to override
 	template <class precision_type>
 	  HOST void optimizer<precision_type>::update(precision_type * weights, const precision_type * const gradient, const std::uint32_t length, const std::uint32_t n_threads, const std::uint32_t thread_id)
 	  { update_impl(weights, gradient, length, n_threads, thread_id); }
-
-
+	
 	template <class precision_type>
 	  HOST void optimizer<precision_type>::set_size(const std::uint32_t size)
 	  { set_size_impl(size); }
 
-
 	template <class precision_type>
 	  HOST std::uint32_t optimizer<precision_type>::get_size()const
 	  { return get_size_impl(size); }
+	
+	// optional members for subclasses to override
+	template <class precision_type>
+	  HOST void optimizer<precision_type>::update_bias_correction()
+	  { update_bias_correction_impl(); }
 
+	template <class precision_type>
+	  HOST precision_type optimizer<precision_type>::get_bias_corrected_first_moment()const
+	  { return get_bias_corrected_first_moment_impl(); }
+
+	template <class precision_type>
+	  HOST precision_type optimizer<precision_type>::get_bias_corrected_second_moment()const
+	  { return get_bias_corrected_second_moment_impl(); }
 
 	template <class precision_type>
 	  HOST void optimizer<precision_type>::safe_deallocate()
@@ -483,9 +494,43 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST adamax<precision_type>::adamax(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type epsilon)
+	  {
+		set_size_impl(size);
+		this->learning_rate = learning_rate;
+		this->beta_1 = beta_1;
+		this->beta_2 = beta_2;
+		this->beta_1_t = beta_1_t;
+		this->epsilon = epsilon;
+		mean = new precision_type[get_size_impl()];
+		variance = new precision_type[get_size_impl()];
+		for(std::uint32_t i = 0; i < get_size_impl(); ++i)
+		{
+		  mean[i] = 0.0;
+		  variance[i] = 0.0;
+		}
+	  }
+
+	template <class precision_type>
+	  HOST adamax<precision_type>::~adamax()
+	  { safe_deallocate_impl(); }
+
+	template <class precision_type>
 	  HOST void adamax<precision_type>::update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::adamax_optimizer(), *(weights + op), *(mean + op), *(variance + op), *(gradient + op), learning_rate, beta_1, beta_2, beta_1_t, epsilon);
 	  }
+
+	template <class precision_type>
+	  HOST void adamax<precision_type>::update_bias_correction_impl()
+	  {	beta_1_t *= beta_1; }
+
+	template <class precision_type>
+	  HOST precision_type adamax<precision_type>::get_bias_corrected_first_moment_impl()const
+	  {	return beta_1_t; }
 
 	template <class precision_type>
   	  HOST void adamax<precision_type>::set_size_impl(const std::uint32_t & size)
@@ -496,8 +541,44 @@ namespace zinhart
 	  { return size; }
 
 	template <class precision_type>
+  	  HOST void adamax<precision_type>::safe_deallocate_impl()
+	  {
+		if(mean != nullptr)
+		  delete [] mean;
+		if(variance != nullptr)
+		  delete [] variance;
+	  }
+
+	template <class precision_type>
+	  HOST amsgrad<precision_type>::amsgrad(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type epsilon)
+	  {
+		set_size_impl(size);
+		this->learning_rate = learning_rate;
+		this->beta_1 = beta_1;
+		this->beta_2 = beta_2;
+		this->epsilon = epsilon;
+		mean = new precision_type[get_size_impl()];
+		variance = new precision_type[get_size_impl()];
+		bias_corrected_variance = new precision_type[get_size_impl()];
+		for(std::uint32_t i = 0; i < get_size_impl(); ++i)
+		{
+		  mean[i] = 0.0;
+		  variance[i] = 0.0;
+		  bias_corrected_variance[i] = 0.0;
+		}
+	  }
+
+	template <class precision_type>
+	  HOST amsgrad<precision_type>::~amsgrad()
+	  { safe_deallocate_impl(); }
+
+	template <class precision_type>
 	  HOST void amsgrad<precision_type>::update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
 	  {
+		std::uint32_t start{0}, stop{0};
+		zinhart::multi_core::map(thread_id, n_threads, length, start, stop);
+		for(std::uint32_t op{start}; op < stop; ++op)
+		  opt.update(optimizer_attributes::amsgrad_optimizer(), *(weights + op), *(mean + op), *(variance + op), *(bias_corrected_variance + op), *(gradient + op), learning_rate, beta_1, beta_2, epsilon);
 	  }
 
 	template <class precision_type>
@@ -507,6 +588,17 @@ namespace zinhart
 	template <class precision_type>
 	  HOST std::uint32_t amsgrad<precision_type>::get_size_impl()const
 	  { return size; }
+
+	template <class precision_type>
+  	  HOST void amsgrad<precision_type>::safe_deallocate_impl()
+	  {
+		if(mean != nullptr)
+		  delete [] mean;
+		if(variance != nullptr)
+		  delete [] variance;
+		if(bias_corrected_variance != nullptr)
+		  delete [] bias_corrected_variance;
+	  }
 
 	template <class precision_type>
 	  HOST void adam<precision_type>::update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id)
