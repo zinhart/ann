@@ -79,7 +79,8 @@ namespace zinhart
 										        const precision_type * total_bias, 
 										        precision_type * numerically_approx_gradient, 
 										        const precision_type limit_epsilon, 
-										        const std::uint32_t n_threads, const std::uint32_t thread_id
+										        const std::uint32_t n_threads, 
+												const std::uint32_t thread_id
 										       );
 
 		  HOST virtual void backward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
@@ -124,7 +125,8 @@ namespace zinhart
 			  					   const precision_type * total_bias, 
 			  					   precision_type * numerically_approx_gradient, 
 			  					   const precision_type limit_epsilon, 
-			  					   const std::uint32_t n_threads, const std::uint32_t thread_id
+			  					   const std::uint32_t n_threads = 1,
+								   const std::uint32_t thread_id = 0
 			  					  );
 		  HOST void backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
 									   const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
@@ -146,5 +148,6 @@ namespace zinhart
 	  };
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART
+#include <ann/ext/ann.tcc>
 #include <ann/models/ann_mlp.hh>
 #endif
