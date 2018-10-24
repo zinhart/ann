@@ -4,7 +4,6 @@
 #include <multi_core/multi_core_error.hh>
 #include <ann/loss_function.hh>
 #include <ann/layer.hh>
-//#include <ann/activation.hh>
 #include <ann/optimizer.hh>
 #include <vector>
 #if CUDA_ENABLED == true
@@ -17,77 +16,134 @@ namespace zinhart
 {
   namespace models
   {
-	enum architecture : std::uint32_t {mlp_dense = 0, mlp_sparse, rbm_dense, rbm_sparse, dbn_dense, dbn_sparse, cnn_dense, cnn_sparse, rnn_dense, rnn_sparse, gan_dense, gan_sparse, esn};
-	enum connection : std::uint32_t {dense = 0, sparse = 1};
-	template <architecture arch, class precision_type>
-	  class ann;
+	namespace architecture
+	{
+	  enum multi_layer_perceptron          : std::uint32_t;
+	  enum restricted_boltzman_machine     : std::uint32_t;
+	  enum deep_belief_network             : std::uint32_t;
+	  enum convolutional_neural_network    : std::uint32_t;
+	  enum recurrent_neural_network        : std::uint32_t;
+	  enum general_adversarial_network     : std::uint32_t;
+	  enum echo_state_network              : std::uint32_t;
+	  union architectures
+	  {
+		multi_layer_perceptron             mlp;     
+		restricted_boltzman_machine        rbm;
+		deep_belief_network                dbn;
+		convolutional_neural_network       cnn;
+		recurrent_neural_network           rnn;
+		general_adversarial_network        gan;
+		echo_state_network                 esn;
+	  };
+	  namespace connection
+	  {
+		enum dense  : std::uint32_t;
+		enum sparse : std::uint32_t;
+	  }
+	}
 	template <class precision_type>
-	  class ann<architecture::mlp_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::mlp_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::rbm_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::rbm_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::dbn_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::dbn_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::cnn_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::cnn_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::rnn_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::rnn_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::gan_dense, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::gan_sparse, precision_type>;
-	template <class precision_type>
-	  class ann<architecture::esn, precision_type>;
+	  class ann
+	  {
+		protected:
+#if CUDA_ENABLED == /*MULTI_CORE_DISABLED*/ false
+		  std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> optimizer;
+		  std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> loss_function;
+		  std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > total_layers;
 
-/*
-	//Begin External Interface
-	//debugging functions
-	
-	template <class model_type, class precision_type>
-	  HOST std::vector<zinhart::activation::LAYER_INFO> get_total_layers(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_observations(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_hidden_weights(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_activations(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_error(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_gradient(const ann<model_type, precision_type> & model);
-	template <class model_type, class precision_type>
-	  HOST std::pair<std::uint32_t, double *> get_total_deltas(const ann<model_type, precision_type> & model);
-	//End debugging functions
-	template<class model_type, class precision_type>
-  	  HOST void add_layer(ann<model_type, precision_type> & model, const zinhart::activation::LAYER_INFO & ith_layer);
+		  HOST virtual void add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) = 0;
+		  HOST virtual void remove_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) = 0;
+		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op) = 0;
+		  HOST virtual void set_loss_function_inpl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) = 0;
+		  HOST virtual void init_impl() = 0;
 
-#if CUDA_ENABLED == 1
-	template <class model_type, class precision_type>
-	  HOST std::int32_t initialize_model(ann<model_type, precision_type> & model,  
-							 std::pair<std::uint32_t, double *> & total_observations,
-							 std::pair<std::uint32_t, double *> & total_targets, std::uint32_t device_id = 0 );
-	template <class model_type, class precision_type>
-	  HOST std::int32_t forward_propagate(ann<model_type, precision_type> & model,const bool & copy_device_to_host, cublasHandle_t & context, 
-			                   const std::uint32_t & ith_observation_index, const std::vector<LAYER_INFO> & total_layers,
-							   const std::pair<std::uint32_t, double *> & total_targets, 
-			                   const std::pair<std::uint32_t, double *> & total_hidden_weights,
-							   const std::pair<std::uint32_t, double *> & total_activations,
-							   double * device_total_observations, double * device_total_activations, double * device_total_bias, double * device_total_hidden_weights);
+		  HOST virtual void forward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+												   const precision_type * total_training_cases, const std::uint32_t case_index,
+												   precision_type * total_activations, const std::uint32_t total_activations_length,
+												   const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+												   const precision_type * total_bias,
+												   const std::uint32_t n_threads,
+												   const std::uint32_t thread_id);
+
+		  HOST virtual void get_outputs_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+										     const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+										     precision_type * model_outputs, 
+										     const std::uint32_t n_threads, 
+										     const std::uint32_t thread_id
+									        );
+
+		  HOST virtual void gradient_check_impl(zinhart::loss_functions::loss_function<precision_type> * loss,
+										        const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+										        const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+										        precision_type * total_activations, const std::uint32_t total_activations_length,
+										        precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+										        const precision_type * total_bias, 
+										        precision_type * numerically_approx_gradient, 
+										        const precision_type limit_epsilon, 
+										        const std::uint32_t n_threads, const std::uint32_t thread_id
+										       );
+
+		  HOST virtual void backward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+											        const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+											        const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+											        const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+											        const precision_type * const total_bias,
+											        const std::uint32_t n_threads,
+											        const std::uint32_t thread_id
+			                                       );
+
+
+
 #endif
-	template <class model_type, class precision_type>
-	  HOST int train(ann<model_type, precision_type> & model, const std::uint16_t & epochs, const std::uint32_t & batch_size, const float & weight_penalty);
-	template <class model_type, class precision_type>
-	  HOST int cleanup(ann<model_type, precision_type> & model);
-	  */
+		  // functions independant of cpu and gpu
+		  HOST virtual void train_impl(bool verbose) = 0;
+		  HOST virtual std::uint32_t get_total_hidden_weights_impl()const = 0;
+		  HOST virtual std::uint32_t get_total_activations_impl()const = 0;
+		public:
+// outer interface	
+#if CUDA_ENABLED == /*MULTI_CORE_DISABLED*/ false
+		  HOST void forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+			  						  const precision_type * total_training_cases, const std::uint32_t case_index,
+			  						  precision_type * total_activations, const std::uint32_t total_activations_length,
+			  						  const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+			  						  const precision_type * total_bias,
+			  						  const std::uint32_t n_threads = 1,
+			  						  const std::uint32_t thread_id = 0
+			  						 );
+		  HOST void get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+			  					const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+			  					precision_type * model_outputs, 
+			  					const std::uint32_t n_threads = 1, 
+			  					const std::uint32_t thread_id = 0
+			  				   );
+
+		  HOST void gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
+			  					   const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+			  					   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+			  					   precision_type * total_activations, const std::uint32_t total_activations_length,
+			  					   precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+			  					   const precision_type * total_bias, 
+			  					   precision_type * numerically_approx_gradient, 
+			  					   const precision_type limit_epsilon, 
+			  					   const std::uint32_t n_threads, const std::uint32_t thread_id
+			  					  );
+		  HOST void backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+									   const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+									   const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+									   const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+									   const precision_type * const total_bias,
+									   const std::uint32_t n_threads = 1,
+									   const std::uint32_t thread_id = 0
+			                          );	  
+		  HOST void add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
+		  HOST void remove_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
+		  HOST void set_optimizer(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op);
+		  HOST void set_loss_function(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function);
+		 
+#endif
+		  HOST void init();
+		  HOST std::uint32_t get_total_hidden_weights()const;
+		  HOST std::uint32_t get_total_activations()const;
+	  };
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART
 #include <ann/models/ann_mlp.hh>

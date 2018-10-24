@@ -5,12 +5,9 @@ namespace zinhart
 {
   namespace models
   {	
-	// base template
-	template<connection c, class precision_type>
-	  class multi_layer_perceptron;
 	
 	template<class precision_type>
-  	  class multi_layer_perceptron<connection::dense, precision_type> : private ann< architecture::mlp_dense, precision_type>
+  	  class multi_layer_perceptron 
 	  {
 		public:
 		  multi_layer_perceptron() = default;
@@ -32,21 +29,6 @@ namespace zinhart
 								  );
 
 #if CUDA_ENABLED == 1
-		  template <class LOSS_FUNCTION>
-			HOST std::int32_t forward_propagate_async(const bool & copy_device_to_host, 
-								   const cudaStream_t & stream, const cublasHandle_t & context, LOSS_FUNCTION error_metric,
-								   const std::uint32_t & ith_observation_index, const std::vector<zinhart::activation::LAYER_INFO> & total_layers,
-								   const std::uint32_t & total_targets, const double * host_total_targets, const double * device_total_targets,
-								   const std::uint32_t & total_hidden_weights, const double * host_total_hidden_weights, const double * device_total_hidden_weights, 
-								   const std::uint32_t & total_activations, double * host_total_activations, double * device_total_activations,
-								   const double * device_total_observations, double * device_total_outputs,
-								   const double * host_total_bias, std::uint32_t device_id = 0
-								  );
-
-			HOST void backward_propagate(cublasHandle_t & context);
-
-
-
 #else 
 			// Defaults to single-threaded
 			void forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,

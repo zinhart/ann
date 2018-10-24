@@ -64,7 +64,7 @@ void fprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<doubl
 			   const std::uint32_t total_threads, const std::uint32_t thread_index
 			  )
 {
-   multi_layer_perceptron<connection::dense, double> mlp;
+   multi_layer_perceptron<double> mlp;
    mlp.forward_propagate(total_layers,
 						 total_cases_ptr, ith_training_case,
 						 total_activations_ptr, activations_length,
@@ -85,7 +85,7 @@ void gradient_check_mlp(zinhart::loss_functions::loss_function<double> * loss,
 					    const double limit_epsilon, 
 					    const std::uint32_t n_threads, const std::uint32_t thread_id)
 {
-  multi_layer_perceptron<connection::dense, double> mlp_p;
+  multi_layer_perceptron<double> mlp_p;
 								mlp_p.gradient_check(loss, 
 												  total_layers,
 												  total_training_cases, total_targets, case_index,
@@ -107,7 +107,7 @@ void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<doubl
 						const std::uint32_t n_threads,
 					    const std::uint32_t thread_id)
 {
-  multi_layer_perceptron<connection::dense, double> mlp;
+  multi_layer_perceptron<double> mlp;
   mlp.backward_propagate(total_layers,
 						 total_training_cases, total_targets, d_error, case_index,
 						 total_activations, total_deltas, total_activations_length,
@@ -164,7 +164,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
   std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
-  multi_layer_perceptron<connection::dense, double> model;
+  multi_layer_perceptron<double> model;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   zinhart::function_space::objective objective_function{};
 
@@ -361,7 +361,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
   std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
-  multi_layer_perceptron<connection::dense, double> model;
+  multi_layer_perceptron<double> model;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   zinhart::function_space::objective objective_function{};
 
@@ -518,7 +518,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
 
-	   multi_layer_perceptron<connection::dense, double> mlp;
+	   multi_layer_perceptron<double> mlp;
 	  mlp.get_outputs(total_layers,
 					  total_activations_ptr, total_activations_length,
 					  outputs_ptr,
@@ -580,7 +580,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
-   multi_layer_perceptron<connection::dense, double> model;
+   multi_layer_perceptron<double> model;
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   zinhart::function_space::objective objective_function{};
 
@@ -652,7 +652,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 	bias[i] = real_dist(mt);
 
   
-  multi_layer_perceptron<connection::dense, double> mlp;
+  multi_layer_perceptron<double> mlp;
 
   std::cout.precision(10);
   // for gradient checking
@@ -798,7 +798,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
 
   // the model
-  multi_layer_perceptron<connection::dense, double> model;
+  multi_layer_perceptron<double> model;
   zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::mean_squared_error<double>();
 //  zinhart::loss_functions::loss_function<double> * loss = new zinhart::loss_functions::cross_entropy_multi_class<double>();
 
@@ -993,7 +993,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<<"i: "<<i<<"\n";
 
-	  multi_layer_perceptron<connection::dense, double> mlp;
+	  multi_layer_perceptron<double> mlp;
 	  mlp.get_outputs(total_layers,
 					  total_activations_ptr, total_activations_length,
 					  outputs_ptr,
