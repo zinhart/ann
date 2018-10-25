@@ -3,7 +3,7 @@ namespace zinhart
   namespace models
   {
 // outer interface	
-#if CUDA_ENABLED == /*MULTI_CORE_DISABLED*/ false
+#if CUDA_ENABLED == MULTI_CORE_DISABLED
 	template <class precision_type>
 	  HOST void ann<precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 													   const precision_type * total_training_cases, const std::uint32_t case_index,
@@ -55,8 +55,8 @@ namespace zinhart
 	  { add_layer_impl(layer); }
 
 	template <class precision_type>
-	  HOST void ann<precision_type>::remove_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
-	  { remove_layer(layer); }
+	  HOST void ann<precision_type>::remove_layer(std::uint32_t index)
+	  { remove_layer_impl(index); }
 
 	template <class precision_type>
   	  HOST void ann<precision_type>::set_optimizer(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op)
@@ -64,20 +64,20 @@ namespace zinhart
 
 	template <class precision_type>
 	  HOST void ann<precision_type>::set_loss_function(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function)
-	  { set_loss_function_inpl(loss_function); }
+	  { set_loss_function_impl(loss_function); }
 		 
 #endif
 	
 	template <class precision_type>	  
 	   HOST void ann<precision_type>::init()
 	   { init_impl(); }
-
+/*
 	template <class precision_type>
 	   HOST std::uint32_t ann<precision_type>::get_total_hidden_weights()const
 	   { return get_total_hidden_weights(); }
 
 	template <class precision_type>
 	  HOST std::uint32_t ann<precision_type>::get_total_activations()const
-	  {return get_total_activations_impl(); }
+	  {return get_total_activations_impl(); }*/
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART

@@ -5,111 +5,20 @@ namespace zinhart
 {
   namespace models
   {
-	template <class precision_type>
-  	  HOST void multi_layer_perceptron<precision_type>::gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
-																	   const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
-																	   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
-																	   precision_type * total_activations, const std::uint32_t total_activations_length,
-																	   precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
-																	   const precision_type * total_bias, 
-																	   precision_type * numerically_approx_gradient, 
-																	   const precision_type limit_epsilon, 
-																	   const std::uint32_t n_threads, const std::uint32_t thread_id
-								                                      )
-	  { 
-		zinhart::function_space::objective objective_function{};
-		std::uint32_t i{0};
-		const std::uint32_t output_layer{total_layers.size() - 1};
 
-		std::uint32_t output_layer_index{0};
-		// start at 1 to skip the input layer
-		for(i = 1; i < total_layers.size() - 1; ++i)
-		  output_layer_index += total_layers[i]->get_size();
 
-		// a ptr to the current training case, 
-		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
-		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
-		const precision_type * current_target{total_targets + (case_index * total_layers[output_layer]->get_size())};
-
-		// variables for the thread calling this method, to determine it's workspace
-		std::uint32_t /*current_threads_activation_workspace_index{0},*/ current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
-		precision_type * current_threads_gradient_ptr{nullptr};
-		precision_type * current_threads_output_layer_ptr{nullptr};
-
-		// Assumes the numerically_approx_gradient vector is partitioned into equally size chucks, 1 for each thread
-		thread_gradient_stride = total_hidden_weights_length;
-		thread_activation_stride = total_activations_length / n_threads; 
-		thread_output_layer_stride = (thread_id * thread_activation_stride) + output_layer_index;
-
-		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
-		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
-		current_threads_output_layer_ptr = total_activations + thread_output_layer_stride;
-
-		// and finally the beginning of gradient for the current thread
-		current_threads_gradient_ptr = numerically_approx_gradient + current_threads_gradient_workspace_index;
-
-		// As in the left and right side derivatives of the error function
-		precision_type right{0};
-		precision_type left{0};
-
-		// to set the parameter back to its original value
-		precision_type original{0};
-	//	precision_type outputs[total_layers[output_layer].second];
-		// gradient_check loop
-		for(i = 0; i < total_hidden_weights_length; ++i)
-		{
-		  
-		  // save original
-		  original = total_hidden_weights[i];
-		  
-		  // right side
-		  total_hidden_weights[i] += limit_epsilon;
-		  forward_propagate(total_layers, 
-							total_training_cases, case_index, 
-							total_activations, total_activations_length,
-							total_hidden_weights, total_hidden_weights_length, 
-							total_bias,
-							n_threads, thread_id
-						  );
-
-	      right = loss->error(objective_function, current_threads_output_layer_ptr, current_target, total_layers[output_layer]->get_size());
-
-		  // set back
-		  total_hidden_weights[i] = original; 
-
-		  // left side
-		  total_hidden_weights[i] -= limit_epsilon;
-		  forward_propagate(total_layers, 
-							total_training_cases, case_index, 
-							total_activations, total_activations_length,
-							total_hidden_weights, total_hidden_weights_length, 
-							total_bias,
-							n_threads, thread_id
-						  );
-
-	      left = loss->error(objective_function, current_threads_output_layer_ptr, current_target, total_layers[output_layer]->get_size());
-
-		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
-		  *(current_threads_gradient_ptr + i) = (right - left) / (precision_type{2.0} * limit_epsilon);
-
-		  // set back
-		  total_hidden_weights[i] = original;
-		}
-	  }
-
-#if CUDA_ENABLED == 1
-#else
+#if CUDA_ENABLED == MULTI_CORE_DISABLED
 	//cpu multi-threaded code
 
 	template <class precision_type>
-	  void multi_layer_perceptron<precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers,
-																	 const precision_type * total_training_cases, const std::uint32_t case_index,
-																	 precision_type * total_activations, const std::uint32_t total_activations_length,
-																	 const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
-																	 const precision_type * total_bias,
-																	 const std::uint32_t n_threads,
-																	 const std::uint32_t thread_id
-																	)
+	  HOST void multi_layer_perceptron<precision_type>::forward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+																		  const precision_type * total_training_cases, const std::uint32_t case_index,
+																		  precision_type * total_activations, const std::uint32_t total_activations_length,
+																		  const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																		  const precision_type * total_bias,
+																		  const std::uint32_t n_threads,
+																		  const std::uint32_t thread_id
+																		 )
 	  {
 		zinhart::function_space::objective objective_function{};
 
@@ -200,13 +109,14 @@ namespace zinhart
 		 }
 		 
 	  }
+
 	template <class precision_type>
-  	  void multi_layer_perceptron<precision_type>::get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
-															   const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
-															   precision_type * model_outputs, 
-															   const std::uint32_t n_threads, 
-															   const std::uint32_t thread_id
-															  )
+  	  void multi_layer_perceptron<precision_type>::get_outputs_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+																    const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length, 
+																    precision_type * model_outputs, 
+																    const std::uint32_t n_threads, 
+																    const std::uint32_t thread_id
+																   )
   	  {
 		std::uint32_t i{0}, j{0}, output_layer{total_layers.size()-1}, output_layer_index{0};
 		std::uint32_t thread_stride{0}, current_threads_workspace_index{0}; 
@@ -223,16 +133,108 @@ namespace zinhart
 		for(i = current_threads_workspace_index + output_layer_index, j = 0; j < total_layers[output_layer]->get_size(); ++i, ++j)
 		  *(model_outputs + j) = *(total_hidden_outputs + i);
 	  }
-	  
+
+  	template <class precision_type>
+  	  HOST void multi_layer_perceptron<precision_type>::gradient_check_impl(zinhart::loss_functions::loss_function<precision_type> * loss,
+																		    const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+																		    const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+																		    precision_type * total_activations, const std::uint32_t total_activations_length,
+																		    precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																		    const precision_type * total_bias, 
+																		    precision_type * numerically_approx_gradient, 
+																		    const precision_type limit_epsilon, 
+																		    const std::uint32_t n_threads, const std::uint32_t thread_id
+																		   )
+	  { 
+		zinhart::function_space::objective objective_function{};
+		std::uint32_t i{0};
+		const std::uint32_t output_layer{total_layers.size() - 1};
+
+		std::uint32_t output_layer_index{0};
+		// start at 1 to skip the input layer
+		for(i = 1; i < total_layers.size() - 1; ++i)
+		  output_layer_index += total_layers[i]->get_size();
+
+		// a ptr to the current training case, 
+		// the number of nodes in the input layer is the same length as the length of the current training case so we move case_index times forward in the total_training_cases ptr, 
+		// -> case_index = 0 is the first training case, case_index = 1 the second case, case_index = n the nth case.
+		const precision_type * current_target{total_targets + (case_index * total_layers[output_layer]->get_size())};
+
+		// variables for the thread calling this method, to determine it's workspace
+		std::uint32_t /*current_threads_activation_workspace_index{0},*/ current_threads_gradient_workspace_index{0}, thread_activation_stride{0}, thread_gradient_stride{0}, thread_output_layer_stride{0};
+		precision_type * current_threads_gradient_ptr{nullptr};
+		precision_type * current_threads_output_layer_ptr{nullptr};
+
+		// Assumes the numerically_approx_gradient vector is partitioned into equally size chucks, 1 for each thread
+		thread_gradient_stride = total_hidden_weights_length;
+		thread_activation_stride = total_activations_length / n_threads; 
+		thread_output_layer_stride = (thread_id * thread_activation_stride) + output_layer_index;
+
+		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
+		current_threads_gradient_workspace_index = thread_id * thread_gradient_stride;
+		current_threads_output_layer_ptr = total_activations + thread_output_layer_stride;
+
+		// and finally the beginning of gradient for the current thread
+		current_threads_gradient_ptr = numerically_approx_gradient + current_threads_gradient_workspace_index;
+
+		// As in the left and right side derivatives of the error function
+		precision_type right{0};
+		precision_type left{0};
+
+		// to set the parameter back to its original value
+		precision_type original{0};
+	//	precision_type outputs[total_layers[output_layer].second];
+		// gradient_check loop
+		for(i = 0; i < total_hidden_weights_length; ++i)
+		{
+		  
+		  // save original
+		  original = total_hidden_weights[i];
+		  
+		  // right side
+		  total_hidden_weights[i] += limit_epsilon;
+		  forward_propagate_impl(total_layers, 
+								 total_training_cases, case_index, 
+								 total_activations, total_activations_length,
+								 total_hidden_weights, total_hidden_weights_length, 
+								 total_bias,
+								 n_threads, thread_id
+							    );
+
+	      right = loss->error(objective_function, current_threads_output_layer_ptr, current_target, total_layers[output_layer]->get_size());
+
+		  // set back
+		  total_hidden_weights[i] = original; 
+
+		  // left side
+		  total_hidden_weights[i] -= limit_epsilon;
+		  forward_propagate_impl(total_layers, 
+								 total_training_cases, case_index, 
+								 total_activations, total_activations_length,
+								 total_hidden_weights, total_hidden_weights_length, 
+								 total_bias,
+								 n_threads, thread_id
+							    );
+
+	      left = loss->error(objective_function, current_threads_output_layer_ptr, current_target, total_layers[output_layer]->get_size());
+
+		  // calc numerically derivative for the ith_weight, save it, increment the pointer to the next weight
+		  *(current_threads_gradient_ptr + i) = (right - left) / (precision_type{2.0} * limit_epsilon);
+
+		  // set back
+		  total_hidden_weights[i] = original;
+		}
+	  }  
+
 	template <class precision_type>
-	  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<double> > > & total_layers, 
-																	  const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
-																	  const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
-																	  const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
-																	  const precision_type * const total_bias,
-																	  const std::uint32_t n_threads,
-																	  const std::uint32_t thread_id
-																	 )
+	  void multi_layer_perceptron<precision_type>::backward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+																		   const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+																	       const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+																	       const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+																	       const precision_type * const total_bias,
+																	       const std::uint32_t n_threads,
+																	       const std::uint32_t thread_id
+																	      )
 	  {
 		zinhart::function_space::derivative derivative_function{};
 		std::uint32_t i{0};
@@ -357,8 +359,125 @@ namespace zinhart
 		--current_layer;
 		--previous_layer;
 	  }
-	  
 	}
+	template <class precision_type>
+	  HOST void multi_layer_perceptron<precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+																		  const precision_type * total_training_cases, const std::uint32_t  case_index,
+																		  precision_type * total_activations, const std::uint32_t total_activations_length,
+																		  const precision_type * total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																		  const precision_type * total_bias,
+																		  const std::uint32_t n_threads,
+																		  const std::uint32_t thread_id
+																		 )
+	  {	forward_propagate_impl(total_layers, total_training_cases, case_index, total_activations, total_activations_length, total_hidden_weights, total_hidden_weights_length, total_bias, n_threads, thread_id); }
+	template <class precision_type>
+  	  HOST void multi_layer_perceptron<precision_type>::get_outputs(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+																	const precision_type * total_activations, const std::uint32_t total_activations_length,
+																	precision_type * model_outputs, 
+																	const std::uint32_t n_threads, 
+																	const std::uint32_t thread_id
+																   )
+	  { get_outputs_impl(total_layers, total_activations, total_activations_length, model_outputs, n_threads, thread_id); }
+
+	template <class precision_type>
+	  HOST void multi_layer_perceptron<precision_type>::gradient_check(zinhart::loss_functions::loss_function<precision_type> * loss,
+																	   const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
+																	   const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+																	   precision_type * total_activations, const std::uint32_t total_activations_length,
+																	   precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+																	   const precision_type * total_bias, 
+																	   precision_type * num_approx_grad, 
+																	   const precision_type limit_epsilon, 
+																	   const std::uint32_t n_threads, const std::uint32_t thread_id
+																	  )
+	  {	gradient_check_impl(loss, total_layers, total_training_cases, total_targets, case_index, total_activations, total_activations_length, total_hidden_weights, total_hidden_weights_length, total_bias, num_approx_grad, limit_epsilon, n_threads, thread_id); }
+
+	template <class precision_type>
+	  HOST  void multi_layer_perceptron<precision_type>::backward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+																			const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+																			const precision_type * const total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+																			const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+																			const precision_type * const total_bias,
+																			const std::uint32_t n_threads,
+																			const std::uint32_t thread_id
+																		   )
+	  { backward_propagate_impl(total_layers, total_training_cases, total_targets, d_error, case_index, total_activations, total_deltas, total_activations_length, total_hidden_weights, total_gradient, total_hidden_weights_length, total_bias, n_threads, thread_id); }
+	
+	template<class precision_type>
+  	  void fprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
+			   precision_type * total_cases_ptr, const std::uint32_t ith_training_case,
+			   precision_type * total_activations_ptr, const std::uint32_t activations_length,
+			   precision_type * total_hidden_weights_ptr, const std::uint32_t weights_length,
+			   precision_type * total_bias_ptr,
+			   const std::uint32_t total_threads, const std::uint32_t thread_index
+			  )
+	  {
+		multi_layer_perceptron<precision_type> mlp;
+		mlp.forward_propagate(total_layers,
+							  total_cases_ptr, ith_training_case,
+							  total_activations_ptr, activations_length,
+							  total_hidden_weights_ptr, weights_length,
+							  total_bias_ptr,
+							  total_threads,
+							  thread_index
+							 );
+
+	  }
+
+	template<class precision_type>
+	  HOST void get_outputs_mlp(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
+  		                        const precision_type * total_hidden_outputs, const std::uint32_t total_hidden_outputs_length,
+							    precision_type * model_outputs, 
+							    const std::uint32_t n_threads, 
+							    const std::uint32_t thread_id
+						       )
+	  {
+		multi_layer_perceptron<precision_type> mlp;
+		mlp.get_outputs(total_layers, total_hidden_outputs, total_hidden_outputs_length, model_outputs, n_threads, thread_id);
+	  }
+	template<class precision_type>
+	  void gradient_check_mlp(zinhart::loss_functions::loss_function<precision_type> * loss,
+					    std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
+					    const precision_type * total_training_cases, const precision_type * total_targets, const std::uint32_t case_index,
+					    precision_type * total_activations, const std::uint32_t total_activations_length,
+					    precision_type * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
+					    const precision_type * total_bias, 
+					    precision_type * numerically_approx_gradient, 
+					    const precision_type limit_epsilon, 
+					    const std::uint32_t n_threads, const std::uint32_t thread_id)
+	  {
+		multi_layer_perceptron<precision_type> mlp;
+		mlp.gradient_check(loss, 
+						  total_layers,
+						  total_training_cases, total_targets, case_index,
+						  total_activations, total_activations_length,
+						  total_hidden_weights, total_hidden_weights_length,
+						  total_bias,
+						  numerically_approx_gradient,
+						  limit_epsilon,
+						  n_threads, thread_id
+						  );
+						
+	  }
+	template<class precision_type>
+	  void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers, 
+					 const precision_type * const total_training_cases, const precision_type * const total_targets, const precision_type * const d_error, const std::uint32_t case_index,
+					 precision_type * total_activations, precision_type * total_deltas, const std::uint32_t total_activations_length,
+					 const precision_type * const total_hidden_weights, precision_type * total_gradient, const std::uint32_t total_hidden_weights_length,
+					 const precision_type * const total_bias,
+					 const std::uint32_t n_threads,
+					 const std::uint32_t thread_id)
+	  {
+		multi_layer_perceptron<precision_type> mlp;
+		mlp.backward_propagate(total_layers,
+							   total_training_cases, total_targets, d_error, case_index,
+							   total_activations, total_deltas, total_activations_length,
+							   total_hidden_weights, total_gradient, total_hidden_weights_length,
+							   total_bias,
+							   n_threads,
+							   thread_id
+							  );
+	  }
 #endif
-  }
-}
+  }// END NAMESPACE MODELS
+}// END NAMESPACE ZINHART

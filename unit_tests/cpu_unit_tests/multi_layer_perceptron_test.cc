@@ -56,70 +56,6 @@ void random_layer(std::vector< std::shared_ptr<zinhart::models::layers::layer<do
   {
   }*/
 }
-void fprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers,
-			   double * total_cases_ptr, const std::uint32_t ith_training_case,
-			   double * total_activations_ptr, const std::uint32_t activations_length,
-			   double * total_hidden_weights_ptr, const std::uint32_t weights_length,
-			   double * total_bias_ptr,
-			   const std::uint32_t total_threads, const std::uint32_t thread_index
-			  )
-{
-   multi_layer_perceptron<double> mlp;
-   mlp.forward_propagate(total_layers,
-						 total_cases_ptr, ith_training_case,
-						 total_activations_ptr, activations_length,
-						 total_hidden_weights_ptr, weights_length,
-						 total_bias_ptr,
-						 total_threads,
-						 thread_index
-						);
-
-}
-void gradient_check_mlp(zinhart::loss_functions::loss_function<double> * loss,
-					    std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers,
-					    const double * total_training_cases, const double * total_targets, const std::uint32_t case_index,
-					    double * total_activations, const std::uint32_t total_activations_length,
-					    double * const total_hidden_weights, const std::uint32_t total_hidden_weights_length,
-					    const double * total_bias, 
-					    double * numerically_approx_gradient, 
-					    const double limit_epsilon, 
-					    const std::uint32_t n_threads, const std::uint32_t thread_id)
-{
-  multi_layer_perceptron<double> mlp_p;
-								mlp_p.gradient_check(loss, 
-												  total_layers,
-												  total_training_cases, total_targets, case_index,
-												  total_activations, total_activations_length,
-												  total_hidden_weights, total_hidden_weights_length,
-												  total_bias,
-												  numerically_approx_gradient,
-												  limit_epsilon,
-												  n_threads, thread_id
-												  );
-						
-}
-
-void bprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > & total_layers, 
-						const double * const total_training_cases, const double * const total_targets, const double * const d_error, const std::uint32_t case_index,
-						double * total_activations, double * total_deltas, const std::uint32_t total_activations_length,
-						const double * const total_hidden_weights, double * total_gradient, const std::uint32_t total_hidden_weights_length,
-						const double * const total_bias,
-						const std::uint32_t n_threads,
-					    const std::uint32_t thread_id)
-{
-  multi_layer_perceptron<double> mlp;
-  mlp.backward_propagate(total_layers,
-						 total_training_cases, total_targets, d_error, case_index,
-						 total_activations, total_deltas, total_activations_length,
-						 total_hidden_weights, total_gradient, total_hidden_weights_length,
-						 total_bias,
-						 n_threads,
-						 thread_id
-						);
-
-}
-
-
 
 TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 {
@@ -224,7 +160,7 @@ TEST(multi_layer_perceptron, forward_propagate_thread_safety)
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
 	  
-	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  results.push_back(pool.add_task(fprop_mlp<double>, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  
@@ -431,7 +367,7 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer]->get_size())};
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
-	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  results.push_back(pool.add_task(fprop_mlp<double>, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  current_layer_index = 0;
@@ -518,13 +454,13 @@ TEST(multi_layer_perceptron, get_results_thread_safety)
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i]);
 
-	   multi_layer_perceptron<double> mlp;
-	  mlp.get_outputs(total_layers,
-					  total_activations_ptr, total_activations_length,
-					  outputs_ptr,
-					  n_threads,
-					  thread_id
-					 );
+	  pool.add_task(get_outputs_mlp<double>, total_layers,
+					total_activations_ptr, total_activations_length,
+					outputs_ptr,
+					n_threads,
+					thread_id
+				   ).get();
+
 	  for(i = 0; i < output_layer_nodes; ++i)
 		EXPECT_DOUBLE_EQ(outputs_ptr[i], outputs_ptr_test[i])<<"total_layers: "<<total_layers.size()<<"\n";
 	}
@@ -665,7 +601,6 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
   for(ith_case = 0; ith_case < total_cases; ++ith_case)
   {
 
-//	const double * current_training_case{total_cases_ptr + (ith_case * total_layers[input_layer]->get_size())};
     const double * current_target{total_targets + (ith_case * total_layers[output_layer]->get_size())};
 	// for each thread perform a gradient check on the same values, ideally each thread would come to the same conclusion (return the same values)
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
@@ -683,6 +618,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 						  bias,
 						  n_threads, thread_id
 						 );
+
 		mlp.get_outputs(total_layers, total_activations, total_activations_length, current_threads_output_layer_ptr, n_threads, thread_id);
 
 		right = loss->error(objective_function, current_threads_output_layer_ptr, current_target, total_layers[output_layer]->get_size());
@@ -707,7 +643,7 @@ TEST(multi_layer_perceptron, gradient_check_thread_safety)
 		total_hidden_weights_copy[i] = original; 
 	  }
 	  // gradient check
-	  results.push_back(pool.add_task(gradient_check_mlp,
+	  results.push_back(pool.add_task(gradient_check_mlp<double>,
 									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets, ith_case,
@@ -908,7 +844,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	for(thread_id = 0; thread_id < n_threads; ++thread_id)
 	{
 	  
-	  results.push_back(pool.add_task(fprop_mlp, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
+	  results.push_back(pool.add_task(fprop_mlp<double>, std::ref(total_layers), total_cases_ptr, ith_case, total_activations_ptr, total_activations_length, total_hidden_weights_ptr, total_hidden_weights_length, total_bias_ptr, n_threads, thread_id));
 	  current_layer = 1;
 	  previous_layer = 0; 
 	  current_layer_index = 0;
@@ -993,13 +929,12 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 	  for(i = 0; i < total_activations_length; ++i)
 		EXPECT_DOUBLE_EQ(total_activations_ptr[i], total_activations_ptr_test[i])<<"i: "<<i<<"\n";
 
-	  multi_layer_perceptron<double> mlp;
-	  mlp.get_outputs(total_layers,
-					  total_activations_ptr, total_activations_length,
-					  outputs_ptr,
-					  n_threads,
-					  thread_id
-					 );
+	   pool.add_task(get_outputs_mlp<double>, total_layers,
+	 				 total_activations_ptr, total_activations_length,
+					 outputs_ptr,
+					 n_threads,
+					 thread_id
+				    ).get();
 
 	  // validate output_layer
 	  for(i = 0; i < output_layer_nodes; ++i)
@@ -1039,7 +974,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
      loss->error(zinhart::function_space::derivative(), outputs_ptr, current_target, current_error_matrix, output_layer_nodes);
  
 	 // begin backprop 
-	 results[thread_id] = pool.add_task(bprop_mlp, std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
+	 results[thread_id] = pool.add_task(bprop_mlp<double>, std::ref(total_layers), total_cases_ptr, total_targets_ptr, d_error, ith_case, 
 										 total_activations_ptr, total_deltas_ptr, total_activations_length, 
 										 total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length, 
 										 total_bias_ptr, 
@@ -1127,7 +1062,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
 		EXPECT_NEAR(total_gradient_ptr[i], total_gradient_ptr_test[i], std::numeric_limits<double>::epsilon())<< "case: "<<ith_case<<" thread_id: "<<thread_id<<" i: "<<i<<"\n";
 	  
 	  // gradient check
-	  results[thread_id] = pool.add_task(gradient_check_mlp,
+	  results[thread_id] = pool.add_task(gradient_check_mlp<double>,
 									  loss,
 									  total_layers,
 									  total_cases_ptr, total_targets_ptr, ith_case,
