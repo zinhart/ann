@@ -59,6 +59,10 @@ namespace zinhart
 	  { remove_layer_impl(index); }
 
 	template <class precision_type>
+	  HOST std::uint32_t ann<precision_type>::size()const
+	  { return size_impl(); }
+
+	template <class precision_type>
   	  HOST void ann<precision_type>::set_optimizer(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op)
 	  { set_optimizer_impl(op); }
 

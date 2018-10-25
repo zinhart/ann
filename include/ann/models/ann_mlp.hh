@@ -23,11 +23,12 @@ namespace zinhart
 		  std::uint32_t total_bias_length;
 		  std::uint32_t batch_size;
 
-		  HOST virtual void add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
-		  HOST virtual void remove_layer_impl(std::uint32_t index);
-		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op);
-		  HOST virtual void set_loss_function_inpl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function);
-		  HOST virtual void init_impl();
+		  HOST virtual void add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) override;
+		  HOST virtual void remove_layer_impl(std::uint32_t index) override;
+		  HOST virtual std::uint32_t size_impl()const override;
+		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op) override;
+		  HOST virtual void set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) override;
+		  HOST virtual void init_impl() override;
 		protected:
 #if CUDA_ENABLED == MULTI_CORE_DISABLED
 
@@ -87,6 +88,9 @@ namespace zinhart
 		  ~ann_mlp();
 		  HOST void add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
 		  HOST void remove_layer(std::uint32_t index);
+		  HOST std::uint32_t size()const;
+		  HOST void init();
+		  HOST const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & operator [] (std::uint32_t index) const;
 		  HOST void forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 									  const precision_type * total_training_cases, const std::uint32_t case_index,
 									  precision_type * tot_activations, const std::uint32_t total_activations_length,

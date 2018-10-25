@@ -55,8 +55,9 @@ namespace zinhart
 		  HOST virtual void add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) = 0;
 		  HOST virtual void remove_layer_impl(std::uint32_t index) = 0;
 		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op) = 0;
-		  HOST virtual void set_loss_function_inpl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) = 0;
+		  HOST virtual void set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) = 0;
 		  HOST virtual void init_impl() = 0;
+		  HOST virtual std::uint32_t size_impl()const = 0;
 
 		  HOST virtual void forward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 												   const precision_type * total_training_cases, const std::uint32_t case_index,
@@ -142,6 +143,7 @@ namespace zinhart
 			                          );	  
 		  HOST void add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
 		  HOST void remove_layer(const std::uint32_t index);
+		  HOST std::uint32_t size()const;
 		  HOST void set_optimizer(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op);
 		  HOST void set_loss_function(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function);
 		 

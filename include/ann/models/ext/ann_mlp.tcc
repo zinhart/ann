@@ -12,13 +12,16 @@ namespace zinhart
 		assert(index < total_layers.size());
 		total_layers.erase(total_layers.begin() + index);
 	  }
+	template <class precision_type>
+	  HOST std::uint32_t ann_mlp<precision_type>::size_impl()const
+	  {	return total_layers.size(); }
 
 	template<class precision_type>
   	  HOST void ann_mlp<precision_type>::set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op)
 	  { optimizer = op; }
 
 	template<class precision_type>
-	  HOST void ann_mlp<precision_type>::set_loss_function_inpl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function)
+	  HOST void ann_mlp<precision_type>::set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function)
 	  { this->loss_function = loss_function; }
 
 	template<class precision_type>
@@ -40,14 +43,7 @@ namespace zinhart
 
 
 #if CUDA_ENABLED == MULTI_CORE_DISABLED
-	template <class precision_type>
-	  HOST ann_mlp<precision_type>::ann_mlp()
-	  {
-	  }
-	template <class precision_type>
-	  HOST ann_mlp<precision_type>::~ann_mlp()
-	  {
-	  }
+
 	template <class precision_type>
 	  HOST void ann_mlp<precision_type>::forward_propagate(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
 													   const  precision_type * total_training_cases, const std::uint32_t case_index,
@@ -95,11 +91,29 @@ namespace zinhart
 	   { backward_propagate_impl(total_layers, total_training_cases, total_targets, d_error, case_index, tot_activations, total_deltas, tot_activations_length, total_hidden_weights, tot_grad, total_hidden_weights_length, total_bias, n_threads, thread_id);}		 
 #endif
 	template <class precision_type>
+	  HOST ann_mlp<precision_type>::ann_mlp()
+	  {
+	  }
+	template <class precision_type>
+	  HOST ann_mlp<precision_type>::~ann_mlp()
+	  {
+	  }
+	template <class precision_type>
+  	  HOST void ann_mlp<precision_type>::init()
+	  {
+	  }
+	template <class precision_type>
+	  HOST const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & ann_mlp<precision_type>::operator [] (std::uint32_t index)const
+	  { return total_layers.at(index); } // .at throws exceptionw when a index is out of range
+	template <class precision_type>
   	  HOST void ann_mlp<precision_type>::add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
-	  { add_layer(layer); }
+	  { add_layer_impl(layer); }
+	template <class precision_type>
+	  HOST std::uint32_t ann_mlp<precision_type>::size()const
+	  {	return size_impl(); }
 	template <class precision_type>
   	  HOST void ann_mlp<precision_type>::remove_layer(std::uint32_t index)
-	  { remove_layer(index); }
+	  { remove_layer_impl(index); }
 	
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART
