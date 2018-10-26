@@ -138,7 +138,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const = 0;
 			HOST virtual void set_bias(precision_type bias) = 0;
 			HOST virtual precision_type get_bias()const = 0;
-//			HOST virtual activation<precision_type> get_activation() = 0;
+			HOST virtual std::string name()const = 0;
 		};
 
 	  template<class precision_type>
@@ -163,6 +163,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -186,6 +187,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -209,6 +211,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 
@@ -233,6 +236,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -256,6 +260,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -279,6 +284,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -303,6 +309,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 	  template<class precision_type>
@@ -327,6 +334,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 
 
@@ -356,6 +364,7 @@ namespace zinhart
 			HOST virtual std::uint32_t get_size()const override;
 			HOST virtual void set_bias(precision_type bias)override;
 			HOST virtual precision_type get_bias()const override;
+			HOST virtual std::string name()const override;
 		};
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS
