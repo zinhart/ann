@@ -45,8 +45,6 @@ namespace zinhart
 	  class ann
 	  {
 		protected:
-//		  std::uint32_t tot_wts;
-//		  std::uint32_t tot_acts;
 #if CUDA_ENABLED == MULTI_CORE_DISABLED
 		  std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> optimizer;
 		  std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> loss_function;
@@ -56,7 +54,7 @@ namespace zinhart
 		  HOST virtual void remove_layer_impl(std::uint32_t index) = 0;
 		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op) = 0;
 		  HOST virtual void set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) = 0;
-		  HOST virtual void init_impl() = 0;
+		  HOST virtual void init_impl(std::uint32_t n_threads) = 0;
 		  HOST virtual std::uint32_t size_impl()const = 0;
 
 		  HOST virtual void forward_propagate_impl(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers,
@@ -148,7 +146,7 @@ namespace zinhart
 		  HOST void set_loss_function(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function);
 		 
 #endif
-		  HOST void init();
+		  HOST void init(std::uint32_t n_threads = 1);
 	  };
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART

@@ -73,8 +73,8 @@ namespace zinhart
 #endif
 	
 	template <class precision_type>	  
-	   HOST void ann<precision_type>::init()
-	   { init_impl(); }
+	   HOST void ann<precision_type>::init(std::uint32_t n_threads)
+	   { init_impl(n_threads); }
 /*
 	template <class precision_type>
 	   HOST std::uint32_t ann<precision_type>::get_total_hidden_weights()const

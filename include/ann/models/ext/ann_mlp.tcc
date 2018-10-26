@@ -23,23 +23,92 @@ namespace zinhart
 	template<class precision_type>
 	  HOST void ann_mlp<precision_type>::set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function)
 	  { this->loss_function = loss_function; }
+	
+	template<class precision_type>
+	  HOST void ann_mlp<precision_type>::safe_allocate(std::uint32_t total_activations_length, std::uint32_t total_hidden_weights_length)
+	  {
+		if(total_activations_ptr != nullptr)
+		  total_activations_ptr   = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+		else
+		{
+		  delete [] total_activations_ptr;
+		  total_activations_ptr   = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+		}
+
+		if(total_deltas_ptr != nullptr)
+		  total_deltas_ptr   = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+		else
+		{
+		  delete [] total_deltas_ptr;
+		  total_deltas_ptr   = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+		}
+
+
+		if(total_hidden_weights_ptr != nullptr)
+		  total_hidden_weights_ptr   = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+		else
+		{
+		  delete [] total_hidden_weights_ptr;
+		  total_hidden_weights_ptr   = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+		}
+
+		if(total_gradient_ptr != nullptr)
+		  total_gradient_ptr   = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+		else
+		{
+		  delete [] total_gradient_ptr;
+		  total_gradient_ptr   = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+		}
+	  }
 
 	template<class precision_type>
-	  HOST void ann_mlp<precision_type>::init_impl()
+	  HOST void ann_mlp<precision_type>::safe_deallocate()
 	  {
+		if(total_activations_ptr != nullptr)
+		{
+		  mkl_free(total_activations_ptr);
+		  total_activations_ptr = nullptr;
+		}
+		if(total_deltas_ptr != nullptr)
+		{
+		  mkl_free(total_deltas_ptr);
+		  total_deltas_ptr = nullptr;
+		}
+		if(total_hidden_weights_ptr != nullptr)
+		{
+		  mkl_free(total_hidden_weights_ptr);
+		  total_deltas_ptr = nullptr;
+		}
+		if(total_gradient_ptr != nullptr)
+		{
+		  mkl_free(total_gradient_ptr);
+		  total_gradient_ptr = nullptr;
+		}
+	  }
+
+	template<class precision_type>
+	  HOST void ann_mlp<precision_type>::init_impl(std::uint32_t n_threads)
+	  {
+		assert(total_layers.size() > 0);
+		this->alignment =  (sizeof(precision_type) == sizeof(float)) ? 32 : 64;
+		this->n_threads = n_threads;
+	    
+		// calc number of activations
+		for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
+	  	  total_activations_length += total_layers[ith_layer]->get_size();//accumulate neurons in the hidden layers and output layer
+		total_activations_length *= n_threads;
+		
+		// calc number of hidden weights
+		for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+		  total_hidden_weights_length += total_layers[ith_layer + 1]->get_size() * total_layers[ith_layer]->get_size(); 
+
+		safe_allocate(total_activations_length, total_hidden_weights_length);
 	  }
 	template<class precision_type>
 	  HOST void ann_mlp<precision_type>::train_impl(bool verbose)
 	  {
 	  }
-	template<class precision_type>
-	  HOST std::uint32_t ann_mlp<precision_type>::get_total_hidden_weights()const
-	  {
-	  }
-	template<class precision_type>
-	  HOST std::uint32_t ann_mlp<precision_type>::get_total_activations()const 
-	  {
-	  }
+
 
 
 #if CUDA_ENABLED == MULTI_CORE_DISABLED
@@ -91,17 +160,17 @@ namespace zinhart
 	   { backward_propagate_impl(total_layers, total_training_cases, total_targets, d_error, case_index, tot_activations, total_deltas, tot_activations_length, total_hidden_weights, tot_grad, total_hidden_weights_length, total_bias, n_threads, thread_id);}		 
 #endif
 	template <class precision_type>
-	  HOST ann_mlp<precision_type>::ann_mlp()
+	  HOST ann_mlp<precision_type>::ann_mlp(std::uint32_t batch_size, std::uint32_t n_threads)
 	  {
+		this->total_activations_ptr    = nullptr;
+		this->total_deltas_ptr         = nullptr;
+		this->total_hidden_weights_ptr = nullptr;
+		this->total_gradient_ptr       = nullptr;
+	//	init(batch_size, n_threads);
 	  }
 	template <class precision_type>
 	  HOST ann_mlp<precision_type>::~ann_mlp()
-	  {
-	  }
-	template <class precision_type>
-  	  HOST void ann_mlp<precision_type>::init()
-	  {
-	  }
+	  { safe_deallocate(); }
 	template <class precision_type>
 	  HOST const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & ann_mlp<precision_type>::operator [] (std::uint32_t index)const
 	  { return total_layers.at(index); } // .at throws exceptionw when a index is out of range
@@ -114,6 +183,14 @@ namespace zinhart
 	template <class precision_type>
   	  HOST void ann_mlp<precision_type>::remove_layer(std::uint32_t index)
 	  { remove_layer_impl(index); }
-	
+	template <class precision_type>
+  	  HOST void ann_mlp<precision_type>::init(std::uint32_t n_threads)
+	  { init_impl(n_threads); }
+	template<class precision_type>
+	  HOST std::uint32_t ann_mlp<precision_type>::total_activations()const 
+	  { return total_activations_length; }
+	template<class precision_type>
+	  HOST std::uint32_t ann_mlp<precision_type>::total_hidden_weights()const
+	  { return total_hidden_weights_length; }
   }// END NAMESPACE MODELS
 }// END NAMESPACE ZINHART
