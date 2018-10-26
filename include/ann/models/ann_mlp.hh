@@ -35,8 +35,9 @@ namespace zinhart
 		  HOST void safe_allocate(std::uint32_t total_activations_length, std::uint32_t total_hidden_weights_length);
 		  HOST void safe_deallocate();
 
-		  HOST virtual void add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) override;
-		  HOST virtual void remove_layer_impl(std::uint32_t index) override;
+		  HOST virtual void add_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer) override;
+		  HOST virtual void insert_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer, const std::uint32_t pos);
+		  HOST virtual void remove_impl(std::uint32_t pos) override;
 		  HOST virtual std::uint32_t size_impl()const override;
 		  HOST virtual void set_optimizer_impl(const std::shared_ptr<zinhart::optimizers::optimizer<precision_type>> & op) override;
 		  HOST virtual void set_loss_function_impl(const std::shared_ptr<zinhart::loss_functions::loss_function<precision_type>> & loss_function) override;
@@ -96,8 +97,9 @@ namespace zinhart
           const ann_mlp & operator = (const ann_mlp &)= delete;
           const ann_mlp & operator = (ann_mlp&&) = delete;
 		  ~ann_mlp();
-		  HOST void add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
-		  HOST void remove_layer(std::uint32_t index);
+		  HOST void add(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer);
+		  HOST void insert(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer, const std::uint32_t pos);
+		  HOST void remove(const std::uint32_t pos);
 		  HOST std::uint32_t size()const;
 		  HOST void init(std::uint32_t n_threads = 1);
 		  HOST std::uint32_t total_activations()const;

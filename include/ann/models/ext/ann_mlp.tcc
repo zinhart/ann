@@ -3,14 +3,18 @@ namespace zinhart
   namespace models
   {
 	template<class precision_type>
-	  HOST void ann_mlp<precision_type>::add_layer_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
+	  HOST void ann_mlp<precision_type>::add_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
 	  {	total_layers.push_back(layer); }
 
 	template<class precision_type>
-	  HOST void ann_mlp<precision_type>::remove_layer_impl(std::uint32_t index)
+	  HOST void ann_mlp<precision_type>::insert_impl(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer, const std::uint32_t pos)
+	  {	total_layers.insert(total_layers.begin() + pos, layer); }
+
+	template<class precision_type>
+	  HOST void ann_mlp<precision_type>::remove_impl(std::uint32_t pos)
 	  {
-		assert(index < total_layers.size());
-		total_layers.erase(total_layers.begin() + index);
+		assert(pos >= 0 && pos <= total_layers.size());
+		total_layers.erase(total_layers.begin() + pos);
 	  }
 	template <class precision_type>
 	  HOST std::uint32_t ann_mlp<precision_type>::size_impl()const
@@ -175,14 +179,17 @@ namespace zinhart
 	  HOST const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & ann_mlp<precision_type>::operator [] (std::uint32_t index)const
 	  { return total_layers.at(index); } // .at throws exceptionw when a index is out of range
 	template <class precision_type>
-  	  HOST void ann_mlp<precision_type>::add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
-	  { add_layer_impl(layer); }
+  	  HOST void ann_mlp<precision_type>::add(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
+	  { add_impl(layer); }
+	template <class precision_type>
+  	  HOST void ann_mlp<precision_type>::insert(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer, const std::uint32_t pos)
+	  { insert_impl(layer); }
+	template <class precision_type>
+  	  HOST void ann_mlp<precision_type>::remove(std::uint32_t pos)
+	  { remove_impl(pos); }
 	template <class precision_type>
 	  HOST std::uint32_t ann_mlp<precision_type>::size()const
 	  {	return size_impl(); }
-	template <class precision_type>
-  	  HOST void ann_mlp<precision_type>::remove_layer(std::uint32_t index)
-	  { remove_layer_impl(index); }
 	template <class precision_type>
   	  HOST void ann_mlp<precision_type>::init(std::uint32_t n_threads)
 	  { init_impl(n_threads); }

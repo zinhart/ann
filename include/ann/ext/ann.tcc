@@ -51,12 +51,16 @@ namespace zinhart
 	   { backward_propagate_impl(total_layers, total_training_cases, total_targets, d_error, case_index, tot_activations, total_deltas, tot_activations_length, total_hidden_wts, tot_grad, total_hidden_wts_length, total_bias, n_threads, thread_id);}		 
 
 	template <class precision_type>
-  	  HOST void ann<precision_type>::add_layer(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
-	  { add_layer_impl(layer); }
+  	  HOST void ann<precision_type>::add(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer)
+	  { add_impl(layer); }
 
 	template <class precision_type>
-	  HOST void ann<precision_type>::remove_layer(std::uint32_t index)
-	  { remove_layer_impl(index); }
+	  HOST void ann<precision_type>::insert(const std::shared_ptr<zinhart::models::layers::layer<precision_type>> & layer, const std::uint32_t pos)
+	  { insert_impl(layer, pos); }
+
+	template <class precision_type>
+	  HOST void ann<precision_type>::remove(const std::uint32_t pos)
+	  { remove_impl(pos); }
 
 	template <class precision_type>
 	  HOST std::uint32_t ann<precision_type>::size()const
