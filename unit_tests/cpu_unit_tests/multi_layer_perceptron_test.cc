@@ -1134,7 +1134,7 @@ TEST(multi_layer_perceptron, train)
   std::uniform_real_distribution<float> neg_real_dist(-1.0, 0);
   std::uniform_real_distribution<float> pos_real_dist(0, 1.0);
   // declarations for vector lengths
-  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_training_cases_length{0}, total_targets_length{0}, total_cases{0}, total_error_length{0};
+  std::uint32_t total_activations_length{0}, total_hidden_weights_length{0}, total_gradient_length{0}, total_bias_length{0}, total_training_cases_length{0}, total_targets_length{0}, total_training_cases{0}, total_error_length{0};
 
   
   // declarations for pointers
@@ -1171,7 +1171,7 @@ TEST(multi_layer_perceptron, train)
   std::uniform_int_distribution<std::uint32_t> case_dist(n_threads, 50);
   // set total case length 
   total_training_cases_length = total_layers[input_layer]->get_size() * /*case_dist(mt)*/ 500; // 100 of each class
-  total_cases = total_training_cases_length / total_layers[input_layer]->get_size();
+  total_training_cases = total_training_cases_length / total_layers[input_layer]->get_size();
  
   
   // calc number of activations
@@ -1184,7 +1184,7 @@ TEST(multi_layer_perceptron, train)
 	total_hidden_weights_length += total_layers[ith_layer + 1]->get_size() * total_layers[ith_layer]->get_size(); 
   total_gradient_length = total_hidden_weights_length * n_threads;// important!
   total_bias_length = total_layers.size() - 1;
-  total_targets_length = total_layers[output_layer]->get_size() * total_cases;
+  total_targets_length = total_layers[output_layer]->get_size() * total_training_cases;
 
 
   const std::uint32_t alignment{64};
@@ -1204,18 +1204,160 @@ TEST(multi_layer_perceptron, train)
   error_matrix = (double*) mkl_malloc(total_error_length * sizeof(double), alignment );
 
 
-  double x_coordinate{0}, y_coordinate{0};
+  double coordinate{0};
 
   // initialize training data matrix
   for(i = 0; i < total_training_cases_length; ++i)
 	total_training_cases_ptr[i] = 0;
   // set training data
-  
+  for(i = 0; i < total_training_cases; ++i)
+  {
+	for(j = 0; j < total_layers[input_layer]->get_size(); ++j)
+	{
+	  // first quadrant class 1
+	  if( i <= 100)
+	  {
+		coordinate = pos_real_dist(mt);
+  		total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+	  }
+	  // second quadrant class 2
+	  else if (i > 100 && i <= 200)
+	  {
+
+		if(j == 0)
+		{
+
+  		  coordinate = neg_real_dist(mt);
+  		  total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+		}
+		else
+		{
+  		  coordinate = pos_real_dist(mt);
+  		  total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+		}
+	  }
+	  // third quadrant class 3
+	  else if(i > 200 && i <= 300)
+	  {
+		coordinate = neg_real_dist(mt);
+  		total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+	  }
+
+	  // first quadrant class 4
+	  else if(i > 300 && i <= 400)
+	  {
+		if(j == 0)
+		{
+
+  		  coordinate = pos_real_dist(mt);
+  		  total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+		}
+		else
+		{
+  		  coordinate = neg_real_dist(mt);
+  		  total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+		}
+	  }
+	  // class 5
+	  else if(i > 400 && i <= 500)
+	  {
+  		coordinate = 0.0;
+  	    total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j] = coordinate;
+	  }
+	}
+  }
+  // visualize training data
+  for(i = 0; i < total_training_cases; ++i)
+  {
+	for(j = 0; j < total_layers[input_layer]->get_size(); ++j) 
+	{
+	  std::cout<< total_training_cases_ptr[i * total_layers[input_layer]->get_size() + j]<< " " ;
+	}
+	std::cout<<"\n";
+  }
   // initialize target matrix
   for(i = 0; i < total_targets_length; ++i)
 	total_targets_ptr[i] = 0;
 
   // set target vectors
+  for(i = 0; i < total_training_cases; ++i)
+  {
+	for(j = 0; j < total_layers[output_layer]->get_size(); ++j)
+	{
+	  // first quadrant class 1
+	  if( i <= 100)
+	  {
+		if(j == 0)
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 1.0 ;
+		}
+		else
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 0.0 ;
+		}
+  	  }
+	  // second quadrant class 2
+	  else if (i > 100 && i <= 200)
+	  {
+		if(j == 1)
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 1.0 ;
+		}
+		else
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 0.0 ;
+		}
+	  }
+	  // third quadrant class 3
+	  else if(i > 200 && i <= 300)
+	  {
+		if(j == 2)
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 1.0 ;
+		}
+		else
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 0.0 ;
+		}
+	  }
+
+	  // first quadrant class 4
+	  else if(i > 300 && i <= 400)
+	  {
+		if(j == 3)
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 1.0 ;
+		}
+		else
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 0.0 ;
+		}
+	  }
+	  // class 5
+	  else if(i > 400 && i <= 500)
+	  {
+		if(j == 4)
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 1.0 ;
+		}
+		else
+		{
+		  total_targets_ptr[i * total_layers[output_layer]->get_size() + j] = 0.0 ;
+		}
+	  }
+	}
+  }
+  
+  // visualize target data
+  for(i = 0; i < total_training_cases; ++i)
+  {
+	for(j = 0; j < total_layers[output_layer]->get_size(); ++j) 
+	{
+	  std::cout<< total_targets_ptr[i * total_layers[output_layer]->get_size() + j]<< " " ;
+	}
+	std::cout<<"\n";
+  }
+
   for(i = 0; i < total_activations_length; ++i)
   {
 	total_activations_ptr[i] = 0.0;
