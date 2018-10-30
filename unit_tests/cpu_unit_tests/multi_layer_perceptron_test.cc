@@ -1149,8 +1149,8 @@ TEST(multi_layer_perceptron, train_thread_safety)
   double * error_matrix{nullptr};
 
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
-  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function;
-  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer;
+  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
+  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
 
   // loop counters misc vars
   std::uint32_t i{0}, j{0}, ith_layer{0}, ith_case{0}, n_layers{1/*layer_dist(mt)*/};

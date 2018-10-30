@@ -555,27 +555,29 @@ namespace zinhart
 			// synchronize outputs
 			for(thread_id = 0; thread_id < batch_size; ++thread_id)
 			  tasks[thread_id].get();
-/*
+
 			// calculate error and error derivatives
 			for(case_id = ith_training_case - batch_size, thread_id = 0; case_id < ith_training_case; ++case_id)
 			{
-			  const precision_type * current_target_ptr = total_targets_ptr + (case_id * total_layers[output_layer]->get_size());
-			  error_tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(loss_function->error(zinhart::function_space::objective{},
-																											 model_outputs_ptr[thread_id],
-																											 current_target_ptr,
-																											 total_layers[output_layer]->get_size()
-																											)
-				                                                                       )
-				                   );
+			  // clean this up
+			  auto error = [&loss_function](const precision_type * o, const precision_type * t, std::uint32_t len)
+			  {
+				return loss_function->error(zinhart::function_space::objective{}, o, t, len);
+			  };
+			  const precision_type * current_target_ptr{total_targets_ptr + (case_id * total_layers[output_layer]->get_size())};
+			  const precision_type * current_outputs_ptr{model_outputs_ptr[thread_id]};
+			  const std::uint32_t length{ total_layers[output_layer]->get_size() };
+			  error_tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(error, current_outputs_ptr, current_target_ptr, length) );
 			}
 
 			// synchronize error calculation
-			for(thread_id = 0; thread_id < batch_size; ++thread_id)
+			for(thread_id = 0, batch_error = 0; thread_id < batch_size; ++thread_id)
 			{
 			  batch_error += error_tasks[thread_id].get();
 			 // tasks[thread_id].get();
 			}
-*/
+			error_tasks.clear();
+/**/
 			
 			if(verbose == true) 
 			{
