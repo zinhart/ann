@@ -99,12 +99,13 @@ namespace zinhart
 		};// END CLASS MULTI_LAYER_PERCEPTRON
 	template<class precision_type>
   	  HOST void fprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
-			   precision_type * total_cases_ptr, const std::uint32_t ith_training_case,
-			   precision_type * total_activations_ptr, const std::uint32_t activations_length,
-			   precision_type * total_hidden_weights_ptr, const std::uint32_t weights_length,
-			   precision_type * total_bias_ptr,
-			   const std::uint32_t total_threads, const std::uint32_t thread_index
-			  );
+						  precision_type * total_cases_ptr, const std::uint32_t ith_training_case,
+						  precision_type * total_activations_ptr, const std::uint32_t activations_length,
+						  precision_type * total_hidden_weights_ptr, const std::uint32_t weights_length,
+						  precision_type * total_bias_ptr,
+						  const std::uint32_t total_threads, 
+						  const std::uint32_t thread_id
+						 );
 
 	template<class precision_type>
 	  HOST void get_outputs_mlp(const std::vector< std::shared_ptr< zinhart::models::layers::layer<precision_type> > > & total_layers, 
@@ -139,14 +140,14 @@ namespace zinhart
 	  void train(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
 		         std::shared_ptr< zinhart::loss_functions::loss_function<precision_type> > loss_function,
 		         std::shared_ptr< zinhart::optimizers::optimizer<precision_type> > optimizer,
-				 const precision_type * const total_training_cases_ptr, const std::uint32_t total_training_cases_length,
-				 const precision_type * const total_targets_ptr, const precision_type * const total_error_ptr,
+				 precision_type * total_training_cases_ptr,  const std::uint32_t total_training_cases_length,
+				 const precision_type * const total_targets_ptr, precision_type * total_error_ptr,
 				 precision_type * total_activations_ptr, precision_type * total_deltas_ptr, const std::uint32_t total_activations_length,
-				 const precision_type * const total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
-				 const precision_type * const total_bias_ptr,
+				 precision_type * total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
+				 precision_type * total_bias_ptr,
 				 const std::uint32_t batch_size = 1,
-				 const std::uint32_t n_threads = 1,
-		         bool verbose = true
+		         bool verbose = true,
+				 std::ostream & output_stream = std::cout
 		        );
 
   }// END NAMESPACE MODELS

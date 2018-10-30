@@ -1111,7 +1111,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(gradient_approx);
 }
 
-TEST(multi_layer_perceptron, train)
+TEST(multi_layer_perceptron, train_thread_safety)
 {
   /* Learning A toy data set with 5 classes. 4 of  which is a quadrant plane.
    * E.g 
@@ -1155,6 +1155,7 @@ TEST(multi_layer_perceptron, train)
   // loop counters misc vars
   std::uint32_t i{0}, j{0}, ith_layer{0}, ith_case{0}, n_layers{1/*layer_dist(mt)*/};
   const std::uint32_t n_threads{thread_dist(mt)};
+  const std::uint32_t batch_size{n_threads};
   const std::uint32_t input_layer{0};
 
   // set layers
@@ -1385,9 +1386,9 @@ TEST(multi_layer_perceptron, train)
 		total_activations_ptr, total_deltas_ptr, total_activations_length,
 		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
 		total_bias_ptr,
-		10, // batchsize
-		n_threads,
-		true
+		batch_size,
+		true,
+		std::cout
 	   );
 
 

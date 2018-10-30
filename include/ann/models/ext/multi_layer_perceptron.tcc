@@ -143,7 +143,8 @@ namespace zinhart
 																		    const precision_type * total_bias, 
 																		    precision_type * numerically_approx_gradient, 
 																		    const precision_type limit_epsilon, 
-																		    const std::uint32_t n_threads, const std::uint32_t thread_id
+																		    const std::uint32_t n_threads, 
+																			const std::uint32_t thread_id
 																		   )
 	  { 
 		zinhart::function_space::objective objective_function{};
@@ -483,107 +484,154 @@ namespace zinhart
 							   thread_id
 							  );
 	  }
+	
 	template<class precision_type>
 	  void train(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
 		         std::shared_ptr< zinhart::loss_functions::loss_function<precision_type> > loss_function,
 		         std::shared_ptr< zinhart::optimizers::optimizer<precision_type> > optimizer,
-				 const precision_type * const total_training_cases_ptr,  const std::uint32_t total_training_cases_length,
-				 const precision_type * const total_targets_ptr, const precision_type * const total_error_ptr,
+				 precision_type * total_training_cases_ptr,  const std::uint32_t total_training_cases_length,
+				 const precision_type * const total_targets_ptr, precision_type * total_error_ptr,
 				 precision_type * total_activations_ptr, precision_type * total_deltas_ptr, const std::uint32_t total_activations_length,
-				 const precision_type * const total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
-				 const precision_type * const total_bias_ptr,
+				 precision_type * total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
+				 precision_type * total_bias_ptr,
 				 const std::uint32_t batch_size,
-				 const std::uint32_t n_threads,
-		         bool verbose
+		         bool verbose,
+				 std::ostream & output_stream
 		        )
 	  {
-
-		multi_layer_perceptron<precision_type> mlp;
-
 		// task futures
+		zinhart::multi_core::default_thread_pool::resize(batch_size);// consider moving this to scope of function that calls train
 		std::vector<zinhart::multi_core::thread_pool::task_future<void>> tasks;
-		zinhart::multi_core::default_thread_pool::resize(n_threads);// consider moving this to scope of function that calls train
+		std::vector<zinhart::multi_core::thread_pool::task_future<precision_type>> error_tasks;
 
-		std::uint32_t ith_batch{0}, ith_training_case{0}, thread_id{0};
+		std::uint32_t ith_batch{0}, ith_training_case{0}, thread_id{0}, i{0}, case_id{0};
 		const std::uint32_t input_layer{0};
-		const std::uint32_t total_training_cases{ total_training_cases_length / total_layers[input_layer]->get_size() };
+		const std::uint32_t output_layer{total_layers.size() - 1};
+//		precision_type * current_target_ptr{nullptr};
+		precision_type ** model_outputs_ptr{nullptr};
+	    model_outputs_ptr = new precision_type*[batch_size];
+		for(thread_id = 0; thread_id < batch_size; ++thread_id)
+		{
+		  model_outputs_ptr[thread_id] = new precision_type[total_layers[output_layer]->get_size()];
+		  for(i = 0; i < total_layers[output_layer]->get_size(); ++i)
+			model_outputs_ptr[thread_id][i] = precision_type{};
+		}
+		precision_type batch_error{0.0};
 
+		const std::uint32_t total_training_cases{ total_training_cases_length / total_layers[input_layer]->get_size() };
 		const std::uint32_t full_batches{ total_training_cases / batch_size  };
 		const std::uint32_t remaining_cases{ total_training_cases % batch_size  };
 		const std::uint32_t training_loop_stop{ total_training_cases - remaining_cases };
 
 		if(verbose == true) 
 		{
-		  std::cout<<"full batches: "             << full_batches                          << "\n";
-		  std::cout<<"left over cases: "          << remaining_cases                       << "\n";
-		  std::cout<<"cases per batch: "          << batch_size                            << "\n";
-		  std::cout<<"total training cases: "     << total_training_cases                  << "\n";
-		  std::cout<<"case dimensions: "          << total_layers[input_layer]->get_size() << "\n";
-		  std::cout<<"model layers: "             << total_layers.size() << "\n";
+		  output_stream<<"full batches: "             << full_batches                          << "\n";
+		  output_stream<<"left over cases: "          << remaining_cases                       << "\n";
+		  output_stream<<"cases per batch: "          << batch_size                            << "\n";
+		  output_stream<<"total training cases: "     << total_training_cases                  << "\n";
+		  output_stream<<"case dimensions: "          << total_layers[input_layer]->get_size() << "\n";
+		  output_stream<<"model layers: "             << total_layers.size() << "\n";
 		}
 
-		
-
 		// this loop completes full batches
-		for(ith_training_case = 0; ith_training_case < training_loop_stop; ++ith_training_case)
+		for(ith_training_case = 0, thread_id = 0; ith_training_case < training_loop_stop; ++ith_training_case)
 		{
-		  if(ith_training_case % batch_size == 0)
-		  {
 
+		  if(ith_training_case % batch_size == 0 && ith_training_case > 0)
+		  {	        
 			// synchronize forward propagate threads because time it's to back propagate
-			for(thread_id = 0; thread_id < n_threads; ++thread_id)
-  			{
-  			}
-
+			for(thread_id = 0; thread_id < batch_size; ++thread_id)
+			  tasks[thread_id].get();
+		    
 			// get_outputs
-			for(thread_id = 0; thread_id < n_threads; ++thread_id)
-  			{
-  			}
+			for(thread_id = 0; thread_id < batch_size; ++thread_id)
+			  tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task(get_outputs_mlp<precision_type>,
+																					 std::ref(total_layers), 
+																					 total_activations_ptr, total_activations_length,
+																					 model_outputs_ptr[thread_id],
+																					 batch_size,
+																					 thread_id
+																					);
+			// synchronize outputs
+			for(thread_id = 0; thread_id < batch_size; ++thread_id)
+			  tasks[thread_id].get();
+/*
+			// calculate error and error derivatives
+			for(case_id = ith_training_case - batch_size, thread_id = 0; case_id < ith_training_case; ++case_id)
+			{
+			  const precision_type * current_target_ptr = total_targets_ptr + (case_id * total_layers[output_layer]->get_size());
+			  error_tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(loss_function->error(zinhart::function_space::objective{},
+																											 model_outputs_ptr[thread_id],
+																											 current_target_ptr,
+																											 total_layers[output_layer]->get_size()
+																											)
+				                                                                       )
+				                   );
+			}
 
-			
-			// calculate error and cumulate error
+			// synchronize error calculation
+			for(thread_id = 0; thread_id < batch_size; ++thread_id)
+			{
+			  batch_error += error_tasks[thread_id].get();
+			 // tasks[thread_id].get();
+			}
+*/
 			
 			if(verbose == true) 
 			{
+			  output_stream<<"batches left: "<< full_batches - ith_batch <<"\n";
+			  output_stream<<"current batch: "<< ith_batch <<"\n";
+  			  output_stream<<"ith_training_case: "<< ith_training_case <<"\n";
+			  output_stream<<"batch error: "<< batch_error <<"\n";
 			  // display error current batch batches left
 			}
 			
 			// calculate error derivatives and cumulate error derivatives
 			
 			// back_propagate
-  			for(thread_id = 0; thread_id < n_threads; ++thread_id)
+  			for(thread_id = 0; thread_id < batch_size; ++thread_id)
   			{
   			}
 
 			// optimize weights
-			for(thread_id = 0; thread_id < n_threads; ++thread_id)
+			for(thread_id = 0; thread_id < batch_size; ++thread_id)
   			{
   			}
 				
 			// another gradient w.r.t to current mini-batch done
 			++ith_batch;
 
+			
 			// reset thread id
 			thread_id = 0;
+
+			// clear results
+		    tasks.clear();
 		  }
-/*
+
+		  output_stream<<"thread_id: "<< thread_id<<"\n";
 		  // forward propagate
-		  zinhart::multi_core::default_thread_pool::push_task(fprop_mlp,
-															  total_layers,
-															  total_training_cases_ptr, ith_training_case,
-															  total_activations_ptr, total_activations_length,
-															  total_hidden_weights_ptr, total_hidden_weights_length,
-															  total_bias_ptr,
-															  n_threads,
-															  thread_id
-			                                                 );
-*/
+		  tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(fprop_mlp<precision_type>,
+																			  total_layers,
+																			  total_training_cases_ptr, ith_training_case,
+																			  total_activations_ptr, total_activations_length,
+																			  total_hidden_weights_ptr, total_hidden_weights_length,
+																			  total_bias_ptr,
+																			  batch_size,
+																			  thread_id
+																			 )
+			            );
+
 
 		  // update thread_id for next forward prop case.
 		  ++thread_id;
 
 		}// end training loop
-      	  
+		for(thread_id = 0; thread_id < batch_size; ++thread_id)
+		{
+		  delete [] model_outputs_ptr[thread_id];
+		}
+		delete [] model_outputs_ptr;
 	  }
 #endif
   }// END NAMESPACE MODELS
