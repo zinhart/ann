@@ -135,6 +135,19 @@ namespace zinhart
 					 const std::uint32_t n_threads,
 					 const std::uint32_t thread_id);
 
+	template<class precision_type>
+	  void online_train(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
+					   std::shared_ptr< zinhart::loss_functions::loss_function<precision_type> > loss_function,
+					   std::shared_ptr< zinhart::optimizers::optimizer<precision_type> > optimizer,
+					   precision_type * total_training_cases_ptr,  const std::uint32_t total_training_cases_length,
+					   const precision_type * const total_targets_ptr, precision_type * total_error_ptr,
+					   precision_type * total_activations_ptr, precision_type * total_deltas_ptr, const std::uint32_t total_activations_length,
+					   precision_type * total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
+					   precision_type * total_bias_ptr,
+					   bool verbose = true,
+					   std::ostream & output_stream = std::cout
+					  );
+
 	// defaults to single threaded and online training
 	template<class precision_type>
 	  void batch_train(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
