@@ -1111,7 +1111,7 @@ TEST(multi_layer_perceptron, backward_propagate_thread_safety)
   mkl_free(gradient_approx);
 }
 
-TEST(multi_layer_perceptron, train_thread_safety)
+TEST(multi_layer_perceptron, batch_train_thread_safety)
 {
   /* Learning A toy data set with 5 classes. 4 of  which is a quadrant plane.
    * E.g 
@@ -1379,45 +1379,44 @@ TEST(multi_layer_perceptron, train_thread_safety)
 	error_matrix[i] = 0.0;
 
 
-  train(total_layers,
-	    loss_function,
-		optimizer,
-		total_training_cases_ptr, total_training_cases_length,
-		total_targets_ptr, error_matrix,
-		total_activations_ptr, total_deltas_ptr, total_activations_length,
-		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
-		total_bias_ptr,
-		batch_size,
-		true,
-		std::cout
-	   );
+  batch_train(total_layers,
+	          loss_function,
+		      optimizer,
+			  total_training_cases_ptr, total_training_cases_length,
+			  total_targets_ptr, error_matrix,
+			  total_activations_ptr, total_deltas_ptr, total_activations_length,
+			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
+			  total_bias_ptr,
+			  batch_size,
+			  true,
+			  std::cout
+			 );
 
-  train(total_layers,
-	    loss_function,
-		optimizer,
-		total_training_cases_ptr, total_training_cases_length,
-		total_targets_ptr, error_matrix,
-		total_activations_ptr, total_deltas_ptr, total_activations_length,
-		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
-		total_bias_ptr,
-		batch_size,
-		true,
-		std::cout
-	   );
+  batch_train(total_layers,
+	          loss_function,
+		      optimizer,
+			  total_training_cases_ptr, total_training_cases_length,
+			  total_targets_ptr, error_matrix,
+			  total_activations_ptr, total_deltas_ptr, total_activations_length,
+			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
+			  total_bias_ptr,
+			  batch_size,
+			  true,
+			  std::cout
+			 );
 
-  train(total_layers,
-	    loss_function,
-		optimizer,
-		total_training_cases_ptr, total_training_cases_length,
-		total_targets_ptr, error_matrix,
-		total_activations_ptr, total_deltas_ptr, total_activations_length,
-		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
-		total_bias_ptr,
-		batch_size,
-		true,
-		std::cout
-	   );
-
+  batch_train(total_layers,
+	          loss_function,
+		      optimizer,
+			  total_training_cases_ptr, total_training_cases_length,
+			  total_targets_ptr, error_matrix,
+			  total_activations_ptr, total_deltas_ptr, total_activations_length,
+			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
+			  total_bias_ptr,
+			  batch_size,
+			  true,
+			  std::cout
+			 );
 
   // release memory
   mkl_free(total_activations_ptr);
