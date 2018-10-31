@@ -1268,7 +1268,7 @@ TEST(multi_layer_perceptron, train_thread_safety)
 	}
   }
   // visualize training data
-  for(i = 0; i < total_training_cases; ++i)
+ /* for(i = 0; i < total_training_cases; ++i)
   {
 	for(j = 0; j < total_layers[input_layer]->get_size(); ++j) 
 	{
@@ -1276,6 +1276,7 @@ TEST(multi_layer_perceptron, train_thread_safety)
 	}
 	std::cout<<"\n";
   }
+  */
   // initialize target matrix
   for(i = 0; i < total_targets_length; ++i)
 	total_targets_ptr[i] = 0;
@@ -1348,7 +1349,7 @@ TEST(multi_layer_perceptron, train_thread_safety)
 	  }
 	}
   }
-  
+ /* 
   // visualize target data
   for(i = 0; i < total_training_cases; ++i)
   {
@@ -1358,7 +1359,7 @@ TEST(multi_layer_perceptron, train_thread_safety)
 	}
 	std::cout<<"\n";
   }
-
+*/
   for(i = 0; i < total_activations_length; ++i)
   {
 	total_activations_ptr[i] = 0.0;
