@@ -1392,6 +1392,32 @@ TEST(multi_layer_perceptron, train_thread_safety)
 		std::cout
 	   );
 
+  train(total_layers,
+	    loss_function,
+		optimizer,
+		total_training_cases_ptr, total_training_cases_length,
+		total_targets_ptr, error_matrix,
+		total_activations_ptr, total_deltas_ptr, total_activations_length,
+		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
+		total_bias_ptr,
+		batch_size,
+		true,
+		std::cout
+	   );
+
+  train(total_layers,
+	    loss_function,
+		optimizer,
+		total_training_cases_ptr, total_training_cases_length,
+		total_targets_ptr, error_matrix,
+		total_activations_ptr, total_deltas_ptr, total_activations_length,
+		total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
+		total_bias_ptr,
+		batch_size,
+		true,
+		std::cout
+	   );
+
 
   // release memory
   mkl_free(total_activations_ptr);
