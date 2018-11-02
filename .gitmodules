@@ -1,3 +1,6 @@
 [submodule "multi_core"]
 	path = multi_core
 	url = git@github.com:zinhart/multi_core.git
+[submodule "examples/multi_layer_perceptron"]
+	path = examples/multi_layer_perceptron
+	url = git@github.com:zinhart/multi_layer_perceptron.git
