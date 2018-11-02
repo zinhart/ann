@@ -2,6 +2,8 @@
 #include <multi_core/multi_core.hh>
 #include <cassert>
 #include <exception>
+#include <random>
+#include <algorithm>
 namespace zinhart
 {
   namespace models
@@ -537,15 +539,18 @@ namespace zinhart
 		{
 		  optimizer->update(weights, gradient, len, nthreads, thread_id);
 		};
-
+		std::uint32_t   * case_ids{nullptr};
 		precision_type ** model_outputs_ptr{nullptr};
-	    std::uint32_t thread_id{0};
+	    std::uint32_t     thread_id{0};
 		try
 		{
 		  if(batch_size < 2 )
 			throw std::logic_error("batch_size much be greater than 1, you may also use the online training function");
 		  zinhart::multi_core::default_thread_pool::resize(batch_size);// consider moving this to scope of function that calls train
 
+		  // to shuffle the case id_s;
+		  std::random_device rd;
+		  std::mt19937       mt(rd());
 		  const std::uint32_t input_layer{0};
 		  const std::uint32_t output_layer{total_layers.size() - 1};
 		  const std::uint32_t total_training_cases{ total_training_cases_length / total_layers[input_layer]->get_size() };
@@ -556,6 +561,10 @@ namespace zinhart
 		  std::uint32_t ith_batch{0}, ith_epoch{0}, current_batch_begin{0}, current_batch_end{0}, ith_training_case{0}, i{0}, case_count{0};
 
 		  // allocate 
+		  case_ids          = new std::uint32_t[total_training_cases];
+		  for(i = 0; i < total_training_cases; ++i)
+			case_ids[i]     = i;
+
 		  model_outputs_ptr = new precision_type*[batch_size];
 		  for(thread_id = 0; thread_id < batch_size; ++thread_id)
 		  {
@@ -582,6 +591,8 @@ namespace zinhart
 			{
 			  output_stream<<"current epoch: "<< ith_epoch<<"\n";
 			}
+			// randomly shuffle the case id's
+			std::shuffle(case_ids, case_ids + total_training_cases, mt);
 			for(ith_batch = 1, current_batch_begin = 0, current_batch_end = batch_size; ith_batch <= full_batches; ++ith_batch, current_batch_begin+=batch_size, current_batch_end += batch_size)
   			{
 			  if(verbose == true)			
@@ -596,7 +607,7 @@ namespace zinhart
 				// forward propagate
 				tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(fprop_mlp<precision_type>,
 																					total_layers,
-																					total_training_cases_ptr, ith_training_case,
+																					total_training_cases_ptr, case_ids[ith_training_case],
 																					total_activations_ptr, total_activations_length,
 																					total_hidden_weights_ptr, total_hidden_weights_length,
 																					total_bias_ptr,
@@ -626,7 +637,7 @@ namespace zinhart
 			  for(ith_training_case = current_batch_begin, thread_id = 0; ith_training_case < current_batch_end; ++ith_training_case, ++thread_id)
 			  {
 				// clean this up
-				const precision_type * current_target_ptr{total_targets_ptr + (ith_training_case * total_layers[output_layer]->get_size())};
+				const precision_type * current_target_ptr{total_targets_ptr + (case_ids[ith_training_case] * total_layers[output_layer]->get_size())};
 				const precision_type * current_outputs_ptr{model_outputs_ptr[thread_id]};
 				precision_type       * current_error_ptr{total_error_ptr + (thread_id * total_layers[output_layer]->get_size())};
 				const std::uint32_t length{ total_layers[output_layer]->get_size() };
@@ -655,7 +666,7 @@ namespace zinhart
 			  {
 				tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task(bprop_mlp<precision_type>,
 																					   total_layers,
-																					   total_training_cases_ptr, total_targets_ptr, total_error_ptr, ith_training_case,
+																					   total_training_cases_ptr, total_targets_ptr, total_error_ptr, case_ids[ith_training_case],
 																					   total_activations_ptr, total_deltas_ptr, total_activations_length,
 																					   total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
 																					   total_bias_ptr,
@@ -667,9 +678,7 @@ namespace zinhart
 
 			  // synchronize gradient calculation for this batch
 			  for(thread_id = 0; thread_id < batch_size; ++thread_id)
-			  {
 				tasks[thread_id].get();
-			  }
 
 			  /* sketch
 			   * instead of allocating memory for a space to cumulate the gradient in,
@@ -719,6 +728,9 @@ namespace zinhart
 			delete [] model_outputs_ptr[thread_id];
 		  }
 		  delete [] model_outputs_ptr;
+		  delete [] case_ids;
+
+		  case_ids          = nullptr;
 		  model_outputs_ptr = nullptr;
 
 		}
@@ -732,9 +744,14 @@ namespace zinhart
 			delete [] model_outputs_ptr[thread_id];
 		  }
 		  delete [] model_outputs_ptr;
+		  delete [] case_ids;
+
+		  case_ids          = nullptr;
 		  model_outputs_ptr = nullptr;
 
 		}
+		if(case_ids != nullptr)
+		  delete [] case_ids;
 
 		if(model_outputs_ptr != nullptr)
 		{
@@ -743,7 +760,6 @@ namespace zinhart
 			delete [] model_outputs_ptr[thread_id];
 		  }
 		  delete [] model_outputs_ptr;
-
 		}
 	  }
 #endif
