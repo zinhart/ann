@@ -1389,7 +1389,7 @@ TEST(multi_layer_perceptron, batch_train_thread_safety)
 			  total_activations_ptr, total_deltas_ptr, total_activations_length,
 			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
 			  total_bias_ptr,
-			  max_epochs,
+			  /*max_epochs*/1000,
 			  batch_size,
 			  true,
 			  std::cout
