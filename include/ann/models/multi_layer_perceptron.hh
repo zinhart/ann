@@ -144,6 +144,7 @@ namespace zinhart
 					   precision_type * total_activations_ptr, precision_type * total_deltas_ptr, const std::uint32_t total_activations_length,
 					   precision_type * total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
 					   precision_type * total_bias_ptr,
+					   const std::uint32_t max_epochs = 1,
 					   bool verbose = true,
 					   std::ostream & output_stream = std::cout
 					  );
@@ -158,7 +159,8 @@ namespace zinhart
 					   precision_type * total_activations_ptr, precision_type * total_deltas_ptr, const std::uint32_t total_activations_length,
 					   precision_type * total_hidden_weights_ptr, precision_type * total_gradient_ptr, const std::uint32_t total_hidden_weights_length,
 					   precision_type * total_bias_ptr,
-					   const std::uint32_t batch_size = 1,
+					   const std::uint32_t max_epochs = 1,
+					   const std::uint32_t batch_size = 2,
 					   bool verbose = true,
 					   std::ostream & output_stream = std::cout
 					  );

@@ -1126,6 +1126,7 @@ TEST(multi_layer_perceptron, batch_train_thread_safety)
   // declarations for random numbers
   std::random_device rd;
   std::mt19937 mt(rd());
+  std::uniform_int_distribution<std::uint32_t> epoch_dist(1, 3);
   std::uniform_int_distribution<std::uint32_t> neuron_dist(1, 10);
   std::uniform_int_distribution<std::uint32_t> layer_dist(1, 7);// does not include input layer
   std::uniform_int_distribution<std::uint32_t> loss_function_dist(0, 1);
@@ -1154,6 +1155,7 @@ TEST(multi_layer_perceptron, batch_train_thread_safety)
 
   // loop counters misc vars
   std::uint32_t i{0}, j{0}, ith_layer{0}, ith_case{0}, n_layers{1/*layer_dist(mt)*/};
+  const uint32_t max_epochs{epoch_dist(mt)};
   const std::uint32_t n_threads{thread_dist(mt)};
   const std::uint32_t batch_size{n_threads};
   const std::uint32_t input_layer{0};
@@ -1387,36 +1389,12 @@ TEST(multi_layer_perceptron, batch_train_thread_safety)
 			  total_activations_ptr, total_deltas_ptr, total_activations_length,
 			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
 			  total_bias_ptr,
+			  max_epochs,
 			  batch_size,
 			  true,
 			  std::cout
 			 );
 
-  batch_train(total_layers,
-	          loss_function,
-		      optimizer,
-			  total_training_cases_ptr, total_training_cases_length,
-			  total_targets_ptr, error_matrix,
-			  total_activations_ptr, total_deltas_ptr, total_activations_length,
-			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
-			  total_bias_ptr,
-			  batch_size,
-			  true,
-			  std::cout
-			 );
-
-  batch_train(total_layers,
-	          loss_function,
-		      optimizer,
-			  total_training_cases_ptr, total_training_cases_length,
-			  total_targets_ptr, error_matrix,
-			  total_activations_ptr, total_deltas_ptr, total_activations_length,
-			  total_hidden_weights_ptr, total_gradient_ptr, total_hidden_weights_length,
-			  total_bias_ptr,
-			  batch_size,
-			  true,
-			  std::cout
-			 );
 
   // release memory
   mkl_free(total_activations_ptr);
