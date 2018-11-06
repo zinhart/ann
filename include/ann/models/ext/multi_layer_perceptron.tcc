@@ -521,8 +521,8 @@ namespace zinhart
 					  )
 	  {
 		// task futures
-		std::vector<zinhart::multi_core::thread_pool::task_future<void>> tasks;
-		std::vector<zinhart::multi_core::thread_pool::task_future<precision_type>> error_tasks;
+		std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> tasks;
+		std::vector<zinhart::multi_core::thread_pool::tasks::task_future<precision_type>> error_tasks;
 
 		auto this_batch_error = [&loss_function](const precision_type * o, const precision_type * t, std::uint32_t len)
 		{
@@ -546,7 +546,7 @@ namespace zinhart
 		{
 		  if(batch_size < 2 )
 			throw std::logic_error("batch_size much be greater than 1, you may also use the online training function");
-		  zinhart::multi_core::default_thread_pool::resize(batch_size);// consider moving this to scope of function that calls train
+		  zinhart::multi_core::thread_pool::resize(batch_size);// consider moving this to scope of function that calls train
 
 		  // to shuffle the case id_s;
 		  std::random_device rd;
@@ -605,7 +605,7 @@ namespace zinhart
 			  for(ith_training_case = current_batch_begin, thread_id = 0; ith_training_case < current_batch_end; ++ith_training_case, ++thread_id)
 			  {
 				// forward propagate
-				tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(fprop_mlp<precision_type>,
+				tasks.push_back(zinhart::multi_core::thread_pool::push_task(fprop_mlp<precision_type>,
 																					total_layers,
 																					total_training_cases_ptr, case_ids[ith_training_case],
 																					total_activations_ptr, total_activations_length,
@@ -625,7 +625,7 @@ namespace zinhart
 
 			  // get_outputs
 			  for(thread_id = 0; thread_id < batch_size; ++thread_id)
-				tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task(get_outputs_mlp<precision_type>, std::ref(total_layers), total_activations_ptr, total_activations_length, model_outputs_ptr[thread_id], batch_size, thread_id);
+				tasks[thread_id] = zinhart::multi_core::thread_pool::push_task(get_outputs_mlp<precision_type>, std::ref(total_layers), total_activations_ptr, total_activations_length, model_outputs_ptr[thread_id], batch_size, thread_id);
 
 			  // synchronize outputs
 			  for(thread_id = 0; thread_id < batch_size; ++thread_id)
@@ -641,8 +641,8 @@ namespace zinhart
 				const precision_type * current_outputs_ptr{model_outputs_ptr[thread_id]};
 				precision_type       * current_error_ptr{total_error_ptr + (thread_id * total_layers[output_layer]->get_size())};
 				const std::uint32_t length{ total_layers[output_layer]->get_size() };
-				error_tasks.push_back(zinhart::multi_core::default_thread_pool::push_task(this_batch_error, current_outputs_ptr, current_target_ptr, length) );
-				tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task(this_batch_error_derivative, current_outputs_ptr, current_target_ptr, current_error_ptr, length);
+				error_tasks.push_back(zinhart::multi_core::thread_pool::push_task(this_batch_error, current_outputs_ptr, current_target_ptr, length) );
+				tasks[thread_id] = zinhart::multi_core::thread_pool::push_task(this_batch_error_derivative, current_outputs_ptr, current_target_ptr, current_error_ptr, length);
 			  }
 
 
@@ -664,7 +664,7 @@ namespace zinhart
 			  // backpropagate for each case in this batch
 			  for(ith_training_case = current_batch_begin, thread_id = 0; ith_training_case < current_batch_end; ++ith_training_case, ++thread_id)
 			  {
-				tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task(bprop_mlp<precision_type>,
+				tasks[thread_id] = zinhart::multi_core::thread_pool::push_task(bprop_mlp<precision_type>,
 																					   total_layers,
 																					   total_training_cases_ptr, total_targets_ptr, total_error_ptr, case_ids[ith_training_case],
 																					   total_activations_ptr, total_deltas_ptr, total_activations_length,
@@ -700,7 +700,7 @@ namespace zinhart
 			  if(total_hidden_weights_length >= batch_size)
 			  {
 				for(thread_id = 0; thread_id < batch_size; ++thread_id)
-				  tasks[thread_id] = zinhart::multi_core::default_thread_pool::push_task( weight_update, total_hidden_weights_ptr, initial_gradient_ptr, total_hidden_weights_length, batch_size, thread_id );	
+				  tasks[thread_id] = zinhart::multi_core::thread_pool::push_task( weight_update, total_hidden_weights_ptr, initial_gradient_ptr, total_hidden_weights_length, batch_size, thread_id );	
 			  }
 			  else
 			  {

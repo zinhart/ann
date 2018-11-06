@@ -9,7 +9,7 @@ TEST(optimizer, sgd_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max() );
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -18,8 +18,8 @@ TEST(optimizer, sgd_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<sgd<double>>(learning_rate);
@@ -68,7 +68,7 @@ TEST(optimizer, momentum_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -77,8 +77,8 @@ TEST(optimizer, momentum_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<momentum<double>>(length, learning_rate, momentum_term);
@@ -128,7 +128,7 @@ TEST(optimizer, nesterov_momentum_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -137,8 +137,8 @@ TEST(optimizer, nesterov_momentum_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<nesterov_momentum<double>>(length, learning_rate, momentum_term);
@@ -188,7 +188,7 @@ TEST(optimizer, adagrad_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -197,8 +197,8 @@ TEST(optimizer, adagrad_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<adagrad<double>>(length, learning_rate, epsilon);
@@ -248,7 +248,7 @@ TEST(optimizer, conjugate_gradient_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -257,8 +257,8 @@ TEST(optimizer, conjugate_gradient_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<conjugate_gradient<double>>(length, epsilon);
@@ -308,7 +308,7 @@ TEST(optimizer, adadelta_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -317,8 +317,8 @@ TEST(optimizer, adadelta_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<adadelta<double>>(length, gamma, epsilon);
@@ -368,7 +368,7 @@ TEST(optimizer, rms_prop_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -377,8 +377,8 @@ TEST(optimizer, rms_prop_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<rms_prop<double>>(length, learning_rate, beta, epsilon);
@@ -428,7 +428,7 @@ TEST(optimizer, rprop_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -437,8 +437,8 @@ TEST(optimizer, rprop_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<rprop<double>>(length, learning_rate_pos, learning_rate_neg, delta_max, delta_min);
@@ -488,7 +488,7 @@ TEST(optimizer, adamax_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -497,8 +497,8 @@ TEST(optimizer, adamax_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<adamax<double>>(length, learning_rate, beta_1, beta_2, beta_1_t, epsilon);
@@ -553,7 +553,7 @@ TEST(optimizer, amsgrad_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -562,8 +562,8 @@ TEST(optimizer, amsgrad_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<amsgrad<double>>(length, learning_rate, beta_1, beta_2, epsilon);
@@ -614,7 +614,7 @@ TEST(optimizer, adam_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -623,8 +623,8 @@ TEST(optimizer, adam_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<adam<double>>(length, learning_rate, beta_1, beta_2, beta_1_t, beta_2_t, epsilon);
@@ -680,7 +680,7 @@ TEST(optimizer, nadam_thread_safety)
 {
   std::random_device rd;
   std::uniform_real_distribution<float> real_dist(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
-  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::default_thread_pool::get_default_thread_pool().size(), 20);
+  std::uniform_int_distribution<std::uint32_t> thread_dist(zinhart::multi_core::thread_pool::get_thread_pool().size(), 20);
   std::uniform_int_distribution<std::uint32_t> uint_dist(20, std::numeric_limits<std::uint16_t>::max());
   std::mt19937 mt(rd());
   std::uint32_t length{uint_dist(mt)}, n_threads{thread_dist(mt)}, i{0}, thread_id{0};
@@ -689,8 +689,8 @@ TEST(optimizer, nadam_thread_safety)
   const std::uint32_t alignment = 64;
 
   // the thread pool & futures
-  zinhart::multi_core::thread_pool pool(n_threads);
-  std::vector<zinhart::multi_core::thread_pool::task_future<void>> results;
+  zinhart::multi_core::thread_pool::pool pool(n_threads);
+  std::vector<zinhart::multi_core::thread_pool::tasks::task_future<void>> results;
 
   // the optimizer
   std::shared_ptr<optimizer<double>> op = std::make_shared<nadam<double>>(length, learning_rate, gamma, beta_1, beta_2, beta_1_t, beta_2_t, epsilon);
