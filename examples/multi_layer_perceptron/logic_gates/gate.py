@@ -5,7 +5,6 @@ def file_is_present(file_handle):
     return file_handle != None
 
 def make_inputs(gate, file_handle, num_points) :
-    print (file_is_present)
     if file_is_present(file_handle):
         file_handle.write(gate + " gate inputs" + newline)
         for i in range(0,4):
@@ -188,7 +187,7 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--gate',   type=str, choices=['and','or','nand', 'nor', 'xor'], help='the logic to choose from')
     parser.add_argument('-i', '--input',  type=argparse.FileType('w'), help='inputs output file')
     parser.add_argument('-t', '--target', type=argparse.FileType('w'), help='targets output file')
-    parser.add_argument('-n', '--number', type=int, help='number of targets and labels for each class')
+    parser.add_argument('-n', '--number', type=int, help='number of target and label pairs for each class')
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit()
