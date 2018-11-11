@@ -2,6 +2,7 @@
 #if CUDA_ENABLED == 1 
 #else
 #include <algorithm>
+#include <mkl.h>
 #endif
 namespace zinhart
 {

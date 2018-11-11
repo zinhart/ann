@@ -2,6 +2,7 @@
 #include <ann/loss_function.hh>
 #include <random>
 #include <limits>
+#include <mkl.h>
 
 //using namespace zinhart::function_space;
 //using namespace zinhart::function_space::error_metrics;

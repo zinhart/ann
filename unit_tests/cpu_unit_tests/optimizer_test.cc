@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <limits>
+#include <mkl.h>
 
 using namespace zinhart::optimizers;
 
