@@ -7,6 +7,10 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RELEASE")
 endif ()
 
+
+# for other libraries 
+set(ANN_INCLUDE_DIR ann/include CACHE STRING "ANN INCLUDE DIRS") 
+
 # for unit tests using google test
 option(BuildUnitTest "BuildUnitTest" ON)
 # for benchmarking using google bench
