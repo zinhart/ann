@@ -92,7 +92,7 @@ else()
 	add_definitions(-DCUDA_ENABLED=false)
   endif()
   # set include paths
-  include_directories(. include ${MKL_INCLUDE_DIR} multi_core/include)
+  include_directories(. include "${MULTI_CORE_INCLUDE_DIR}" ${MKL_INCLUDE_DIR} )
 endif()
 
 
@@ -117,7 +117,7 @@ if (Sanitize)
 endif()
 
 # add multi_core directory
-add_subdirectory(multi_core)
+#add_subdirectory(multi_core)
 
 # add src directory
 add_subdirectory(src)
