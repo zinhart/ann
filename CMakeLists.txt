@@ -117,7 +117,9 @@ if (Sanitize)
 endif()
 
 # add multi_core directory
-#add_subdirectory(multi_core)
+if(${ZINHART_INCLUDE_DIR} MATCHES "^$")
+  add_subdirectory(multi_core)
+endif()
 
 # add src directory
 add_subdirectory(src)
