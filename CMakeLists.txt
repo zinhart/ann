@@ -38,10 +38,11 @@ else()
 endif()
 
 
-# conditionally add multi_core directory
+# conditionally add multi_core and bmp directories
 message(status ${ZINHART_INCLUDE_DIR})
 if("${ZINHART_INCLUDE_DIR}" MATCHES "^$")
   add_subdirectory(multi_core)
+  add_subdirectory(bmp)
 endif()
 
 #set module path
@@ -99,7 +100,7 @@ else()
 	add_definitions(-DCUDA_ENABLED=false)
   endif()
   # set include paths
-  include_directories(. include "${MULTI_CORE_INCLUDE_DIR}" ${MKL_INCLUDE_DIR} )
+  include_directories(. include "${MULTI_CORE_INCLUDE_DIR}" "${BMP_INCLUDE_DIR}" ${MKL_INCLUDE_DIR} )
 endif()
 
 

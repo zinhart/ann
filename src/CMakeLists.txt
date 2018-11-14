@@ -34,6 +34,7 @@ else()
 
    target_link_libraries(ann
 						 multi_core
+						 bmp
 						 ${MKL_LIBRARIES}
 						 ${CMAKE_THREAD_LIBS_INIT}
 						 ${MATH_LIBS}

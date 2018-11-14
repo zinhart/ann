@@ -1,3 +1,6 @@
 [submodule "multi_core"]
 	path = multi_core
 	url = git@github.com:zinhart/multi_core.git
+[submodule "bmp"]
+	path = bmp
+	url = git@github.com:zinhart/bmp.git
