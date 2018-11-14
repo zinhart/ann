@@ -37,6 +37,13 @@ else()
   set(LIB_TYPE STATIC)
 endif()
 
+
+# conditionally add multi_core directory
+message(status ${ZINHART_INCLUDE_DIR})
+if("${ZINHART_INCLUDE_DIR}" MATCHES "^$")
+  add_subdirectory(multi_core)
+endif()
+
 #set module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
@@ -116,10 +123,6 @@ if (Sanitize)
   set(CMAKE_CXX_FLAGS "-fsantize=address -fsanitize=undefined ${CMAKE_CXX_FLAGS}")
 endif()
 
-# add multi_core directory
-if(${ZINHART_INCLUDE_DIR} MATCHES "^$")
-  add_subdirectory(multi_core)
-endif()
 
 # add src directory
 add_subdirectory(src)
