@@ -43,6 +43,7 @@ message(status ${ZINHART_INCLUDE_DIR})
 if("${ZINHART_INCLUDE_DIR}" MATCHES "^$")
   add_subdirectory(multi_core)
   add_subdirectory(bmp)
+  #  add_subdirectory(examples) # to do make this a build option
 endif()
 
 #set module path

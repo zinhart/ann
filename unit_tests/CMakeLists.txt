@@ -1,12 +1,3 @@
-# includes
-#include_directories(.)
-
-# add google test library
-#add_library(gtest_ann ./gtest/gtest-all.cc)
-
-# link google test library
-#target_link_libraries(gtest_ann ${CMAKE_THREAD_LIBS_INIT})
-
 # cpu & gpu unit tests
 if(BuildCuda)
   # gpu unit tests
