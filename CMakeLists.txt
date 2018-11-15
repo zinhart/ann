@@ -9,7 +9,7 @@ endif ()
 
 
 # for other libraries 
-set(ANN_INCLUDE_DIR ann/include CACHE STRING "ANN INCLUDE DIRS") 
+set(ANN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE STRING "ANN INCLUDE DIRS") 
 
 # for unit tests using google test
 option(BuildUnitTest "BuildUnitTest" ON)
@@ -21,7 +21,6 @@ option(BuildCuda "BuildCuda" ON)
 option(BuildShared "BuildShared" OFF)
 # nesting protection
 option(AnnUseCodeCoverage "AnnUseCodeCoverage" ON)
-#set(ConcurrentRoutinesUseCodeCoverage OFF CACHE BOOL "Ignore concurrent_routines in local CodeCoverage" FORCE)
 # sanitizer support
 option(Sanitize "Sanitize" OFF)
 
@@ -43,7 +42,7 @@ message(status ${ZINHART_INCLUDE_DIR})
 if("${ZINHART_INCLUDE_DIR}" MATCHES "^$")
   add_subdirectory(multi_core)
   add_subdirectory(bmp)
-  #  add_subdirectory(examples) # to do make this a build option
+  add_subdirectory(examples) # to do make this a build option
 endif()
 
 #set module path
@@ -100,8 +99,6 @@ else()
   else()
 	add_definitions(-DCUDA_ENABLED=false)
   endif()
-  # set include paths
-  include_directories(. include "${MULTI_CORE_INCLUDE_DIR}" "${BMP_INCLUDE_DIR}" ${MKL_INCLUDE_DIR} )
 endif()
 
 

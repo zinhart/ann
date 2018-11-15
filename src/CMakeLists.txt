@@ -31,6 +31,8 @@ else()
 	 )
 
    add_library(ann ${LIB_TYPE} ${ann_lib})
+  
+   target_include_directories(ann PUBLIC ${ANN_INCLUDE_DIR} ${MULTI_CORE_INCLUDE_DIR} ${BMP_INCLUDE_DIR} ${MKL_INCLUDE_DIR} )
 
    target_link_libraries(ann
 						 multi_core
@@ -39,6 +41,7 @@ else()
 						 ${CMAKE_THREAD_LIBS_INIT}
 						 ${MATH_LIBS}
 					  )
+
   if(BuildShared)
 	message (STATUS ${LIB_TYPE})
 	#install  libmulti_core.so to <cmake output dir>/${CMAKE_CURRENT_DIR}/

@@ -1,9 +1,3 @@
-#include_directories("${ANN_INCLUDE_DIR}" "${MULTI_CORE_INCLUDE_DIR}" "${BMP_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}")
-set(HEADERS 
-  #"${CMAKE_SOURCE_DIR}/${ANN_INCLUDE_DIR}"
-  "${CMAKE_SOURCE_DIR}/${MULTI_CORE_INCLUDE_DIR}" 
-  "${CMAKE_SOURCE_DIR}/${BMP_INCLUDE_DIR}" 
-  "${PROJECT_BINARY_DIR}")
 set(logic_gates_src logic_gates/logic_gates.cc)
 set(quadrants_src quadrants/quadrants.cc)
 
