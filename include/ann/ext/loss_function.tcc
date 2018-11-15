@@ -60,6 +60,9 @@ namespace zinhart
 	HOST void loss_function<precision_type>::error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length)
 	{ error_impl(d, outputs, targets, results, length); }
 
+  template <class precision_type>
+	HOST std::string loss_function<precision_type>::name()const
+	{ return name_impl(); }
 
   template <class precision_type>
 	HOST precision_type mean_squared_error<precision_type>::error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
@@ -81,6 +84,10 @@ namespace zinhart
 	}
 
   template <class precision_type>
+	HOST std::string mean_squared_error<precision_type>::name_impl()const
+	{ return "mse"; }
+
+  template <class precision_type>
 	HOST precision_type cross_entropy_multi_class<precision_type>::error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length)
 	{
 #if CUDA_ENABLED == 1
@@ -98,5 +105,9 @@ namespace zinhart
 	  e.error(loss_attributes::cross_entropy_multi_class(), d, outputs, targets, results, length);
 #endif
 	}
+
+  template <class precision_type>
+	HOST std::string cross_entropy_multi_class<precision_type>::name_impl()const
+	{ return "ce_multinomial"; }
   }// END NAMESPACE LOSS_FUNCTIONS
 }// END NAMESPACE ZINHART

@@ -29,6 +29,9 @@ void nor_gate();
 void xor_gate();
 int main(int argc, char *argv[])
 {
+  using namespace zinhart::models::layers;
+  using namespace zinhart::loss_functions;
+  using namespace zinhart::optimizers;
   /* Sketch
    * have a vector of strings with all layer types as a cmd arg
    * have gate type as a cmd arg
@@ -58,13 +61,59 @@ int main(int argc, char *argv[])
 	std::cout<<"Main and informational args are mutually exclusive\n";
 	std::exit(0);
   }
-  std::for_each(argv, argv + argc, [](char * init){std::cout<<init<<"\n";});
-  if(argv[1] == "-g")
-	std::cout<<"here\n";
-  // check for informational args
-  if(std::any_of(argv, argv + argc, [](char * init){return init == "-g" || init == "-l" || init == "-o" || init == "-e";}))
+  const std::vector<std::string> args(argv, argv + argc);
+  const std::vector<std::shared_ptr<layer<double>>> all_layers
   {
-	std::cout<<"found informational args\n";
+   std::make_shared<identity_layer<double>>(), 
+   std::make_shared<sigmoid_layer<double>>(), std::make_shared<softplus_layer<double>>(), std::make_shared<tanh_layer<double>>(), 
+   std::make_shared<relu_layer<double>>(), std::make_shared<leaky_relu_layer<double>>(), std::make_shared<exp_leaky_relu_layer<double>>(), 
+   std::make_shared<softmax_layer<double>>(0)
+  };
+  const std::vector<std::shared_ptr<optimizer<double>>> all_optimizers
+  {
+	std::make_shared<sgd<double>>(),
+	std::make_shared<momentum<double>>(0),
+	std::make_shared<nesterov_momentum<double>>(0),
+	std::make_shared<adagrad<double>>(0),
+	std::make_shared<conjugate_gradient<double>>(0),
+	std::make_shared<adadelta<double>>(0),
+	std::make_shared<rms_prop<double>>(0),
+	std::make_shared<adamax<double>>(0),
+	std::make_shared<amsgrad<double>>(0),
+	std::make_shared<adam<double>>(0),
+	std::make_shared<nadam<double>>(0),
+  };
+  const std::vector<std::shared_ptr<loss_function<double>>> all_loss_functions
+  {
+	std::make_shared<cross_entropy_multi_class<double>>(),
+	std::make_shared<mean_squared_error<double>>()
+  };
+
+  // check for informational args
+  if(std::any_of(args.begin(), args.end(), [](const std::string & init){return init == "-g" || init == "-l" || init == "-o" || init == "-e";}))
+  {
+	std::uint32_t i{0};
+  	std::vector<std::string> informational_flags;
+	for(i = 0; i < args.size(); ++i)
+	{
+	  if(args[i] == "-g")
+		std::cout<<"supported gates: and, or, nand, nor, xor\n";
+	  else if(args[i] == "-l")
+	  {
+		std::cout<<"supported layers:\n";
+		std::for_each(all_layers.begin(), all_layers.end(), [](const std::shared_ptr<layer<double>> & l){std::cout<<l->name()<<"\n";});
+	  }
+	  else if(args[i] == "-o")
+	  {
+		std::cout<<"supported optimizers:\n";
+		std::for_each(all_optimizers.begin(), all_optimizers.end(), [](const std::shared_ptr<optimizer<double>> & o){std::cout<<o->name()<<"\n";});
+	  }
+	  else if(args[i] == "-e")
+	  {
+		std::cout<<"supported loss_functions:\n";
+		std::for_each(all_loss_functions.begin(), all_loss_functions.end(), [](const std::shared_ptr<loss_function<double>> & l){std::cout<<l->name()<<"\n";});
+	  }
+	}
 	std::exit(0);
   }
   // check for main args

@@ -192,6 +192,9 @@ namespace zinhart
 	  HOST void optimizer<precision_type>::safe_deallocate()
 	  { safe_deallocate_impl(); }
 
+	template <class precision_type>
+	  HOST std::string optimizer<precision_type>::name()const
+	  { return name_impl(); }
 
 	template <class precision_type>
 	  HOST optimizer<precision_type>::~optimizer()
@@ -217,6 +220,10 @@ namespace zinhart
 	template <class precision_type>
 	  HOST std::uint32_t sgd<precision_type>::get_size_impl()const
 	  { return size; }
+
+	template <class precision_type>
+	  HOST std::string sgd<precision_type>::name_impl()const
+	  { return "sgd"; }
 
 	template <class precision_type>
 	  HOST momentum<precision_type>::momentum(std::uint32_t size, precision_type learning_rate, precision_type momentum_term)
@@ -259,6 +266,10 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST std::string momentum<precision_type>::name_impl()const
+	  { return "momentum"; }
+
+	template <class precision_type>
 	  HOST nesterov_momentum<precision_type>::nesterov_momentum(std::uint32_t size, precision_type learning_rate, precision_type momentum_term)
 	  {
 		this->learning_rate = learning_rate; 
@@ -298,6 +309,10 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST std::string nesterov_momentum<precision_type>::name_impl()const
+	  { return "nesterov_momentum"; }
+
+	template <class precision_type>
 	  HOST adagrad<precision_type>::adagrad(std::uint32_t size, precision_type learning_rate, precision_type epsilon)
 	  {
 		this->learning_rate = learning_rate; 
@@ -334,6 +349,10 @@ namespace zinhart
 		if(prior_gradient != nullptr) // might have a previous state
 		  delete [] prior_gradient;
 	  }
+
+	template <class precision_type>
+	  HOST std::string adagrad<precision_type>::name_impl()const
+	  { return "adagrad"; }
 
 	template <class precision_type>
 	  conjugate_gradient<precision_type>::conjugate_gradient(std::uint32_t size, precision_type epsilon)
@@ -378,6 +397,10 @@ namespace zinhart
 		if(hessian != nullptr)
 		  delete [] hessian;
 	  }
+
+	template <class precision_type>
+	  HOST std::string conjugate_gradient<precision_type>::name_impl()const
+	  { return "conjugrad"; }
 
 	template <class precision_type>
 	  HOST adadelta<precision_type>::adadelta(std::uint32_t size, precision_type gamma, precision_type epsilon)
@@ -425,6 +448,10 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST std::string adadelta<precision_type>::name_impl()const
+	  { return "adadelta"; }
+
+	template <class precision_type>
 	  HOST rms_prop<precision_type>::rms_prop(std::uint32_t size, precision_type learning_rate, precision_type beta, precision_type epsilon)
 	  {
 		set_size_impl(size);
@@ -464,6 +491,10 @@ namespace zinhart
 		if(prior_gradient != nullptr)
 		  delete [] prior_gradient;
 	  }
+
+	template <class precision_type>
+	  HOST std::string rms_prop<precision_type>::name_impl()const
+	  { return "rms_prop"; }
 
 	template <class precision_type>
 	  HOST rprop<precision_type>::rprop(std::uint32_t size, precision_type learning_rate_pos, precision_type learning_rate_neg, precision_type delta_max, precision_type delta_min)
@@ -511,6 +542,10 @@ namespace zinhart
 		if(delta != nullptr)
 		  delete [] delta;
 	  }
+
+	template <class precision_type>
+	  HOST std::string rprop<precision_type>::name_impl()const
+	  { return "rprop"; }
 
 	template <class precision_type>
 	  HOST adamax<precision_type>::adamax(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type epsilon)
@@ -569,6 +604,10 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST std::string adamax<precision_type>::name_impl()const
+	  { return "adamax"; }
+
+	template <class precision_type>
 	  HOST amsgrad<precision_type>::amsgrad(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type epsilon)
 	  {
 		set_size_impl(size);
@@ -618,6 +657,10 @@ namespace zinhart
 		if(bias_corrected_variance != nullptr)
 		  delete [] bias_corrected_variance;
 	  }
+
+	template <class precision_type>
+	  HOST std::string amsgrad<precision_type>::name_impl()const
+	  { return "amsgrad"; }
 
 	template <class precision_type>
 	  HOST adam<precision_type>::adam(std::uint32_t size, precision_type learning_rate, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type beta_2_t, precision_type epsilon)
@@ -684,6 +727,10 @@ namespace zinhart
 	  }
 
 	template <class precision_type>
+	  HOST std::string adam<precision_type>::name_impl()const
+	  { return "adam"; }
+
+	template <class precision_type>
 	  HOST nadam<precision_type>::nadam(std::uint32_t size, precision_type learning_rate, precision_type gamma, precision_type beta_1, precision_type beta_2, precision_type beta_1_t, precision_type beta_2_t, precision_type epsilon)
 	  {
 		set_size_impl(size);
@@ -747,5 +794,9 @@ namespace zinhart
 		if(variance != nullptr)
 		  delete [] variance;
 	  }
+
+	template <class precision_type>
+	  HOST std::string nadam<precision_type>::name_impl()const
+	  { return "nadam"; }
   }// END NAMESPACE OPTIMIZERS
 }// END NAMESPACE ZINHART

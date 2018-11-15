@@ -128,6 +128,7 @@ namespace zinhart
 		  HOST virtual precision_type get_bias_corrected_first_moment_impl()const{ return 0; };
 		  HOST virtual precision_type get_bias_corrected_second_moment_impl()const{ return 0; };
 		  HOST virtual void safe_deallocate_impl(){};
+		  HOST virtual std::string name_impl()const=0;
 		public:
   		  HOST void update(precision_type * weights, const precision_type * const gradient, const std::uint32_t length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
 		  HOST void set_size(const std::uint32_t size);
@@ -136,6 +137,7 @@ namespace zinhart
 		  HOST precision_type get_bias_corrected_first_moment()const;
 		  HOST precision_type get_bias_corrected_second_moment()const;
 		  HOST void safe_deallocate();
+		  HOST std::string name()const;
 		  HOST virtual ~optimizer();
 	  };
 
@@ -149,6 +151,7 @@ namespace zinhart
 		  HOST virtual void update_impl(precision_type * weights, const precision_type * const gradient, const std::uint32_t & length, const std::uint32_t & n_threads, const std::uint32_t & thread_id) override;
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST sgd(precision_type learning_rate = 0.01);
 		  HOST sgd(const sgd&) = delete;
@@ -173,6 +176,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST momentum(std::uint32_t size, precision_type learning_rate = 0.01, precision_type momentum_term = 0.9);
 		  HOST momentum(const momentum & m) = delete;
@@ -195,6 +199,7 @@ namespace zinhart
  		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST nesterov_momentum(std::uint32_t size, precision_type learning_rate = 0.01, precision_type momentum_term = 0.9);
 		  HOST nesterov_momentum(const nesterov_momentum & nm) = delete;
@@ -217,6 +222,7 @@ namespace zinhart
  		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST adagrad(std::uint32_t size, precision_type learning_rate = 0.01, precision_type epsilon = 1.e-8);
 		  HOST adagrad(const adagrad & a) = delete;
@@ -240,6 +246,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST conjugate_gradient(std::uint32_t size, precision_type epsilon = 1.e-30);
 		  conjugate_gradient(const conjugate_gradient&) = delete;
@@ -263,6 +270,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST adadelta(std::uint32_t size, precision_type gamma = 0.99, precision_type epsilon = 1.e-6 );
 		  adadelta(const adadelta&) = delete;
@@ -286,6 +294,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST rms_prop(std::uint32_t size, precision_type learning_rate = 0.001, precision_type gamma = 0.90, precision_type epsilon = 1.e-8);
 		  rms_prop(const rms_prop&) = delete;
@@ -311,6 +320,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST rprop(std::uint32_t size, precision_type learning_rate_pos = 1.2, precision_type learning_rate_neg = 0.5, precision_type delta_max = 50, precision_type delta_min = 1.e-6);
 		  rprop(const rprop&) = delete;
@@ -339,6 +349,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST adamax(std::uint32_t size, precision_type learning_rate = 0.002, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type epsilon = 1e-8);
 		  adamax(const adamax&) = delete;
@@ -366,6 +377,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST amsgrad(std::uint32_t size, precision_type learning_rate = 0.01, precision_type beta_1 = 0.9, precision_type beta_2 = 0.99, precision_type epsilon = 1.e-8);
 		  amsgrad(const amsgrad&) = delete;
@@ -397,6 +409,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST adam(std::uint32_t size, precision_type learning_rate = 0.001, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type beta_2_t = 0.999, precision_type epsilon = 1.e-8);
 		  adam(const adam&) = delete;
@@ -429,6 +442,7 @@ namespace zinhart
 		  HOST virtual void set_size_impl(const std::uint32_t & size) override;
 		  HOST virtual std::uint32_t get_size_impl()const override;
 		  HOST void safe_deallocate_impl()override;
+		  HOST virtual std::string name_impl()const override;
 		public:
 		  HOST nadam(std::uint32_t size, precision_type learning_rate = 0.001, precision_type gamma = 0.9, precision_type beta_1 = 0.9, precision_type beta_2 = 0.999, precision_type beta_1_t = 0.9, precision_type beta_2_t = 0.999, precision_type epsilon = 1.e-8);
 		  nadam(const nadam&) = delete;
