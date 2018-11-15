@@ -46,10 +46,12 @@ int main(int argc, char *argv[])
 	std::cout<<"USAGE ./logic_gates args\n";
 	std::cout<<"Main args:\n";
 	std::cout<<"--gate <and, or, nand, nor, xor>"<<"\n";
-	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency)\n";
+	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency when not specified)\n";
 	std::cout<<"--optimizer <optimizer>\n";
 	std::cout<<"--loss_function <loss_function>\n";
 	std::cout<<"--layers <n_layers>\n";
+	std::cout<<"--batch_size <n_cases>\n";
+	std::cout<<"--learning_rate <learning rate>";
 	std::cout<<"--save <outputfile>\n";
 
 	std::cout<<"Informational args\n";
@@ -62,6 +64,7 @@ int main(int argc, char *argv[])
 	std::exit(0);
   }
   const std::vector<std::string> args(argv, argv + argc);
+  const std::vector<std::string> all_gates{"and", "or", "nand", "nor", "xor"};
   const std::vector<std::shared_ptr<layer<double>>> all_layers
   {
    std::make_shared<identity_layer<double>>(), 
@@ -97,30 +100,84 @@ int main(int argc, char *argv[])
 	for(i = 0; i < args.size(); ++i)
 	{
 	  if(args[i] == "-g")
-		std::cout<<"supported gates: and, or, nand, nor, xor\n";
+	  {
+		std::cout<<"supported gates: ";
+	  	std::for_each(all_gates.begin(), all_gates.end(), [](const std::string & init){std::cout<<init<<"|";});
+		std::cout<<"\n";
+	  }
 	  else if(args[i] == "-l")
 	  {
-		std::cout<<"supported layers:\n";
-		std::for_each(all_layers.begin(), all_layers.end(), [](const std::shared_ptr<layer<double>> & l){std::cout<<l->name()<<"\n";});
+		std::cout<<"supported layers: ";
+		std::for_each(all_layers.begin(), all_layers.end(), [](const std::shared_ptr<layer<double>> & l){std::cout<<l->name()<<"|";});
+		std::cout<<"\n";
 	  }
 	  else if(args[i] == "-o")
 	  {
-		std::cout<<"supported optimizers:\n";
-		std::for_each(all_optimizers.begin(), all_optimizers.end(), [](const std::shared_ptr<optimizer<double>> & o){std::cout<<o->name()<<"\n";});
+		std::cout<<"supported optimizers: ";
+		std::for_each(all_optimizers.begin(), all_optimizers.end(), [](const std::shared_ptr<optimizer<double>> & o){std::cout<<o->name()<<"|";});
+		std::cout<<"\n";
 	  }
 	  else if(args[i] == "-e")
 	  {
-		std::cout<<"supported loss_functions:\n";
-		std::for_each(all_loss_functions.begin(), all_loss_functions.end(), [](const std::shared_ptr<loss_function<double>> & l){std::cout<<l->name()<<"\n";});
+		std::cout<<"supported loss_functions: ";
+		std::for_each(all_loss_functions.begin(), all_loss_functions.end(), [](const std::shared_ptr<loss_function<double>> & l){std::cout<<l->name()<<"|";});
+		std::cout<<"\n";
 	  }
 	}
 	std::exit(0);
   }
+
   // check for main args
   std::string gate;
+  std::uint32_t n_threads{std::thread::hardware_concurrency()};
   std::string optimizer;
   std::string loss_function;
   std::vector<std::string> layers;
+
+  auto found_gate = std::find(args.begin(), args.end(), "--gate");
+  if(found_gate == args.end())
+  {
+	std::cerr<<"no gate option was found, see usage\n";
+	std::exit(0);
+  }
+  else if(found_gate == args.end() - 1)// gate option was given but no argument
+  {
+	std::cerr<<"gate option was found but no argument was specified, see usage\n";
+	std::exit(0);
+  }
+  else
+  {
+	gate = *(found_gate + 1);
+	if(!std::any_of(all_gates.begin(), all_gates.end(), [&gate](const std::string & init){return init == gate;}))
+	{
+	  std::cerr<<gate<<" is not a supported logic gate, see usage\n";
+	  std::exit(0);
+	}
+	std::cout<<gate<<"\n";
+  }
+
+  auto found_threads = std::find(args.begin(), args.end(), "--threads");
+  if(found_threads == args.end())
+  {
+	std::cerr<<"no thread option was found using: "<<n_threads<<" threads\n";
+  }
+  else if(found_threads == args.end() - 1)// thread option was given but no argument
+  {
+	std::cerr<<"thread option was found but no argument was specified, see usage\n";
+	std::exit(0);
+  }
+  else
+  {
+	std::string threads{*(found_threads + 1)};
+	bool has_only_positive_digits = (threads.find_first_not_of( "0123456789" ) == std::string::npos);
+	if(!has_only_positive_digits)
+	{
+	  std::cerr<<threads<<" is not valid thread value, see usage\n";
+	  std::exit(0);
+	}
+	n_threads = (std::stoi(threads) == 0) ? n_threads : std::stoi(threads);
+	std::cout<<n_threads;
+  }
 }
 
 void and_gate(const std::uint32_t n_threads)
