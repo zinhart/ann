@@ -1,6 +1,7 @@
 #include <ann/ann.hh>
 #include <bmp/bmp.hh>
 #include <algorithm>
+#include <regex>
 #include <cstdlib>
 
 // allocate everything based on information in total_layers
@@ -26,7 +27,7 @@ template <class precision_type>
 
 bool find_arg(const std::vector<std::string> & args, const std::string & arg_to_find);
 template <class argval, class unary_predicate>
-  void find_arg(const std::vector<std::string> & args, unary_predicate && p, const std::string & arg_to_find, argval & val);
+  void find_arg(const std::vector<std::string> & args, unary_predicate && p, const std::string & arg_to_find, argval & val, bool required = true);
 template <class argval>
   void find_arg(const std::vector<std::string> & args, const std::vector<std::string> & valid_values, const std::string & arg_to_find, argval & val);
 
@@ -135,6 +136,7 @@ int main(int argc, char *argv[])
   std::string gate;
   std::uint32_t n_threads{std::thread::hardware_concurrency()};
   std::uint32_t batch_size{1};
+  double learning_rate{0.0};
   std::string optimizer_name;
   std::string loss_function_name;
   std::vector<std::string> layers;
@@ -166,6 +168,18 @@ int main(int argc, char *argv[])
 	return (std::stoi(batch_size) == 0) ? 1 : std::stoi(batch_size);
   };
   find_arg(args, check_batch_val, "--batch_size", n_threads);
+  auto check_learning_rate = [](std::string learning_rate)
+  {
+	std::regex valid_floating_point("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$");
+	if(!regex_match(learning_rate, valid_floating_point))
+	{
+	  std::cerr<<learning_rate<<" is not a valid learning_rate, see usage\n";
+	  std::exit(0);
+	}
+	return std::stod(learning_rate);
+  };
+  find_arg(args, check_learning_rate, "--learning_rate", learning_rate, false);
+
 
   auto found_layers = std::find(args.begin(), args.end(), "--layers");
   if(found_layers == args.end())
@@ -202,18 +216,20 @@ bool find_arg(const std::vector<std::string> & args, const std::string & arg_to_
   return std::any_of(args.begin(), args.end(), [&arg_to_find](const std::string & init){return init == arg_to_find;});
 }
 template <class argval, class unary_predicate>
-  void find_arg(const std::vector<std::string> & args, unary_predicate && p, const std::string & arg_to_find, argval & val)
+  void find_arg(const std::vector<std::string> & args, unary_predicate && p, const std::string & arg_to_find, argval & val, bool required)
   {
 	auto found_arg = std::find(args.begin(), args.end(), arg_to_find);
 	if(found_arg == args.end())
 	{
 	  std::cerr<<"no "<<arg_to_find <<" option was found, see usage\n";
-	  std::exit(0);
+	  if(required)
+		std::exit(0);
 	}
 	else if(found_arg == args.end() - 1)// gate option was given but no argument
 	{
 	  std::cerr<<arg_to_find<<" option was found but no argument was specified, see usage\n";
-	  std::exit(0);
+	  if(required)
+  		std::exit(0);
 	}
 	else
 	{
