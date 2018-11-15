@@ -1,7 +1,7 @@
 #include <ann/ann.hh>
 #include <bmp/bmp.hh>
-
-
+#include <algorithm>
+#include <cstdlib>
 
 // allocate everything based on information in total_layers
 template <class precision_type>
@@ -38,8 +38,41 @@ int main(int argc, char *argv[])
    * be able to print all layer types, optimizer types, loss function types
    * option to save model structure to file
    * */
-}
+  if(argc < 2)
+  {
+	std::cout<<"USAGE ./logic_gates args\n";
+	std::cout<<"Main args:\n";
+	std::cout<<"--gate <and, or, nand, nor, xor>"<<"\n";
+	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency)\n";
+	std::cout<<"--optimizer <optimizer>\n";
+	std::cout<<"--loss_function <loss_function>\n";
+	std::cout<<"--layers <n_layers>\n";
+	std::cout<<"--save <outputfile>\n";
 
+	std::cout<<"Informational args\n";
+	std::cout<<"-g: lists all gates\n";
+	std::cout<<"-l: lists all layers\n";
+	std::cout<<"-o: lists all optimizers\n";
+	std::cout<<"-e: lists all loss_functions\n";
+
+	std::cout<<"Main and informational args are mutually exclusive\n";
+	std::exit(0);
+  }
+  std::for_each(argv, argv + argc, [](char * init){std::cout<<init<<"\n";});
+  if(argv[1] == "-g")
+	std::cout<<"here\n";
+  // check for informational args
+  if(std::any_of(argv, argv + argc, [](char * init){return init == "-g" || init == "-l" || init == "-o" || init == "-e";}))
+  {
+	std::cout<<"found informational args\n";
+	std::exit(0);
+  }
+  // check for main args
+  std::string gate;
+  std::string optimizer;
+  std::string loss_function;
+  std::vector<std::string> layers;
+}
 
 void and_gate(const std::uint32_t n_threads)
 {
