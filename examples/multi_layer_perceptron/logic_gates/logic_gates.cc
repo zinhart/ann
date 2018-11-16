@@ -31,25 +31,18 @@ template <class argval, class unary_predicate>
 template <class argval>
   void find_arg(const std::vector<std::string> & args, const std::vector<std::string> & valid_values, const std::string & arg_to_find, argval & val);
 
-void and_gate(const std::uint32_t n_threads);
-void or_gate();
-void nand_gate();
-void nor_gate();
-void xor_gate();
+void and_gate(const std::uint32_t n_threads, const std::string optimizer_name, const std::string loss_function_name,
+	          const std::vector<std::string> layers, const std::uint32_t batch_size, double learning_rate, const std::string file
+			 );
+
+bool regex_match(std::regex expr, std::string s)
+{ return std::regex_match(s, expr); }
+
 int main(int argc, char *argv[])
 {
   using namespace zinhart::models::layers;
   using namespace zinhart::loss_functions;
   using namespace zinhart::optimizers;
-  /* Sketch
-   * have a vector of strings with all layer types as a cmd arg
-   * have gate type as a cmd arg
-   * have number of threads as a gate arg(optional)
-   * have vector of strings with all optimizers as a cmd arg
-   * have vector of strings with all loss_functions as a cmd arg
-   * be able to print all layer types, optimizer types, loss function types
-   * option to save model structure to file
-   * */
   if(argc < 2)
   {
 	std::cout<<"USAGE ./logic_gates args\n";
@@ -58,7 +51,7 @@ int main(int argc, char *argv[])
 	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency when not specified)\n";
 	std::cout<<"--optimizer <optimizer>\n";
 	std::cout<<"--loss_function <loss_function>\n";
-	std::cout<<"--layers <n_layers>\n";
+	std::cout<<"--layers <names> <size>\n";
 	std::cout<<"--batch_size <n_cases>\n";
 	std::cout<<"--learning_rate <learning rate>";
 	std::cout<<"--save <outputfile>\n";
@@ -140,11 +133,15 @@ int main(int argc, char *argv[])
   std::string optimizer_name;
   std::string loss_function_name;
   std::vector<std::string> layers;
+  std::string file;
+  std::regex valid_gate("^and|or|nand|nor|xor$");
+  std::regex pos_integer("^([1-9][0-9]*)$");
+  std::regex floating_point("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$");
 
   find_arg(args, all_gates, "--gate", gate);
   find_arg(args, all_optimizers, "--optimizer", optimizer_name);
   find_arg(args, all_loss_functions, "--loss_function", loss_function_name);
-
+/*
   auto check_thread_val = [&n_threads](std::string threads)
   {
 	bool has_only_positive_digits = (threads.find_first_not_of( "0123456789" ) == std::string::npos);
@@ -210,6 +207,23 @@ int main(int argc, char *argv[])
 	  ++next_layer;
 	}
   }
+  if(gate == "and")
+  {
+	and_gate(n_threads, optimizer_name, loss_function_name,	layers, batch_size, learning_rate, file);
+  }
+  /*
+  else if(gate == "or")
+  {
+  }
+  else if(gate == "nand")
+  {
+  }
+  else if(gate == "nor")
+  {
+  }
+  else if(gate == "xor")
+  {
+  }*/
 }
 bool find_arg(const std::vector<std::string> & args, const std::string & arg_to_find)
 {
@@ -265,48 +279,16 @@ template <class argval>
   }
 
 
-void and_gate(const std::uint32_t n_threads)
+void and_gate(const std::uint32_t n_threads, const std::string optimizer_name, const std::string loss_function_name,
+	          const std::vector<std::string> layers, const std::uint32_t batch_size, double learning_rate, const std::string file
+			 )
 {
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
   std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
   zinhart::models::multi_layer_perceptron<double> model;
-  std::uint32_t total_activations_length{0};
-  std::uint32_t total_hidden_weights_length{0};
-}
-void or_gate()
-{
-  std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
-  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
-  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
-  zinhart::models::multi_layer_perceptron<double> model;
-  std::uint32_t total_activations_length{0};
-  std::uint32_t total_hidden_weights_length{0};
-}
-void nand_gate()
-{
-  std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
-  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
-  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
-  zinhart::models::multi_layer_perceptron<double> model;
-  std::uint32_t total_activations_length{0};
-  std::uint32_t total_hidden_weights_length{0};
-}
-void nor_gate()
-{
-  std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
-  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
-  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
-  zinhart::models::multi_layer_perceptron<double> model;
-  std::uint32_t total_activations_length{0};
-  std::uint32_t total_hidden_weights_length{0};
-}
-void xor_gate()
-{
-  std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
-  std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
-  std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
-  zinhart::models::multi_layer_perceptron<double> model;
+
+
   std::uint32_t total_activations_length{0};
   std::uint32_t total_hidden_weights_length{0};
 }
