@@ -139,6 +139,13 @@ namespace zinhart
 			HOST virtual void set_bias(precision_type bias) = 0;
 			HOST virtual precision_type get_bias()const = 0;
 			HOST virtual std::string name()const = 0;
+
+			// new interface
+			HOST void forward(const precision_type * const inputs, const precision_type * const weights,  precision_type * outputs, const std::uint32_t & length, const precision_type & bias = 1.0, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
+			HOST void backward(layer_info::output_layer o, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const std::uint32_t & length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
+			HOST void backward(layer_info::hidden_layer h, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const std::uint32_t & length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
+
+
 		};
 
 	  template<class precision_type>
