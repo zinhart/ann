@@ -49,6 +49,7 @@ void and_gate(const std::uint32_t n_threads, const std::string optimizer_name, c
 
 int main(int argc, char *argv[])
 {
+  /*
   using namespace zinhart::models::layers;
   using namespace zinhart::loss_functions;
   using namespace zinhart::optimizers;
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
 
 
 
-/*
+
   // check for informational args
 
 
