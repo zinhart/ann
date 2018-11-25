@@ -52,27 +52,21 @@ namespace zinhart
   template <class precision_type>
 	class loss_function
 	{
+	  public:
+		HOST precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length);
+		HOST void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length);
+		HOST std::string name()const;
+		HOST virtual ~loss_function() = default;
 	  protected:
 		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) = 0;
 		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) = 0;
 		error_function<precision_type> e;
 		HOST virtual std::string name_impl()const = 0;
-	  public:
-		HOST precision_type error(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length);
-		HOST void error(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length);
-		HOST std::string name()const;
 
-		HOST virtual ~loss_function() = default;
 	};
   template <class precision_type>
 	class mean_squared_error : public loss_function<precision_type>
 	{
-	  private:
-		using loss_function<precision_type>::e;
-		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
-		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
-		const precision_type coefficient{2};
-		HOST virtual std::string name_impl()const override;
 	  public:
 		mean_squared_error() = default;
 		mean_squared_error(const mean_squared_error &) = default;
@@ -80,17 +74,17 @@ namespace zinhart
 		mean_squared_error & operator = (const mean_squared_error &) = default;
 		mean_squared_error & operator = (mean_squared_error &&) = default;
 		~mean_squared_error() = default;
-
+	  private:
+		using loss_function<precision_type>::e;
+		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
+		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
+		const precision_type coefficient{2};
+		HOST virtual std::string name_impl()const override;
 	};
 
   template <class precision_type>
 	class cross_entropy_multi_class : public loss_function<precision_type>
 	{
-	  private:
-		using loss_function<precision_type>::e;
-		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
-		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
-		HOST virtual std::string name_impl()const override;
 	  public:
 		cross_entropy_multi_class() = default;
 		cross_entropy_multi_class(const cross_entropy_multi_class &) = default;
@@ -99,6 +93,11 @@ namespace zinhart
 		cross_entropy_multi_class & operator = (cross_entropy_multi_class &&) = default;
 		~cross_entropy_multi_class() = default;
 		precision_type epsilon{1.e-30};
+	  private:
+		using loss_function<precision_type>::e;
+		HOST virtual precision_type error_impl(zinhart::function_space::objective o, const precision_type * outputs, const precision_type * targets, const std::uint32_t & length) override;
+		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
+		HOST virtual std::string name_impl()const override;
 	};
   }// END NAMESPACE LOSS_FUNCTIONS
 }// END NAMESPACE ZINHART
