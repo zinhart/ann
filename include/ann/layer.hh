@@ -135,12 +135,6 @@ namespace zinhart
 			HOST void set_bias(precision_type bias);
 			HOST precision_type get_bias()const;
 			HOST std::string name()const;
-
-			// new interface
-			HOST void forward(const precision_type * const inputs, const precision_type * const weights,  precision_type * outputs, const std::uint32_t & length, const precision_type & bias = 1.0, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
-			HOST void backward(layer_info::output_layer o, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const precision_type * const error, const std::uint32_t & length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
-			HOST void backward(layer_info::hidden_layer h, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const std::uint32_t & length, const std::uint32_t n_threads = 1, const std::uint32_t thread_id = 0);
-
 		  protected:
 			std::uint32_t size;
 			precision_type bias;
@@ -226,7 +220,7 @@ namespace zinhart
 			HOST virtual void set_bias_impl(precision_type bias)override;
 			HOST virtual precision_type get_bias_impl()const override;
 			HOST virtual std::string name_impl()const override;
-		};
+  		};
 
 
 	  template<class precision_type>

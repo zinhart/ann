@@ -28,7 +28,7 @@ namespace zinhart
 		const std::uint32_t input_layer{0};
 
 		// All layer counters
-		std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0};
+		std::uint32_t current_layer{1}, previous_layer{input_layer}, current_layer_index{0}, previous_layer_index{0}, x{0}, y{0}, z{0};
 		
 		// The index of the beginning of the weight matrix between two layers 
 		std::uint32_t weight_index{0};
@@ -52,7 +52,7 @@ namespace zinhart
 		// with the assumption above the index of where the current chunk begins is the length of each case thread_id chunks forward in the relevant vector
 		current_threads_workspace_index = thread_id * thread_stride;
 		current_threads_output_ptr = total_activations + current_threads_workspace_index;
-
+		
 		// do input layer and the first hidden layer -> Wx
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 					m, n, k,

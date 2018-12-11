@@ -2,6 +2,7 @@
 #if CUDA_ENABLED == 1 
 #else
 #include <algorithm>
+#include <numeric>
 #include <mkl.h>
 #endif
 namespace zinhart
@@ -41,22 +42,6 @@ namespace zinhart
 	  template<class precision_type>
 		HOST std::string layer<precision_type>::name()const
 		{ return name_impl(); }
-
-	  // new interface - to do
-	  template<class precision_type>
-		HOST void layer<precision_type>::forward(const precision_type * const inputs, const precision_type * const weights,  precision_type * outputs, const std::uint32_t & length, const precision_type & bias, const std::uint32_t n_threads, const std::uint32_t thread_id)
-		{
-		}
-
-	  template<class precision_type>
-		HOST void layer<precision_type>::backward(layer_info::output_layer o, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const precision_type * const error, const std::uint32_t & length, const std::uint32_t n_threads, const std::uint32_t thread_id)
-		{
-		}
-
-	  template<class precision_type>
-		HOST void layer<precision_type>::backward(layer_info::hidden_layer h, const precision_type * const inputs, const precision_type * const weights, precision_type * outputs, const std::uint32_t & length, const std::uint32_t n_threads, const std::uint32_t thread_id)
-		{
-		}
 
 	  template<class precision_type>
 		HOST void input_layer<precision_type>::activate_impl(zinhart::function_space::objective o, precision_type * activations, const std::uint32_t & length, const precision_type & bias)
