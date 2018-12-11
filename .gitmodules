@@ -4,3 +4,6 @@
 [submodule "bmp"]
 	path = bmp
 	url = git@github.com:zinhart/bmp.git
+[submodule "token_parser"]
+	path = token_parser
+	url = git@github.com:zinhart/token_parser.git

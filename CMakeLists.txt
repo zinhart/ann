@@ -43,6 +43,7 @@ if("${ZINHART_INCLUDE_DIR}" MATCHES "^$")
   add_subdirectory(multi_core)
   add_subdirectory(bmp)
   add_subdirectory(examples) # to do make this a build option
+  add_subdirectory(token_parser)
 endif()
 
 #set module path
