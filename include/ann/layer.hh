@@ -373,6 +373,48 @@ namespace zinhart
 			HOST virtual precision_type get_bias_impl()const override;
 			HOST virtual std::string name_impl()const override;
 		};
+	  template <class precision_type>
+		std::shared_ptr<layer<precision_type>> get_layer(std::string name, std::uint32_t size, precision_type hint = 0.0)
+		{
+		  if(name == "input")
+		  {
+			input_layer<precision_type> input;
+			input->set_size(size);
+			return input;
+		  }
+		  else if(name == "identity")
+		  {
+			return identity_layer<precision_type>(size);
+		  }
+		  else if(name == "sigmoid")
+		  {
+			return sigmoid_layer<precision_type>(size);
+		  }
+		  else if(name == "softplus")
+		  {
+			return softplus_layer<precision_type>(size);
+		  }
+		  else if(name == "tanh")
+		  {
+			return tanh_layer<precision_type>(size);
+		  }
+		  else if(name == "relu")
+		  {
+			return relu_layer<precision_type>(size);
+		  }
+		  else if(name == "leaky_relu")
+		  {
+			return leaky_relu_layer<precision_type>(size);
+		  }
+		  else if(name == "exp_leaky_relu")
+		  {
+			return exp_leaky_relu_layer<precision_type>(size);
+		  }
+		  else if(name == "softmax")
+		  {
+			return softmax_layer<precision_type>(size);
+		  }
+		}
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS
 }//END NAMESPACE ZINHART

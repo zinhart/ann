@@ -97,6 +97,26 @@ namespace zinhart
 
 #endif
 		};// END CLASS MULTI_LAYER_PERCEPTRON
+
+	// allocate everything based on information in total_layers
+	template <class precision_type>
+	  void init(const std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
+				std::uint32_t & total_activations_length,
+				std::uint32_t & total_hidden_weights_length,
+				const std::uint32_t n_threads
+			   )
+	  {
+		std::uint32_t ith_layer{0};
+		// calc number of activations
+		for(ith_layer = 1, total_activations_length = 0; ith_layer < total_layers.size(); ++ith_layer )
+		  total_activations_length += total_layers[ith_layer]->get_size();//accumulate neurons in the hidden layers and output layer
+		total_activations_length *= n_threads;
+
+		// calc number of hidden weights
+		for(ith_layer = 0, total_hidden_weights_length = 0; ith_layer < total_layers.size() - 1; ++ith_layer)
+		  total_hidden_weights_length += total_layers[ith_layer + 1]->get_size() * total_layers[ith_layer]->get_size(); 
+
+	  }
 	template<class precision_type>
   	  HOST void fprop_mlp(std::vector< std::shared_ptr<zinhart::models::layers::layer<precision_type>> > & total_layers,
 						  precision_type * total_cases_ptr, const std::uint32_t ith_training_case,

@@ -32,11 +32,12 @@ else()
 
    add_library(ann ${LIB_TYPE} ${ann_lib})
   
-   target_include_directories(ann PUBLIC ${ANN_INCLUDE_DIR} ${MULTI_CORE_INCLUDE_DIR} ${BMP_INCLUDE_DIR} ${MKL_INCLUDE_DIR} )
+   target_include_directories(ann PUBLIC ${ANN_INCLUDE_DIR} ${MULTI_CORE_INCLUDE_DIR} ${BMP_INCLUDE_DIR} ${TOKEN_PARSER_INCLUDE_DIR} ${MKL_INCLUDE_DIR} )
 
    target_link_libraries(ann
 						 multi_core
 						 bmp
+						 token_parser
 						 ${MKL_LIBRARIES}
 						 ${CMAKE_THREAD_LIBS_INIT}
 						 ${MATH_LIBS}
