@@ -99,6 +99,20 @@ namespace zinhart
 		HOST virtual void error_impl(zinhart::function_space::derivative d, const precision_type * outputs, const precision_type * targets, precision_type * results, const std::uint32_t & length) override;
 		HOST virtual std::string name_impl()const override;
 	};
+  template <class precision_type>
+	std::shared_ptr<loss_function<precision_type>> make_loss_function(std::string name, precision_type hint = 0.0)
+	{
+	  if(name == "mse")
+	  {
+		std::shared_ptr<loss_function<precision_type>> mse{std::make_shared<mean_squared_error<precision_type>>()};
+		return mse;
+	  }
+	  else if(name == "ce_multinomial")
+	  {
+		std::shared_ptr<loss_function<precision_type>> ce{std::make_shared<cross_entropy_multi_class<precision_type>>()};
+		return ce;
+	  }
+	}
   }// END NAMESPACE LOSS_FUNCTIONS
 }// END NAMESPACE ZINHART
 #include "ext/loss_function.tcc"

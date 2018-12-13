@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
   std::string batch_size_str{"\0"};
   std::vector<std::vector<std::string>> layer_strings;
 
+  // model vars
   std::vector<std::shared_ptr<zinhart::models::layers::layer<double>>> total_layers;
   std::shared_ptr<zinhart::loss_functions::loss_function<double>> loss_function; 
   std::shared_ptr<zinhart::optimizers::optimizer<double>> optimizer;
@@ -51,6 +52,13 @@ int main(int argc, char *argv[])
   std::uint32_t total_hidden_weights_length{0};
   std::uint32_t n_threads{0};
   std::uint32_t batch_size{0};
+  double * total_training_cases_ptr{nullptr};
+  double * total_targets_ptr{nullptr};
+  double * total_activations_ptr{nullptr};
+  double * total_deltas_ptr{nullptr};
+  double * total_hidden_weights_ptr{nullptr};
+  double * total_gradient_ptr{nullptr};
+
 
 
   zinhart::parsers::token_parser ap;
@@ -134,9 +142,19 @@ int main(int argc, char *argv[])
   	}
 	std::cout<<"\n";
   }
+
   // init
   zinhart::models::init(total_layers, total_activations_length, total_hidden_weights_length, n_threads);
+  std::cout<<"total_activations_length: "<<total_activations_length<<"\n"; 
+  std::cout<<"total_hidden_weights_length: "<<total_hidden_weights_length<<"\n";
+  std::cout<<"n_threads: "<<n_threads<<"\n";
   
+  // allocate memory for model vectors
+  
+  // load training and testing data
+  
+  // train
+
   /*
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
