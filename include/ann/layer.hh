@@ -374,46 +374,63 @@ namespace zinhart
 			HOST virtual std::string name_impl()const override;
 		};
 	  template <class precision_type>
-		std::shared_ptr<layer<precision_type>> get_layer(std::string name, std::uint32_t size, precision_type hint = 0.0)
+		std::shared_ptr<layer<precision_type>> make_layer(std::string name, std::uint32_t size, precision_type hint = 0.0)
 		{
 		  if(name == "input")
 		  {
-			input_layer<precision_type> input;
+			std::shared_ptr<layer<precision_type>> input{std::make_shared<input_layer<precision_type>>()};
 			input->set_size(size);
 			return input;
 		  }
 		  else if(name == "identity")
 		  {
-			return identity_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> identity{std::make_shared<identity_layer<precision_type>>()};
+			identity->set_size(size);
+			return identity;
 		  }
+		  
 		  else if(name == "sigmoid")
 		  {
-			return sigmoid_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> sigmoid{std::make_shared<sigmoid_layer<precision_type>>()};
+			sigmoid->set_size(size);
+			return sigmoid;
 		  }
 		  else if(name == "softplus")
 		  {
-			return softplus_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> softplus{std::make_shared<softplus_layer<precision_type>>()};
+			softplus->set_size(size);
+			return softplus;
 		  }
 		  else if(name == "tanh")
 		  {
-			return tanh_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> tanh{std::make_shared<tanh_layer<precision_type>>()};
+			tanh->set_size(size);
+			return tanh;
 		  }
 		  else if(name == "relu")
 		  {
-			return relu_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> relu{std::make_shared<relu_layer<precision_type>>()};
+			relu->set_size(size);
+			return relu;
 		  }
 		  else if(name == "leaky_relu")
 		  {
-			return leaky_relu_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> leaky_relu{std::make_shared<leaky_relu_layer<precision_type>>()};
+			leaky_relu->set_size(size);
+			return leaky_relu;
 		  }
 		  else if(name == "exp_leaky_relu")
 		  {
-			return exp_leaky_relu_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> exp_leaky_relu{std::make_shared<exp_leaky_relu_layer<precision_type>>()};
+			exp_leaky_relu->set_size(size);
+			return exp_leaky_relu;
 		  }
 		  else if(name == "softmax")
 		  {
-			return softmax_layer<precision_type>(size);
+			std::shared_ptr<layer<precision_type>> softmax{std::make_shared<softmax_layer<precision_type>>(size)};
+			return softmax;
 		  }
+		  
 		}
 	}//END NAMESPACE LAYERS
   }//END NAMESPACE MODELS

@@ -32,16 +32,26 @@ void and_gate(const std::uint32_t n_threads, const std::string optimizer_name, c
 
 int main(int argc, char *argv[])
 {
-  
+ /* 
   using namespace zinhart::models::layers;
   using namespace zinhart::loss_functions;
-  using namespace zinhart::optimizers;
+  using namespace zinhart::optimizers;*/
+
   std::string gate{"\0"};
-  std::string threads{"\0"};
-  std::string optimizer{"\0"};
-  std::string loss_function{"\0"};
-  std::string batch_size{"\0"};
+  std::string threads_str{"\0"};
+  std::string optimizer_str{"\0"};
+  std::string loss_function_str{"\0"};
+  std::string batch_size_str{"\0"};
   std::vector<std::vector<std::string>> layer_strings;
+
+  std::vector<std::shared_ptr<zinhart::models::layers::layer<double>>> total_layers;
+  std::shared_ptr<zinhart::loss_functions::loss_function<double>> loss_function; 
+  std::shared_ptr<zinhart::optimizers::optimizer<double>> optimizer;
+  std::uint32_t total_activations_length{0};
+  std::uint32_t total_hidden_weights_length{0};
+  std::uint32_t n_threads{0};
+  std::uint32_t batch_size{0};
+
 
   zinhart::parsers::token_parser ap;
   ap.add_token("--gate", "and|or|nand|nor|xor", "valid logic_gates are <and, or, nand, nor, xor>", true);
@@ -50,77 +60,89 @@ int main(int argc, char *argv[])
   ap.add_token("--loss_function", "ce|mse", "the loss function to use");
   ap.add_token("--batch_size", zinhart::parsers::expressions::pos_integer, "the number of cases to process before a weight update", true );
   ap.add_token("--layer", "(input|relu|sigmoid)([1-9][0-9]*)", "layer name and size", true);
+
   ap.process(argc, argv);
   auto token_values = ap.get_parsed_tokens();
+
+  if(token_values.empty())
+  {
+	std::cout<<"USAGE ./logic_gates args\n";
+	ap.print_support();
+  }
 
   for(auto it = token_values.begin(); it != token_values.end(); ++it)
   {
 	std::cout<<it->first<<" ";
 	if(it->first == "--gate")
-	  gate = *it->second.begin();
+	  if(it->second.begin() == it->second.end())
+	  {
+		std::cout<<"--gate <and, or, nand, nor, xor>"<<"\n";
+		std::exit(0);	
+	  }
+	  else
+		gate = *it->second.begin();
 	if(it->first == "--threads")
-	  threads = *it->second.begin();
+	  if(it->second.begin() == it->second.end())
+	  {
+	   	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency when not specified)\n";
+		std::exit(0);
+	  }
+	  else
+		n_threads = std::stoi(*it->second.begin());
+//  		threads_str = *it->second.begin();
 	if(it->first == "--optimizer")
-	  optimizer =  *it->second.begin();
+	  if(it->second.begin() == it->second.end())
+	  {
+		std::cout<<"--optimizer <optimizer>\n";
+		std::exit(0);
+	  }
+	  else
+  		optimizer_str =  *it->second.begin();
 	if(it->first == "--loss_function")
-	  loss_function =  *it->second.begin();
+	  if(it->second.begin() == it->second.end())
+	  {
+		std::cout<<"--loss_function <loss_function>\n";
+		std::exit(0);
+	  }
+	  else
+  		loss_function_str =  *it->second.begin();
 	if(it->first == "--batch_size")
-	  batch_size =  *it->second.begin();
+	  if(it->second.begin() == it->second.end())
+	  {
+		std::cout<<"--batch_size <n_cases>\n";
+		std::exit(0);
+	  }
+	  else
+  		batch_size_str =  *it->second.begin();
 	if(it->first == "--layer")
 	{
-  	  std::vector<std::string> v;
-  	  for(auto inner_it = it->second.begin(); inner_it != it->second.end(); ++inner_it)
+	  if(it->second.begin() == it->second.end())
 	  {
-		v.push_back(*inner_it);
-		std::cout<<*inner_it<<" ";
+		std::cout<<"--layers <name> <size>\n";
+		std::exit(0);
 	  }
-	  layer_strings.push_back(v);
-	}
+	  else
+	  {
+		std::vector<std::string> v;
+  	    for(auto inner_it = it->second.begin(); inner_it != it->second.end(); ++inner_it)
+	    {
+		  v.push_back(*inner_it);
+		  std::cout<<*inner_it<<" ";
+	    }
+		total_layers.push_back(zinhart::models::layers::make_layer(v.at(0), std::stoi(v.at(1)), double{}));
+	  }
+  	}
 	std::cout<<"\n";
   }
-  std::cout<<"Gate: "<<gate<<"\n";
-  
-  if(gate == "\0")
-  {
-  	std::cout<<"--gate <and, or, nand, nor, xor>"<<"\n";
-	std::exit(0);
-  }
-  else if(threads == "\0")
-  {
-   	std::cout<<"--threads <n_threads> (defaults to std::thread::hardware_concurrency when not specified)\n";
-	std::exit(0);
-  }
-  else if(optimizer == "\0")
-  {
-	std::cout<<"--optimizer <optimizer>\n";
-	std::exit(0);
-  }
-  else if(loss_function == "\0")
-  {
-	std::cout<<"--loss_function <loss_function>\n";
-	std::exit(0);
-  }
-  else if(batch_size == "\0")
-  {
-	std::cout<<"--batch_size <n_cases>\n";
-	std::exit(0);
-  }
-  else if(layer_strings.size() == 0)
-  {
-	std::cout<<"--layers <name> <size>\n";
-	std::exit(0);
-  }
   // init
+  zinhart::models::init(total_layers, total_activations_length, total_hidden_weights_length, n_threads);
   
   /*
   std::vector< std::shared_ptr<zinhart::models::layers::layer<double>> > total_layers;
   std::shared_ptr< zinhart::loss_functions::loss_function<double> > loss_function{std::make_shared<zinhart::loss_functions::mean_squared_error<double>>()};
   std::shared_ptr< zinhart::optimizers::optimizer<double> > optimizer{std::make_shared<zinhart::optimizers::sgd<double>>()};
-  zinhart::models::multi_layer_perceptron<double> model;
-*/
+  */
 
-  std::uint32_t total_activations_length{0};
-  std::uint32_t total_hidden_weights_length{0};
   /*
   std::cout<<"USAGE ./logic_gates args\n";
   std::cout<<"Main args:\n";
