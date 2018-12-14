@@ -38,18 +38,18 @@ int main(int argc, char *argv[])
   using namespace zinhart::optimizers;*/
 
   std::string gate{"\0"};
-  std::string threads_str{"\0"};
   std::string optimizer_str{"\0"};
-  std::string loss_function_str{"\0"};
-  std::string batch_size_str{"\0"};
-  std::vector<std::vector<std::string>> layer_strings;
 
   // model vars
   std::vector<std::shared_ptr<zinhart::models::layers::layer<double>>> total_layers;
   std::shared_ptr<zinhart::loss_functions::loss_function<double>> loss_function; 
   std::shared_ptr<zinhart::optimizers::optimizer<double>> optimizer;
+  std::uint32_t total_training_cases_length{0};
+  std::uint32_t total_targets_length{0};
   std::uint32_t total_activations_length{0};
   std::uint32_t total_hidden_weights_length{0};
+  std::uint32_t total_outputs_length{0};
+  std::uint32_t total_error_length{0};
   std::uint32_t n_threads{0};
   std::uint32_t batch_size{0};
   double * total_training_cases_ptr{nullptr};
@@ -58,14 +58,14 @@ int main(int argc, char *argv[])
   double * total_deltas_ptr{nullptr};
   double * total_hidden_weights_ptr{nullptr};
   double * total_gradient_ptr{nullptr};
-
-
+  double * total_outputs_ptr{nullptr};
+  double * total_error_ptr{nullptr};
 
   zinhart::parsers::token_parser ap;
   ap.add_token("--gate", "and|or|nand|nor|xor", "valid logic_gates are <and, or, nand, nor, xor>", true);
   ap.add_token("--threads", zinhart::parsers::expressions::pos_integer, "number of threads to use 1 - N", true );
   ap.add_token("--optimizer", "sgd|momentum", "the optimizer to use");
-  ap.add_token("--loss_function", "ce|mse", "the loss function to use");
+  ap.add_token("--loss_function", "ce_multinomial|mse", "the loss function to use");
   ap.add_token("--batch_size", zinhart::parsers::expressions::pos_integer, "the number of cases to process before a weight update", true );
   ap.add_token("--layer", "(input|relu|sigmoid)([1-9][0-9]*)", "layer name and size", true);
 
@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
 	  }
 	  else
 		n_threads = std::stoi(*it->second.begin());
-//  		threads_str = *it->second.begin();
 	if(it->first == "--optimizer")
 	  if(it->second.begin() == it->second.end())
 	  {
@@ -113,7 +112,7 @@ int main(int argc, char *argv[])
 		std::exit(0);
 	  }
 	  else
-  		loss_function_str =  *it->second.begin();
+		loss_function = zinhart::loss_functions::make_loss_function(*it->second.begin(), double{});
 	if(it->first == "--batch_size")
 	  if(it->second.begin() == it->second.end())
 	  {
@@ -121,7 +120,7 @@ int main(int argc, char *argv[])
 		std::exit(0);
 	  }
 	  else
-  		batch_size_str =  *it->second.begin();
+		batch_size = std::stoi(*it->second.begin());
 	if(it->first == "--layer")
 	{
 	  if(it->second.begin() == it->second.end())
@@ -142,16 +141,31 @@ int main(int argc, char *argv[])
   	}
 	std::cout<<"\n";
   }
+  const std::uint32_t input_layer{0};
+  const std::uint32_t output_layer{total_layers.size() - 1};
 
-  // init
+  // load training and testing data
+
+  total_outputs_length = total_layers[output_layer]->get_size();
+  total_error_length = total_layers[output_layer]->get_size() * n_threads;
   zinhart::models::init(total_layers, total_activations_length, total_hidden_weights_length, n_threads);
   std::cout<<"total_activations_length: "<<total_activations_length<<"\n"; 
   std::cout<<"total_hidden_weights_length: "<<total_hidden_weights_length<<"\n";
   std::cout<<"n_threads: "<<n_threads<<"\n";
-  
+
+
   // allocate memory for model vectors
-  
-  // load training and testing data
+  std::uint32_t alignment = 64;
+  total_training_cases_ptr = (double*) mkl_malloc( total_training_cases_length * sizeof( double ), alignment );
+  total_targets_ptr = (double*) mkl_malloc(total_targets_length * sizeof(double), alignment );
+  total_activations_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_deltas_ptr = (double*) mkl_malloc( total_activations_length * sizeof( double ), alignment );
+  total_hidden_weights_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+  total_gradient_ptr = (double*) mkl_malloc( total_hidden_weights_length * sizeof( double ), alignment );
+  total_outputs_ptr = (double*) mkl_malloc( total_outputs_length * sizeof( double ), alignment );
+  total_error_ptr = (double*) mkl_malloc(total_error_length * sizeof(double), alignment );
+
+  // init using task manager
   
   // train
 
@@ -182,6 +196,14 @@ int main(int argc, char *argv[])
   std::cout<<"Main and informational args are mutually exclusive\n";
   std::exit(0);
 */
+  mkl_free(total_training_cases_ptr);
+  mkl_free(total_targets_ptr);
+  mkl_free(total_activations_ptr);
+  mkl_free(total_deltas_ptr);
+  mkl_free(total_hidden_weights_ptr);
+  mkl_free(total_gradient_ptr);
+  mkl_free(total_outputs_ptr);
+  mkl_free(total_error_ptr);
 }
 void and_gate(const std::uint32_t n_threads, const std::string optimizer_name, const std::string loss_function_name,
 	          const std::vector<std::string> layers, const std::uint32_t batch_size, double learning_rate, const std::string file
